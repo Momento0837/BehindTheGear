@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Assign this to the selection Canvas and connect its public methods to the two Inspector button events.</summary>
 public sealed class PlayerControlSelector : MonoBehaviour
 {
-    [SerializeField] private PlayerController2D player;
+    [SerializeField] private PlayerInputReader player;
     [SerializeField] private GameObject selectionPanel;
 
     private void Update()
@@ -14,10 +14,16 @@ public sealed class PlayerControlSelector : MonoBehaviour
         if (UnityEngine.InputSystem.Keyboard.current?.digit2Key.wasPressedThisFrame == true) ChooseArrowKeys();
     }
 
+    private void Start()
+    {
+        // Movement now accepts both WASD and arrow keys, so the old choice screen is no longer needed.
+        if (selectionPanel != null) selectionPanel.SetActive(false);
+    }
+
     public void ChooseWASD() => Choose(PlayerController2D.ControlScheme.WASD);
     public void ChooseArrowKeys() => Choose(PlayerController2D.ControlScheme.ArrowKeys);
 
-    public void Configure(PlayerController2D targetPlayer, GameObject targetPanel)
+    public void Configure(PlayerInputReader targetPlayer, GameObject targetPanel)
     {
         player = targetPlayer;
         selectionPanel = targetPanel;
@@ -26,7 +32,6 @@ public sealed class PlayerControlSelector : MonoBehaviour
     private void Choose(PlayerController2D.ControlScheme scheme)
     {
         if (player == null) return;
-        player.SetControlScheme(scheme);
         if (selectionPanel != null) selectionPanel.SetActive(false);
     }
 }

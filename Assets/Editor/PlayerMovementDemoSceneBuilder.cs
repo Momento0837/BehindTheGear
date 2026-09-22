@@ -11,7 +11,7 @@ internal static class PlayerMovementDemoSceneBuilder
 {
     private const string ScenePath = "Assets/Player/Script/PlayerMovementDemo.unity";
     private const string PlayerSpritePath = "Assets/Player/Model/temporary-mechanic-player.png";
-    private const string SessionKey = "BehindTheGear.PlayerMovementDemo.Rebuilt.v3";
+    private const string SessionKey = "BehindTheGear.PlayerMovementDemo.Rebuilt.v7";
 
     [InitializeOnLoadMethod]
     private static void RebuildOnceAfterCompilation()
@@ -45,7 +45,7 @@ internal static class PlayerMovementDemoSceneBuilder
         platformCollider.usedByEffector = true;
         platform.GetComponent<PlatformEffector2D>().useOneWay = true;
 
-        GameObject player = new("Temporary Player", typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(PlayerController2D));
+        GameObject player = new("Temporary Player", typeof(SpriteRenderer), typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(PlayerInputReader), typeof(PlayerMovement2D), typeof(PlayerAttackController), typeof(PlayerInteractionController), typeof(PlayerSpriteFacing), typeof(PlayerInputDebugLogger));
         player.transform.position = new Vector3(-4f, -2.5f, 0f);
         Rigidbody2D body = player.GetComponent<Rigidbody2D>();
         body.gravityScale = 3f;
@@ -73,6 +73,21 @@ internal static class PlayerMovementDemoSceneBuilder
         playerRenderer.sprite = playerSprite;
         playerRenderer.sortingOrder = 1;
 
+        GameObject interactionObject = new("Interaction Test Object (F)", typeof(BoxCollider2D), typeof(Interactable2D));
+        interactionObject.transform.position = new Vector3(-1.6f, -2.8f, 0f);
+        BoxCollider2D interactionCollider = interactionObject.GetComponent<BoxCollider2D>();
+        interactionCollider.isTrigger = true;
+        interactionCollider.size = new Vector2(1.2f, 1.2f);
+        GameObject interactionLabel = new("Label (TMP)", typeof(TextMeshPro));
+        interactionLabel.transform.SetParent(interactionObject.transform, false);
+        TextMeshPro worldLabel = interactionLabel.GetComponent<TextMeshPro>();
+        worldLabel.font = TMP_Settings.defaultFontAsset;
+        worldLabel.text = "Interact\nObject";
+        worldLabel.fontSize = 4f;
+        worldLabel.alignment = TextAlignmentOptions.Center;
+        worldLabel.color = new Color(1f, .72f, .2f);
+        worldLabel.rectTransform.sizeDelta = new Vector2(2.5f, 1.4f);
+
         GameObject canvasObject = new("Control Selection UI", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(PlayerControlSelector));
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -94,8 +109,29 @@ internal static class PlayerMovementDemoSceneBuilder
         labelText.color = Color.white;
         labelText.text = "Choose controls\n[1] WASD     [2] Arrow Keys";
 
+        GameObject promptObject = new("Interaction Prompt UI (TMP)", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(InteractionPromptUI));
+        Canvas promptCanvas = promptObject.GetComponent<Canvas>();
+        promptCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        CanvasScaler promptScaler = promptObject.GetComponent<CanvasScaler>();
+        promptScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        promptScaler.referenceResolution = new Vector2(1280f, 720f);
+        GameObject promptLabel = new("Prompt Text (TMP)", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        promptLabel.transform.SetParent(promptObject.transform, false);
+        RectTransform promptTransform = promptLabel.GetComponent<RectTransform>();
+        promptTransform.anchorMin = promptTransform.anchorMax = new Vector2(.5f, .5f);
+        promptTransform.anchoredPosition = new Vector2(0f, -150f);
+        promptTransform.sizeDelta = new Vector2(360f, 70f);
+        TextMeshProUGUI promptText = promptLabel.GetComponent<TextMeshProUGUI>();
+        promptText.font = TMP_Settings.defaultFontAsset;
+        promptText.fontSize = 32f;
+        promptText.alignment = TextAlignmentOptions.Center;
+        promptText.color = new Color(1f, .9f, .35f);
+        InteractionPromptUI prompt = promptObject.GetComponent<InteractionPromptUI>();
+        prompt.Configure(promptText);
+        player.GetComponent<PlayerInteractionController>().ConfigurePrompt(prompt);
+
         new GameObject("EventSystem", typeof(EventSystem));
-        canvasObject.GetComponent<PlayerControlSelector>().Configure(player.GetComponent<PlayerController2D>(), canvasObject);
+        canvasObject.GetComponent<PlayerControlSelector>().Configure(player.GetComponent<PlayerInputReader>(), canvasObject);
 
         EditorSceneManager.SaveScene(scene, ScenePath, false);
         AssetDatabase.Refresh();

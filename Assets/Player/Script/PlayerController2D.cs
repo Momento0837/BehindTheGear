@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 /// <summary>2D side-scroller player movement. Input is intentionally limited to the chosen control scheme.</summary>
@@ -22,6 +23,14 @@ public sealed class PlayerController2D : MonoBehaviour
     [SerializeField] private ControlScheme controlScheme;
     [SerializeField] private bool controlsEnabled;
 
+    [Header("Attack Input Events")]
+    [SerializeField] private UnityEvent onAttackZ;
+    [SerializeField] private UnityEvent onAttackX;
+    [SerializeField] private UnityEvent onAttackC;
+    [SerializeField] private UnityEvent onAttackV;
+    [SerializeField] private UnityEvent onPrimaryClick;
+    [SerializeField] private UnityEvent onSecondaryClick;
+
     private Rigidbody2D body;
     private BoxCollider2D capsule;
     private SpriteRenderer playerRenderer;
@@ -42,23 +51,26 @@ public sealed class PlayerController2D : MonoBehaviour
         standingSize = capsule.size;
         standingOffset = capsule.offset;
         body.freezeRotation = true;
+        controlsEnabled = true; // Both keyboard layouts are always available.
     }
 
     private void Update()
     {
         if (!controlsEnabled || Keyboard.current == null) return;
 
-        Key left = controlScheme == ControlScheme.WASD ? Key.A : Key.LeftArrow;
-        Key right = controlScheme == ControlScheme.WASD ? Key.D : Key.RightArrow;
-        Key up = controlScheme == ControlScheme.WASD ? Key.W : Key.UpArrow;
-        Key down = controlScheme == ControlScheme.WASD ? Key.S : Key.DownArrow;
-
-        moveLeft = Keyboard.current[left].isPressed;
-        moveRight = Keyboard.current[right].isPressed;
-        downHeld = Keyboard.current[down].isPressed;
+        moveLeft = Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed;
+        moveRight = Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed;
+        downHeld = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
         // Space is the common jump key, regardless of the selected movement scheme.
-        if (Keyboard.current[up].wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current.wKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
             jumpPressed = true;
+
+        if (Keyboard.current.zKey.wasPressedThisFrame) AttackZ();
+        if (Keyboard.current.xKey.wasPressedThisFrame) AttackX();
+        if (Keyboard.current.cKey.wasPressedThisFrame) AttackC();
+        if (Keyboard.current.vKey.wasPressedThisFrame) AttackV();
+        if (Mouse.current?.leftButton.wasPressedThisFrame == true) PrimaryClick();
+        if (Mouse.current?.rightButton.wasPressedThisFrame == true) SecondaryClick();
     }
 
     private void FixedUpdate()
@@ -90,6 +102,15 @@ public sealed class PlayerController2D : MonoBehaviour
         controlScheme = scheme;
         controlsEnabled = true;
     }
+
+    // These methods are intentionally separate so attack logic, animation, or effects can be
+    // assigned independently in the Inspector through the corresponding UnityEvent fields.
+    public void AttackZ() => onAttackZ?.Invoke();
+    public void AttackX() => onAttackX?.Invoke();
+    public void AttackC() => onAttackC?.Invoke();
+    public void AttackV() => onAttackV?.Invoke();
+    public void PrimaryClick() => onPrimaryClick?.Invoke();
+    public void SecondaryClick() => onSecondaryClick?.Invoke();
 
     private void UpdateCrouch(bool shouldCrouch)
     {
