@@ -20,7 +20,11 @@ public sealed class PlayerInteractionController : MonoBehaviour
     private void Update()
     {
         currentTarget = FindClosestInteractable();
-        if (interactionPrompt != null) interactionPrompt.SetVisible(currentTarget != null);
+        if (interactionPrompt != null)
+        {
+            interactionPrompt.SetVisible(currentTarget != null);
+            if (currentTarget != null) interactionPrompt.SetTarget(currentTarget);
+        }
     }
 
     public void ConfigurePrompt(InteractionPromptUI prompt) => interactionPrompt = prompt;

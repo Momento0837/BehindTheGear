@@ -9,5 +9,10 @@ public sealed class Interactable2D : MonoBehaviour
     public void Interact(GameObject interactor)
     {
         onInteract?.Invoke();
+
+        // A component placed on this same scene object needs no fragile UnityEvent setup.
+        // This is intentionally not an object lookup or runtime creation.
+        GetComponent<CutsceneVideoSequence>()?.PlayFromInteraction();
+        GetComponent<ConversationDialogue>()?.Play();
     }
 }
