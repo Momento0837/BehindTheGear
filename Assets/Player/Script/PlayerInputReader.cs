@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>New Input System keyboard/mouse reader. It has no movement or attack implementation.</summary>
@@ -18,6 +20,10 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private float horizontal;
     private bool crouching;
+    private readonly List<RaycastResult> uiHits = new();
+    private static int pointerSuppressedFrame = -1;
+
+    public static void SuppressPointerForCurrentFrame() => pointerSuppressedFrame = Time.frameCount;
 
     private void Update()
     {
@@ -44,8 +50,24 @@ public sealed class PlayerInputReader : MonoBehaviour
         if (Keyboard.current.xKey.wasPressedThisFrame) AttackXPressed?.Invoke();
         if (Keyboard.current.cKey.wasPressedThisFrame) AttackCPressed?.Invoke();
         if (Keyboard.current.vKey.wasPressedThisFrame) AttackVPressed?.Invoke();
-        if (Mouse.current?.leftButton.wasPressedThisFrame == true) PrimaryClickPressed?.Invoke();
-        if (Mouse.current?.rightButton.wasPressedThisFrame == true) SecondaryClickPressed?.Invoke();
+        bool primaryClick = Mouse.current?.leftButton.wasPressedThisFrame == true;
+        bool secondaryClick = Mouse.current?.rightButton.wasPressedThisFrame == true;
+        if ((primaryClick || secondaryClick) && !IsPointerOverUI())
+        {
+            if (primaryClick) PrimaryClickPressed?.Invoke();
+            if (secondaryClick) SecondaryClickPressed?.Invoke();
+        }
         if (Keyboard.current.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
+    }
+
+    private bool IsPointerOverUI()
+    {
+        if (pointerSuppressedFrame == Time.frameCount) return true;
+        if (EventSystem.current == null || Mouse.current == null) return false;
+        // Raycast the current position; cached pointer state can be one frame behind input.
+        PointerEventData pointer = new(EventSystem.current) { position = Mouse.current.position.ReadValue() };
+        uiHits.Clear();
+        EventSystem.current.RaycastAll(pointer, uiHits);
+        return uiHits.Exists(hit => hit.module is UnityEngine.UI.GraphicRaycaster);
     }
 }
