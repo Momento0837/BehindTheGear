@@ -21,4 +21,8 @@
 - `Scripts` 버튼은 `Assets/` 아래에 있으며 `Editor` 폴더 밖에 있는 사용자 스크립트만 대상으로 합니다.
 - Hierarchy 변경 시 오브젝트 아이콘을 갱신합니다.
 
-이 기능은 `[InitializeOnLoad]`로 자동 등록됩니다. 별도의 컴포넌트 부착이나 씬 설정은 필요하지 않습니다.
+## 개인별 사용 설정
+
+이 기능의 코드는 프로젝트에 공유되지만, 활성화 여부는 각 사용자의 Unity `EditorPrefs`에만 저장됩니다. 따라서 팀원의 에디터에는 기본적으로 적용되지 않습니다.
+
+본인 에디터에서만 사용하려면 Unity 메뉴에서 `Tools > Behind The Gear > Personal Hierarchy Controls`를 켜세요. 이 설정은 Git에 포함되지 않으며 씬이나 프로젝트 설정도 변경하지 않습니다.

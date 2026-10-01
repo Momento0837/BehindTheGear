@@ -9,16 +9,68 @@ using UnityEngine;
 [InitializeOnLoad]
 internal static class HierarchyScriptControls
 {
+    private const string PreferenceKey = "BehindTheGear.PersonalHierarchyScriptControls.Enabled";
     private const float ButtonWidth = 82f;
     private const float ActiveButtonWidth = 74f;
     private static bool refreshingIcons;
+    private static bool isRegistered;
     private static readonly Texture2D[] SemanticIcons = new Texture2D[5];
 
     static HierarchyScriptControls()
     {
+        if (EditorPrefs.GetBool(PreferenceKey, false))
+            Register();
+        else
+            ClearSemanticIcons();
+    }
+
+    [MenuItem("Tools/Behind The Gear/Personal Hierarchy Controls")]
+    private static void TogglePersonalHierarchyControls()
+    {
+        bool enabled = !EditorPrefs.GetBool(PreferenceKey, false);
+        EditorPrefs.SetBool(PreferenceKey, enabled);
+
+        if (enabled)
+            Register();
+        else
+            Unregister();
+
+        Menu.SetChecked("Tools/Behind The Gear/Personal Hierarchy Controls", enabled);
+        EditorApplication.RepaintHierarchyWindow();
+    }
+
+    [MenuItem("Tools/Behind The Gear/Personal Hierarchy Controls", true)]
+    private static bool ValidatePersonalHierarchyControls()
+    {
+        Menu.SetChecked("Tools/Behind The Gear/Personal Hierarchy Controls", EditorPrefs.GetBool(PreferenceKey, false));
+        return true;
+    }
+
+    private static void Register()
+    {
+        if (isRegistered) return;
         EditorApplication.hierarchyWindowItemOnGUI += DrawItemControls;
         EditorApplication.hierarchyChanged += RefreshObjectIcons;
         EditorApplication.delayCall += RefreshObjectIcons;
+        isRegistered = true;
+    }
+
+    private static void Unregister()
+    {
+        if (!isRegistered) return;
+        EditorApplication.hierarchyWindowItemOnGUI -= DrawItemControls;
+        EditorApplication.hierarchyChanged -= RefreshObjectIcons;
+        EditorApplication.delayCall -= RefreshObjectIcons;
+        isRegistered = false;
+
+        ClearSemanticIcons();
+    }
+
+    private static void ClearSemanticIcons()
+    {
+        foreach (GameObject gameObject in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (IsSemanticObject(gameObject))
+                EditorGUIUtility.SetIconForObject(gameObject, null);
     }
 
     private static void DrawItemControls(int instanceId, Rect selectionRect)
@@ -131,6 +183,14 @@ internal static class HierarchyScriptControls
         if (gameObject.TryGetComponent<Rigidbody2D>(out _) || gameObject.TryGetComponent<Collider2D>(out _)) return GetOrCreateIcon(4);
         return null;
     }
+
+    private static bool IsSemanticObject(GameObject gameObject) =>
+        gameObject.GetComponent<PlayerMovement2D>() != null ||
+        gameObject.TryGetComponent<Canvas>(out _) ||
+        gameObject.TryGetComponent<PlatformEffector2D>(out _) ||
+        gameObject.TryGetComponent<Camera>(out _) ||
+        gameObject.TryGetComponent<Rigidbody2D>(out _) ||
+        gameObject.TryGetComponent<Collider2D>(out _);
 
     private static Texture2D GetOrCreateIcon(int kind)
     {
