@@ -10,11 +10,15 @@ public sealed class PlayerInteractionController : MonoBehaviour
 
     private BoxCollider2D playerHitbox;
     private Interactable2D currentTarget;
+    private ContactFilter2D interactionFilter;
+    private readonly Collider2D[] interactionHits = new Collider2D[16];
 
     private void Awake()
     {
         playerHitbox = GetComponent<BoxCollider2D>();
         GetComponent<PlayerInputReader>().InteractPressed += TryInteract;
+        interactionFilter.SetLayerMask(interactionLayers);
+        interactionFilter.useTriggers = true;
     }
 
     private void Update()
@@ -41,12 +45,18 @@ public sealed class PlayerInteractionController : MonoBehaviour
     private Interactable2D FindClosestInteractable()
     {
         Bounds bounds = playerHitbox.bounds;
-        Collider2D[] hits = Physics2D.OverlapBoxAll(bounds.center, bounds.size * rangeMultiplier, 0f, interactionLayers);
         Interactable2D closest = null;
         float closestDistance = float.MaxValue;
+        int hitCount = Physics2D.OverlapBox(
+            bounds.center,
+            bounds.size * rangeMultiplier,
+            0f,
+            interactionFilter,
+            interactionHits);
 
-        foreach (Collider2D hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider2D hit = interactionHits[i];
             Interactable2D interactable = hit.GetComponentInParent<Interactable2D>();
             if (interactable == null || interactable.gameObject == gameObject) continue;
             float distance = ((Vector2)interactable.transform.position - (Vector2)transform.position).sqrMagnitude;
