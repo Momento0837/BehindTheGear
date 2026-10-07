@@ -41,6 +41,7 @@ public sealed class InventoryUIEditor : Editor
             if (EditorUtility.IsPersistent(ui) || !ui.gameObject.scene.IsValid() || !ui.gameObject.scene.isLoaded
                 || EditorSceneManager.IsPreviewScene(ui.gameObject.scene)) continue;
             if (!ui.HasSceneUI && ui.CanCreateSceneUI) CreateUI(ui);
+            else if (ui.HasSceneUI) RefreshEditableUI(ui);
         }
     }
 
@@ -52,6 +53,8 @@ public sealed class InventoryUIEditor : Editor
         Undo.SetCurrentGroupName("Create editable inventory UI");
         Undo.RecordObject(ui, "Connect inventory scene UI");
         ui.CreateSceneUI();
+        ui.EnsureEditableSceneUI();
+        ui.ShowEditablePreview();
         if (ui.SceneCanvas != null) Undo.RegisterCreatedObjectUndo(ui.SceneCanvas.gameObject, "Create inventory canvas");
         EditorUtility.SetDirty(ui);
         PrefabUtility.RecordPrefabInstancePropertyModifications(ui);
@@ -74,7 +77,9 @@ public sealed class InventoryUIEditor : Editor
                     if (GUILayout.Button("Create Editable Scene UI")) CreateUI(ui);
                 return;
             }
-            EditorGUILayout.HelpBox("Edit Inventory Shortcut / Inventory Window with the Rect Tool (T). Save the scene to keep the layout. Play starts with the window closed.", MessageType.Info);
+            EditorGUILayout.HelpBox("Edit Inventory Shortcut / Inventory Window / Equipment Stats Panel with the Rect Tool (T). These previews are intentionally editable before Play.", MessageType.Info);
+            if (GUILayout.Button("Refresh Editable UI Panels"))
+                RefreshEditableUI(ui);
             if (GUILayout.Button("Select Bag Button") && ui.ShortcutButton != null)
                 SelectUI(ui.ShortcutButton.gameObject);
             if (GUILayout.Button("Select Inventory Window") && ui.Window != null)
@@ -84,9 +89,16 @@ public sealed class InventoryUIEditor : Editor
                 EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
                 SelectUI(ui.Window);
             }
+            if (GUILayout.Button("Select Equipment Stats Panel") && ui.EquipmentStatsPanel != null)
+            {
+                Undo.RecordObject(ui.EquipmentStatsPanel, "Show equipment stats panel preview");
+                ui.EquipmentStatsPanel.SetActive(true);
+                EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
+                SelectUI(ui.EquipmentStatsPanel);
+            }
             if (ui.Window != null)
             {
-                bool preview = EditorGUILayout.Toggle("Show Window Preview", ui.Window.activeSelf);
+                bool preview = EditorGUILayout.Toggle("Show Inventory Window Preview", ui.Window.activeSelf);
                 if (preview != ui.Window.activeSelf)
                 {
                     Undo.RecordObject(ui.Window, "Toggle inventory window preview");
@@ -94,7 +106,32 @@ public sealed class InventoryUIEditor : Editor
                     EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
                 }
             }
+            if (ui.EquipmentStatsPanel != null)
+            {
+                bool preview = EditorGUILayout.Toggle("Show Equipment Stats Panel Preview", ui.EquipmentStatsPanel.activeSelf);
+                if (preview != ui.EquipmentStatsPanel.activeSelf)
+                {
+                    Undo.RecordObject(ui.EquipmentStatsPanel, "Toggle equipment stats panel preview");
+                    ui.EquipmentStatsPanel.SetActive(preview);
+                    EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
+                }
+            }
         }
+    }
+
+    private static void RefreshEditableUI(InventoryUI ui)
+    {
+        Undo.IncrementCurrentGroup();
+        int group = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Refresh editable inventory UI panels");
+        Undo.RecordObject(ui, "Refresh editable inventory UI panels");
+        ui.EnsureEditableSceneUI();
+        ui.ShowEditablePreview();
+        if (ui.SceneCanvas != null) EditorUtility.SetDirty(ui.SceneCanvas.gameObject);
+        EditorUtility.SetDirty(ui);
+        PrefabUtility.RecordPrefabInstancePropertyModifications(ui);
+        EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
+        Undo.CollapseUndoOperations(group);
     }
 
     private static void SelectUI(GameObject obj)

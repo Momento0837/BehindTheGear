@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f639198b0aa4b5f898c30fa6d4005e4, type: 3}
   m_Name: CopperGear
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItemDefinition
-  displayName: 구리 톱니바퀴
-  description: 기계 장치에 쓰이는 제작 재료입니다.
+  itemId: copper_gear
+  displayName: 구리 톱니장비
+  description: 임시 장비 슬롯 검증용 구리 장비입니다.
   icon: {fileID: 0}
   tint: {r: 0.88, g: 0.60, b: 0.22, a: 1}
   fallbackIcon: 2
-  maxStack: 20
+  category: 2
+  maxStack: 1
+  equipmentSlot: 3
+  consumableEffect: 0
+  consumablePower: 0

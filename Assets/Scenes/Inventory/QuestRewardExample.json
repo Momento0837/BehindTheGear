@@ -1,0 +1,7 @@
+{
+  "rewards": [
+    { "itemId": "health_potion", "amount": 2 },
+    { "itemId": "copper_gear", "amount": 1 },
+    { "itemId": "sky_crystal", "amount": 1 }
+  ]
+}

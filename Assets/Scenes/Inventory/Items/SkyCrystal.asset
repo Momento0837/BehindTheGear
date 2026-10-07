@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f639198b0aa4b5f898c30fa6d4005e4, type: 3}
   m_Name: SkyCrystal
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItemDefinition
+  itemId: sky_crystal
   displayName: 하늘빛 결정
-  description: 은은한 빛을 품고 있는 희귀한 결정입니다.
+  description: 퀘스트 아이템 획득 검증용으로 빛나는 결정입니다.
   icon: {fileID: 0}
   tint: {r: 0.28, g: 0.81, b: 0.74, a: 1}
   fallbackIcon: 1
-  maxStack: 99
+  category: 3
+  maxStack: 50
+  equipmentSlot: 0
+  consumableEffect: 0
+  consumablePower: 0

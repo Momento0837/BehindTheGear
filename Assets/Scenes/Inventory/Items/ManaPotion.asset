@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f639198b0aa4b5f898c30fa6d4005e4, type: 3}
   m_Name: ManaPotion
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItemDefinition
-  displayName: 파란 포션
-  description: 마법의 힘이 깃든 푸른 포션입니다.
+  itemId: mana_potion
+  displayName: 마나 포션
+  description: 마나를 회복하는 푸른 포션입니다.
   icon: {fileID: 0}
   tint: {r: 0.22, g: 0.55, b: 0.94, a: 1}
   fallbackIcon: 0
-  maxStack: 99
+  category: 1
+  maxStack: 50
+  equipmentSlot: 0
+  consumableEffect: 2
+  consumablePower: 25
