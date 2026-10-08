@@ -19,13 +19,14 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     [Header("Content")]
     [SerializeField] private TextAsset dialogueJson;
-    [SerializeField, Min(.005f)] private float characterInterval = .03f;
+    [SerializeField, Min(.005f)] private float characterInterval = .05f;
     [SerializeField] private PlayerControlLock playerControlLock;
 
     [Header("Existing UI references")]
     [SerializeField] private CanvasGroup dialogueGroup;
     [SerializeField] private Image dialoguePanelImage;
     [SerializeField] private Image portraitImage;
+    [Tooltip("Separate UI text for the speaker name.")]
     [SerializeField] private TMP_Text speakerText;
     [SerializeField] private TMP_Text bodyText;
     [SerializeField] private GameObject continueIndicator;
@@ -39,6 +40,8 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private DialogueLine[] lines;
     private Coroutine routine;
+    private RectTransform choiceRoot;
+    private Action<bool> choiceCallback;
 
     private void Awake()
     {
@@ -50,6 +53,30 @@ public sealed class ConversationDialogue : MonoBehaviour
         LoadJson();
     }
 
+    private void Update()
+    {
+        if (!IsPlaying || choiceRoot == null || Mouse.current?.leftButton.wasPressedThisFrame != true)
+            return;
+
+        Vector2 pointerPosition = Mouse.current.position.ReadValue();
+        Button[] buttons = choiceRoot.GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            Canvas canvas = button.GetComponentInParent<Canvas>();
+            Camera eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+            if (!RectTransformUtility.RectangleContainsScreenPoint(
+                    button.transform as RectTransform,
+                    pointerPosition,
+                    eventCamera))
+                continue;
+
+            button.onClick.Invoke();
+            return;
+        }
+    }
+
     private static void ConfigureImage(Image image, Color color)
     {
         if (image == null) return;
@@ -58,8 +85,13 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     public void Play()
     {
+        Play(null);
+    }
+
+    public void Play(TextAsset dialogueOverride)
+    {
         if (IsPlaying) return;
-        LoadJson();
+        LoadJson(dialogueOverride != null ? dialogueOverride : dialogueJson);
         if (lines == null || lines.Length == 0)
         {
             Debug.LogWarning("[ConversationDialogue] No dialogue lines were found in the assigned JSON file.", this);
@@ -70,10 +102,114 @@ public sealed class ConversationDialogue : MonoBehaviour
         routine = StartCoroutine(PlayRoutine());
     }
 
+    /// <summary>Shows a dialogue prompt with two mouse-selectable choices.</summary>
+    public void ShowChoices(string speaker, string prompt, string firstChoice, string secondChoice, Action<bool> onChoice)
+    {
+        if (IsPlaying || onChoice == null || dialogueCanvasRoot == null || bodyText == null)
+        {
+            Debug.LogError("[ConversationDialogue] Choice UI needs an idle dialogue UI, a canvas root, and body text.", this);
+            return;
+        }
+
+        IsPlaying = true;
+        choiceCallback = onChoice;
+        playerControlLock?.Acquire();
+        if (speakerText != null) speakerText.text = speaker ?? string.Empty;
+        bodyText.text = string.Empty;
+        if (continueIndicator != null) continueIndicator.SetActive(false);
+        SetVisible(true);
+        routine = StartCoroutine(ShowChoicesRoutine(speaker, prompt, firstChoice, secondChoice));
+    }
+
+    private IEnumerator ShowChoicesRoutine(string speaker, string prompt, string firstChoice, string secondChoice)
+    {
+        string fullText = prompt ?? string.Empty;
+        yield return RevealText(fullText);
+        routine = null;
+
+        // Keep the choices hidden until the NPC has finished speaking.
+        if (IsPlaying)
+            CreateChoiceButtons(firstChoice, secondChoice);
+    }
+
+    private void CreateChoiceButtons(string firstChoice, string secondChoice)
+    {
+        GameObject panel = new GameObject("Quest Choices", typeof(RectTransform));
+        choiceRoot = panel.GetComponent<RectTransform>();
+        choiceRoot.SetParent(dialogueCanvasRoot.transform, false);
+        choiceRoot.anchorMin = new Vector2(.5f, 0f);
+        choiceRoot.anchorMax = new Vector2(.5f, 0f);
+        choiceRoot.pivot = new Vector2(.5f, .5f);
+        choiceRoot.anchoredPosition = new Vector2(140f, 75f);
+        choiceRoot.sizeDelta = new Vector2(500f, 70f);
+
+        CreateChoiceButton(choiceRoot, "Accept", firstChoice, new Vector2(-125f, 0f), true);
+        CreateChoiceButton(choiceRoot, "Reject", secondChoice, new Vector2(125f, 0f), false);
+    }
+
+    private void CreateChoiceButton(RectTransform parent, string objectName, string label, Vector2 position, bool accepted)
+    {
+        GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+        rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = new Vector2(220f, 58f);
+
+        Image background = buttonObject.GetComponent<Image>();
+        background.color = new Color(.35f, .22f, .14f, 1f);
+        Button button = buttonObject.GetComponent<Button>();
+        button.targetGraphic = background;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() => SelectChoice(accepted));
+
+        GameObject textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.SetParent(rect, false);
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(8f, 4f);
+        textRect.offsetMax = new Vector2(-8f, -4f);
+
+        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
+        text.font = bodyText.font;
+        text.fontSize = 28f;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+        text.text = label ?? string.Empty;
+    }
+
+    private void SelectChoice(bool accepted)
+    {
+        Action<bool> callback = choiceCallback;
+        choiceCallback = null;
+        if (choiceRoot != null)
+        {
+            Destroy(choiceRoot.gameObject);
+            choiceRoot = null;
+        }
+
+        SetVisible(false);
+        IsPlaying = false;
+        playerControlLock?.Release();
+        callback?.Invoke(accepted);
+    }
+
     private void LoadJson()
     {
-        if (dialogueJson == null) return;
-        DialogueFile file = JsonUtility.FromJson<DialogueFile>(dialogueJson.text);
+        LoadJson(dialogueJson);
+    }
+
+    private void LoadJson(TextAsset source)
+    {
+        if (source == null)
+        {
+            lines = null;
+            return;
+        }
+        DialogueFile file = JsonUtility.FromJson<DialogueFile>(source.text);
         lines = file?.lines;
     }
 
@@ -95,39 +231,10 @@ public sealed class ConversationDialogue : MonoBehaviour
             if (bodyText != null) bodyText.text = string.Empty;
             if (continueIndicator != null) continueIndicator.SetActive(false);
 
-            // The layout can omit a separate speaker label; in that case keep the name
-            // in the body so the supplied demo canvas remains a complete dialogue UI.
-            string speakerPrefix = speakerText == null && !string.IsNullOrWhiteSpace(line.speaker)
-                ? $"{line.speaker}\n"
-                : string.Empty;
-            string fullText = speakerPrefix + (line.text ?? string.Empty);
-            bool revealed = false;
-            int character = 0;
-            float characterTimer = 0f;
-            while (character < fullText.Length)
-            {
-                // Check every frame. WaitForSecondsRealtime would miss a short click/key
-                // press that happens between two character intervals.
-                if (AdvancePressed())
-                {
-                    revealed = true;
-                    break;
-                }
-
-                characterTimer += Time.unscaledDeltaTime;
-                while (characterTimer >= characterInterval && character < fullText.Length)
-                {
-                    if (bodyText != null) bodyText.text += fullText[character];
-                    character++;
-                    characterTimer -= characterInterval;
-                }
-                yield return null;
-            }
-            if (bodyText != null) bodyText.text = fullText;
+            string fullText = line.text ?? string.Empty;
+            yield return RevealText(fullText);
             if (continueIndicator != null) continueIndicator.SetActive(true);
 
-            // The press that reveals text does not also advance to the following line.
-            if (revealed) yield return null;
             while (!AdvancePressed()) yield return null;
 
             // Consume the advance input before the next line begins. Without this frame
@@ -136,6 +243,32 @@ public sealed class ConversationDialogue : MonoBehaviour
         }
 
         FinishDialogue();
+    }
+
+    private IEnumerator RevealText(string fullText)
+    {
+        int character = 0;
+        float characterTimer = 0f;
+        while (character < fullText.Length)
+        {
+            // Check every frame so a short press can reveal the rest of the line immediately.
+            if (AdvancePressed())
+                break;
+
+            characterTimer += Time.unscaledDeltaTime;
+            while (characterTimer >= characterInterval && character < fullText.Length)
+            {
+                if (bodyText != null) bodyText.text += fullText[character];
+                character++;
+                characterTimer -= characterInterval;
+            }
+            yield return null;
+        }
+
+        if (bodyText != null) bodyText.text = fullText;
+        // A reveal press should not also advance the next dialogue line.
+        if (character < fullText.Length)
+            yield return null;
     }
 
     private static bool AdvancePressed()
@@ -147,6 +280,12 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private void FinishDialogue()
     {
+        if (choiceRoot != null)
+        {
+            Destroy(choiceRoot.gameObject);
+            choiceRoot = null;
+        }
+        choiceCallback = null;
         SetVisible(false);
         IsPlaying = false;
         routine = null;
@@ -157,7 +296,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     private void OnDisable()
     {
         if (!IsPlaying) return;
-        StopCoroutine(routine);
+        if (routine != null) StopCoroutine(routine);
         FinishDialogue();
     }
 

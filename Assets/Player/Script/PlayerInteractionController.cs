@@ -1,14 +1,16 @@
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInputReader), typeof(BoxCollider2D))]
+[RequireComponent(typeof(PlayerInputReader), typeof(BoxCollider2D), typeof(PlayerSpriteFacing))]
 public sealed class PlayerInteractionController : MonoBehaviour
 {
-    [SerializeField, Range(1f, 3f)] private float rangeMultiplier = 1.5f;
+    [SerializeField, Range(1f, 3f)] private float rangeMultiplier = 2f;
     [SerializeField] private LayerMask interactionLayers = ~0;
+    [SerializeField] private LayerMask lineOfSightLayers = ~0;
     [SerializeField] private InteractionPromptUI interactionPrompt;
     [SerializeField] private bool logSuccessfulInteractions = true;
 
     private BoxCollider2D playerHitbox;
+    private PlayerSpriteFacing playerFacing;
     private Interactable2D currentTarget;
     private ContactFilter2D interactionFilter;
     private readonly Collider2D[] interactionHits = new Collider2D[16];
@@ -16,6 +18,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
     private void Awake()
     {
         playerHitbox = GetComponent<BoxCollider2D>();
+        playerFacing = GetComponent<PlayerSpriteFacing>();
         GetComponent<PlayerInputReader>().InteractPressed += TryInteract;
         interactionFilter.SetLayerMask(interactionLayers);
         interactionFilter.useTriggers = true;
@@ -57,8 +60,11 @@ public sealed class PlayerInteractionController : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             Collider2D hit = interactionHits[i];
+            if (hit == null || !hit.isTrigger) continue;
             Interactable2D interactable = hit.GetComponentInParent<Interactable2D>();
             if (interactable == null || interactable.gameObject == gameObject) continue;
+            if (!IsInFacingDirection(bounds.center, hit.bounds.center)) continue;
+            if (!HasLineOfSight(bounds.center, hit, interactable)) continue;
             float distance = ((Vector2)interactable.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (distance < closestDistance)
             {
@@ -68,6 +74,25 @@ public sealed class PlayerInteractionController : MonoBehaviour
         }
 
         return closest;
+    }
+
+    private bool IsInFacingDirection(Vector2 playerPosition, Vector2 targetPosition)
+    {
+        float horizontalOffset = targetPosition.x - playerPosition.x;
+        return horizontalOffset * playerFacing.FacingDirection >= -0.05f;
+    }
+
+    private bool HasLineOfSight(Vector2 origin, Collider2D targetCollider, Interactable2D target)
+    {
+        Vector2 targetPoint = targetCollider.ClosestPoint(origin);
+        Vector2 direction = targetPoint - origin;
+        float distance = direction.magnitude;
+        if (distance <= 0.01f) return true;
+
+        int blockerMask = lineOfSightLayers.value & ~(1 << gameObject.layer);
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction / distance, distance, blockerMask);
+        if (hit.collider == null) return true;
+        return hit.collider.GetComponentInParent<Interactable2D>() == target;
     }
 
     private void OnDrawGizmosSelected()
