@@ -10,6 +10,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     [SerializeField] private Image icon;
     [SerializeField] private Image background;
     [SerializeField] private TMP_Text amount;
+    [SerializeField] private TMP_Text itemName;
     private Color normal;
     private bool hasNormal;
     private static readonly Color DefaultNormal = new(.98f, .94f, .83f);
@@ -25,6 +26,8 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         icon = iconImage;
         amount = amountText;
         CacheBackground();
+        EnsureNameLabel();
+        ApplyOwnerFont();
     }
 
     public void Bind(InventoryUI ui, int slotIndex)
@@ -32,6 +35,8 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         owner = ui;
         index = slotIndex;
         CacheBackground();
+        EnsureNameLabel();
+        ApplyOwnerFont();
     }
 
     private void CacheBackground()
@@ -50,6 +55,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         icon.sprite = empty ? null : slot.Item.Icon;
         amount.text = empty || slot.Item.MaxStack == 1 ? "" : slot.Amount.ToString();
         amount.color = Amount;
+        if (itemName != null) itemName.text = empty ? "" : slot.Item.DisplayName;
     }
 
     public void ResetVisualState()
@@ -65,8 +71,8 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
 
         if (icon != null)
         {
-            icon.rectTransform.sizeDelta = Vector2.one * Mathf.Max(24f, slotSize * .66f);
-            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = icon.rectTransform.pivot = Vector2.one * .5f;
+            icon.rectTransform.sizeDelta = Vector2.one * Mathf.Max(24f, slotSize * .48f);
+            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = icon.rectTransform.pivot = new Vector2(.5f, .63f);
             icon.rectTransform.anchoredPosition = Vector2.zero;
         }
 
@@ -76,6 +82,41 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
             amount.rectTransform.anchorMin = amount.rectTransform.anchorMax = amount.rectTransform.pivot = new Vector2(0f, 1f);
             amount.rectTransform.anchoredPosition = new Vector2(4f, -(slotSize - 24f));
         }
+
+        if (itemName != null)
+        {
+            itemName.rectTransform.sizeDelta = new Vector2(Mathf.Max(24f, slotSize - 8f), 20f);
+            itemName.rectTransform.anchorMin = itemName.rectTransform.anchorMax = itemName.rectTransform.pivot = new Vector2(.5f, 0f);
+            itemName.rectTransform.anchoredPosition = new Vector2(0f, 4f);
+            itemName.fontSize = Mathf.Clamp(slotSize * .13f, 9f, 12f);
+        }
+    }
+
+    private void EnsureNameLabel()
+    {
+        if (itemName != null) return;
+
+        Transform found = transform.Find("Item Name");
+        if (found != null) itemName = found.GetComponent<TMP_Text>();
+        if (itemName != null) return;
+
+        GameObject labelObject = new("Item Name", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        labelObject.transform.SetParent(transform, false);
+        itemName = labelObject.GetComponent<TMP_Text>();
+        itemName.raycastTarget = false;
+        itemName.alignment = TextAlignmentOptions.Center;
+        itemName.color = Amount;
+        itemName.fontStyle = FontStyles.Normal;
+        itemName.fontWeight = FontWeight.Regular;
+        itemName.textWrappingMode = TextWrappingModes.NoWrap;
+        itemName.overflowMode = TextOverflowModes.Ellipsis;
+        ApplyOwnerFont();
+    }
+
+    private void ApplyOwnerFont()
+    {
+        if (owner == null || owner.UiFont == null || itemName == null) return;
+        itemName.font = owner.UiFont;
     }
 
     public void OnBeginDrag(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left) owner.BeginDrag(index, data); }

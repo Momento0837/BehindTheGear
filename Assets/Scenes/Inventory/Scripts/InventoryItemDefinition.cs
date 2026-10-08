@@ -6,7 +6,7 @@ public sealed class InventoryItemDefinition : ScriptableObject, IItemStatModifie
 {
     public enum FallbackIcon { Potion, Crystal, Gear }
     public enum ItemCategory { Misc, Consumable, Equipment, Quest }
-    public enum EquipmentSlot { None, Weapon, Armor, Accessory }
+    public enum EquipmentSlot { None, Weapon, Armor, Accessory, Head, Shoes, Other }
     public enum ConsumableEffect { None, RestoreHealth, RestoreMana, RestoreHealthAndMana }
 
     [SerializeField] private string itemId = "item_id";
