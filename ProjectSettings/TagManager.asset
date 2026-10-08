@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 2
+  serializedVersion: 3
   tags: []
   layers:
   - Default
@@ -15,7 +15,7 @@ TagManager:
   - Player
   - Interactable
   - Monster
-  - 
+  - Light
   - 
   - 
   - 
@@ -38,6 +38,31 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: BG_Far
+    uniqueID: 2959364177
+    locked: 0
+  - name: BG_Mid
+    uniqueID: 3115053219
+    locked: 0
+  - name: BG_Near
+    uniqueID: 2974078761
+    locked: 0
+  - name: FG
+    uniqueID: 1447296989
+    locked: 0
+  - name: GlobalLight
+    uniqueID: 4062845983
+    locked: 0
+  - name: SpotLight01
+    uniqueID: 3925140651
+    locked: 0
+  - name: Player
+    uniqueID: 506689131
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
+  m_RenderingLayers:
+  - Default
+  - LightingTarget
+  - SpotLight01
