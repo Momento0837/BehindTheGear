@@ -15,6 +15,7 @@ public sealed class QuestGiver2D : MonoBehaviour
     private enum DialoguePurpose
     {
         None,
+        Offer,
         Acceptance,
         Rejection,
         Completion
@@ -22,6 +23,7 @@ public sealed class QuestGiver2D : MonoBehaviour
 
     [Header("Dialogue")]
     [SerializeField] private ConversationDialogue conversationDialogue;
+    [SerializeField] private TextAsset questOfferDialogue;
     [SerializeField] private TextAsset questAcceptedDialogue;
     [SerializeField] private TextAsset questRejectedDialogue;
     [SerializeField] private TextAsset questCompletedDialogue;
@@ -71,7 +73,7 @@ public sealed class QuestGiver2D : MonoBehaviour
         switch (CurrentStage)
         {
             case QuestStage.NotStarted:
-                ShowQuestChoices();
+                PlayQuestDialogue(questOfferDialogue, DialoguePurpose.Offer);
                 break;
             case QuestStage.ReadyToComplete:
                 PlayQuestDialogue(questCompletedDialogue, DialoguePurpose.Completion);
@@ -88,7 +90,7 @@ public sealed class QuestGiver2D : MonoBehaviour
 
     private void ShowQuestChoices()
     {
-        conversationDialogue.ShowChoices("김철수", "반가워 퀘스트 받을레?", "수락", "거절", HandleQuestChoice);
+        conversationDialogue.ShowChoices("김철수", "이 부탁을 받아줄래?", "수락", "거절", HandleQuestChoice);
     }
 
     private void PlayQuestDialogue(TextAsset dialogue, DialoguePurpose purpose)
@@ -108,7 +110,11 @@ public sealed class QuestGiver2D : MonoBehaviour
         DialoguePurpose finishedPurpose = activeDialoguePurpose;
         activeDialoguePurpose = DialoguePurpose.None;
 
-        if (finishedPurpose == DialoguePurpose.Acceptance && CurrentStage == QuestStage.NotStarted)
+        if (finishedPurpose == DialoguePurpose.Offer && CurrentStage == QuestStage.NotStarted)
+        {
+            ShowQuestChoices();
+        }
+        else if (finishedPurpose == DialoguePurpose.Acceptance && CurrentStage == QuestStage.NotStarted)
         {
             if (!SpawnQuestItem()) return;
             CurrentStage = QuestStage.WaitingForItem;

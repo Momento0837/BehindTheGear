@@ -24,7 +24,6 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     [Header("Existing UI references")]
     [SerializeField] private CanvasGroup dialogueGroup;
-    [SerializeField] private Image dialoguePanelImage;
     [SerializeField] private Image portraitImage;
     [Tooltip("Separate UI text for the speaker name.")]
     [SerializeField] private TMP_Text speakerText;
@@ -42,26 +41,36 @@ public sealed class ConversationDialogue : MonoBehaviour
     private Coroutine routine;
     private RectTransform choiceRoot;
     private Action<bool> choiceCallback;
+    private Button continueButton;
+    private TMP_Text continueButtonLabel;
+    private bool advanceRequested;
 
     private void Awake()
     {
-        ConfigureImage(dialoguePanelImage, new Color(.48f, .16f, .035f, 1f));
-        ConfigureImage(portraitImage, Color.white);
         if (playerControlLock == null)
             playerControlLock = FindFirstObjectByType<PlayerControlLock>();
+        CreateContinueButton();
         SetVisible(false);
         LoadJson();
     }
 
     private void Update()
     {
-        if (!IsPlaying || choiceRoot == null || Mouse.current?.leftButton.wasPressedThisFrame != true)
-            return;
+        if (!IsPlaying) return;
+
+        if (Keyboard.current != null &&
+            (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame))
+            advanceRequested = true;
+
+        if (Mouse.current?.leftButton.wasPressedThisFrame != true) return;
 
         Vector2 pointerPosition = Mouse.current.position.ReadValue();
-        Button[] buttons = choiceRoot.GetComponentsInChildren<Button>(true);
+        Button[] buttons = choiceRoot != null
+            ? choiceRoot.GetComponentsInChildren<Button>(true)
+            : continueButton != null ? new[] { continueButton } : Array.Empty<Button>();
         foreach (Button button in buttons)
         {
+            if (button == null || !button.isActiveAndEnabled || !button.interactable) continue;
             Canvas canvas = button.GetComponentInParent<Canvas>();
             Camera eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
                 ? canvas.worldCamera
@@ -75,12 +84,52 @@ public sealed class ConversationDialogue : MonoBehaviour
             button.onClick.Invoke();
             return;
         }
+
+        // Preserve click-to-advance for dialogue lines. Choice prompts require an explicit choice.
+        if (choiceRoot == null) advanceRequested = true;
     }
 
-    private static void ConfigureImage(Image image, Color color)
+    private void CreateContinueButton()
     {
-        if (image == null) return;
-        image.color = color;
+        if (dialogueCanvasRoot == null || bodyText == null) return;
+
+        GameObject buttonObject = new GameObject("Dialogue Next Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+        rect.SetParent(dialogueCanvasRoot.transform, false);
+        rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
+        rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition = new Vector2(520f, 75f);
+        rect.sizeDelta = new Vector2(160f, 56f);
+
+        Image background = buttonObject.GetComponent<Image>();
+        background.color = new Color(.35f, .22f, .14f, 1f);
+        continueButton = buttonObject.GetComponent<Button>();
+        continueButton.targetGraphic = background;
+        continueButton.navigation = new Navigation { mode = Navigation.Mode.None };
+        continueButton.onClick.AddListener(RequestAdvance);
+
+        GameObject textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.SetParent(rect, false);
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(8f, 4f);
+        textRect.offsetMax = new Vector2(-8f, -4f);
+
+        continueButtonLabel = textObject.GetComponent<TextMeshProUGUI>();
+        continueButtonLabel.font = bodyText.font;
+        continueButtonLabel.fontSize = 24f;
+        continueButtonLabel.color = Color.white;
+        continueButtonLabel.alignment = TextAlignmentOptions.Center;
+        continueButtonLabel.raycastTarget = false;
+        continueButtonLabel.text = "다음";
+        buttonObject.SetActive(false);
+    }
+
+    private void RequestAdvance()
+    {
+        if (IsPlaying && choiceRoot == null)
+            advanceRequested = true;
     }
 
     public void Play()
@@ -91,6 +140,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     public void Play(TextAsset dialogueOverride)
     {
         if (IsPlaying) return;
+        advanceRequested = false;
         LoadJson(dialogueOverride != null ? dialogueOverride : dialogueJson);
         if (lines == null || lines.Length == 0)
         {
@@ -113,10 +163,12 @@ public sealed class ConversationDialogue : MonoBehaviour
 
         IsPlaying = true;
         choiceCallback = onChoice;
+        advanceRequested = false;
         playerControlLock?.Acquire();
         if (speakerText != null) speakerText.text = speaker ?? string.Empty;
         bodyText.text = string.Empty;
         if (continueIndicator != null) continueIndicator.SetActive(false);
+        if (continueButton != null) continueButton.gameObject.SetActive(false);
         SetVisible(true);
         routine = StartCoroutine(ShowChoicesRoutine(speaker, prompt, firstChoice, secondChoice));
     }
@@ -125,6 +177,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         string fullText = prompt ?? string.Empty;
         yield return RevealText(fullText);
+        advanceRequested = false;
         routine = null;
 
         // Keep the choices hidden until the NPC has finished speaking.
@@ -193,6 +246,7 @@ public sealed class ConversationDialogue : MonoBehaviour
 
         SetVisible(false);
         IsPlaying = false;
+        advanceRequested = false;
         playerControlLock?.Release();
         callback?.Invoke(accepted);
     }
@@ -218,8 +272,10 @@ public sealed class ConversationDialogue : MonoBehaviour
         IsPlaying = true;
         SetVisible(true);
 
-        foreach (DialogueLine line in lines)
+        for (int i = 0; i < lines.Length; i++)
         {
+            DialogueLine line = lines[i];
+            if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
             if (portraitImage != null)
             {
@@ -234,6 +290,9 @@ public sealed class ConversationDialogue : MonoBehaviour
             string fullText = line.text ?? string.Empty;
             yield return RevealText(fullText);
             if (continueIndicator != null) continueIndicator.SetActive(true);
+            if (continueButtonLabel != null)
+                continueButtonLabel.text = i == lines.Length - 1 ? "닫기" : "다음";
+            if (continueButton != null) continueButton.gameObject.SetActive(true);
 
             while (!AdvancePressed()) yield return null;
 
@@ -271,11 +330,14 @@ public sealed class ConversationDialogue : MonoBehaviour
             yield return null;
     }
 
-    private static bool AdvancePressed()
+    private bool AdvancePressed()
     {
+        bool pressed = advanceRequested;
+        advanceRequested = false;
+
         bool keyboardAdvance = Keyboard.current != null &&
             (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame);
-        return keyboardAdvance || Mouse.current?.leftButton.wasPressedThisFrame == true;
+        return pressed || keyboardAdvance;
     }
 
     private void FinishDialogue()
@@ -286,6 +348,8 @@ public sealed class ConversationDialogue : MonoBehaviour
             choiceRoot = null;
         }
         choiceCallback = null;
+        advanceRequested = false;
+        if (continueButton != null) continueButton.gameObject.SetActive(false);
         SetVisible(false);
         IsPlaying = false;
         routine = null;
@@ -318,7 +382,11 @@ public sealed class ConversationDialogue : MonoBehaviour
 
         // Make the first visible dialogue frame render immediately after inactive UI is enabled.
         if (visible) Canvas.ForceUpdateCanvases();
-        else if (dialogueCanvasRoot != null)
-            dialogueCanvasRoot.SetActive(false);
+        else
+        {
+            if (continueButton != null) continueButton.gameObject.SetActive(false);
+            if (dialogueCanvasRoot != null)
+                dialogueCanvasRoot.SetActive(false);
+        }
     }
 }
