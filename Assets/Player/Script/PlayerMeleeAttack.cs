@@ -25,8 +25,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         monsterFilter.useTriggers = false;
         PlayerInputReader input = GetComponent<PlayerInputReader>();
         input.MoveChanged += UpdateFacing;
-        input.PrimaryClickPressed += Attack;
-        input.AttackCPressed += Attack;
+        input.BasicAttackPressed += Attack;
     }
 
     public void Attack()

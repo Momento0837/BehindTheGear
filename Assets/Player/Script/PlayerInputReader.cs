@@ -4,12 +4,17 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-/// <summary>New Input System keyboard/mouse reader. It has no movement or attack implementation.</summary>
+/// <summary>Reads only the selected control layout and publishes movement and action input.</summary>
 public sealed class PlayerInputReader : MonoBehaviour
 {
     public event Action<float> MoveChanged;
     public event Action<bool> CrouchChanged;
     public event Action JumpPressed;
+    public event Action BasicAttackPressed;
+    public event Action SecondaryAttackPressed;
+    public event Action SkillOnePressed;
+    public event Action SkillTwoPressed;
+    // Kept for callers that still use the original button-specific events.
     public event Action AttackZPressed;
     public event Action AttackXPressed;
     public event Action AttackCPressed;
@@ -27,37 +32,91 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
-
-        float nextHorizontal = (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed ? 1f : 0f)
-            - (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed ? 1f : 0f);
-        if (!Mathf.Approximately(horizontal, nextHorizontal))
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
         {
-            horizontal = nextHorizontal;
+            SetHorizontal(0f);
+            SetCrouching(false);
+            return;
+        }
+
+        bool wasdScheme = PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe;
+        float nextHorizontal = wasdScheme
+            ? (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f)
+            : (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);
+        SetHorizontal(nextHorizontal);
+
+        bool nextCrouching = wasdScheme ? keyboard.sKey.isPressed : keyboard.downArrowKey.isPressed;
+        SetCrouching(nextCrouching);
+
+        bool jumpPressed = (wasdScheme ? keyboard.wKey : keyboard.upArrowKey).wasPressedThisFrame
+            || keyboard.spaceKey.wasPressedThisFrame;
+        if (jumpPressed) JumpPressed?.Invoke();
+
+        if (wasdScheme)
+        {
+            bool primaryClick = Mouse.current?.leftButton.wasPressedThisFrame == true;
+            bool secondaryClick = Mouse.current?.rightButton.wasPressedThisFrame == true;
+            if ((primaryClick || secondaryClick) && !IsPointerOverUI())
+            {
+                if (primaryClick)
+                {
+                    BasicAttackPressed?.Invoke();
+                    PrimaryClickPressed?.Invoke();
+                }
+                if (secondaryClick)
+                {
+                    SecondaryAttackPressed?.Invoke();
+                    SecondaryClickPressed?.Invoke();
+                }
+            }
+
+            if (keyboard.qKey.wasPressedThisFrame) SkillOnePressed?.Invoke();
+            if (keyboard.eKey.wasPressedThisFrame) SkillTwoPressed?.Invoke();
+        }
+        else
+        {
+            if (keyboard.zKey.wasPressedThisFrame)
+            {
+                BasicAttackPressed?.Invoke();
+                AttackZPressed?.Invoke();
+            }
+            if (keyboard.xKey.wasPressedThisFrame)
+            {
+                SecondaryAttackPressed?.Invoke();
+                AttackXPressed?.Invoke();
+            }
+            if (keyboard.cKey.wasPressedThisFrame)
+            {
+                SkillOnePressed?.Invoke();
+                AttackCPressed?.Invoke();
+            }
+            if (keyboard.vKey.wasPressedThisFrame)
+            {
+                SkillTwoPressed?.Invoke();
+                AttackVPressed?.Invoke();
+            }
+        }
+
+        if (keyboard.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
+    }
+
+    private void SetHorizontal(float value)
+    {
+        if (!Mathf.Approximately(horizontal, value))
+        {
+            horizontal = value;
             MoveChanged?.Invoke(horizontal);
         }
+    }
 
-        bool nextCrouching = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
-        if (crouching != nextCrouching)
+    private void SetCrouching(bool value)
+    {
+        if (crouching != value)
         {
-            crouching = nextCrouching;
+            crouching = value;
             CrouchChanged?.Invoke(crouching);
         }
-
-        if (Keyboard.current.wKey.wasPressedThisFrame || Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
-            JumpPressed?.Invoke();
-        if (Keyboard.current.zKey.wasPressedThisFrame) AttackZPressed?.Invoke();
-        if (Keyboard.current.xKey.wasPressedThisFrame) AttackXPressed?.Invoke();
-        if (Keyboard.current.cKey.wasPressedThisFrame) AttackCPressed?.Invoke();
-        if (Keyboard.current.vKey.wasPressedThisFrame) AttackVPressed?.Invoke();
-        bool primaryClick = Mouse.current?.leftButton.wasPressedThisFrame == true;
-        bool secondaryClick = Mouse.current?.rightButton.wasPressedThisFrame == true;
-        if ((primaryClick || secondaryClick) && !IsPointerOverUI())
-        {
-            if (primaryClick) PrimaryClickPressed?.Invoke();
-            if (secondaryClick) SecondaryClickPressed?.Invoke();
-        }
-        if (Keyboard.current.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
     }
 
     private bool IsPointerOverUI()
