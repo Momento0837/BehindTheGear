@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,59 +8,104 @@ using UnityEngine.UI;
 public sealed class SceneFadeTransition : MonoBehaviour
 {
     private static SceneFadeTransition instance;
-    private Image fadeImage;
+    [SerializeField] private Image fadeImage;
     private bool running;
 
-    public static void LoadScene(string sceneName, float fadeDuration = .8f)
+    private void Awake()
     {
-        if (instance == null) Create();
-        if (!instance.running) instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration));
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
+        if (fadeImage == null) fadeImage = GetComponentInChildren<Image>(true);
+        if (fadeImage == null)
+        {
+            Debug.LogError("[Scene Fade] Assign a scene Image to the transition component.", this);
+            return;
+        }
+
+        Canvas canvas = GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = short.MaxValue;
+        }
+
+        SetAlpha(0f);
     }
 
-    private static void Create()
+    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null)
     {
-        GameObject root = new("Scene Fade Transition", typeof(Canvas), typeof(CanvasScaler), typeof(SceneFadeTransition));
-        instance = root.GetComponent<SceneFadeTransition>();
-        DontDestroyOnLoad(root);
+        if (instance == null) CreateRuntimeInstance();
 
-        Canvas canvas = root.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.overrideSorting = true;
-        canvas.sortingOrder = 32000;
+        if (instance.running)
+        {
+            onComplete?.Invoke(false);
+            return;
+        }
 
-        CanvasScaler scaler = root.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280f, 720f);
-
-        GameObject panel = new("Black Fade", typeof(RectTransform), typeof(Image));
-        panel.transform.SetParent(root.transform, false);
-        RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        instance.fadeImage = panel.GetComponent<Image>();
-        instance.fadeImage.color = Color.clear;
-        instance.fadeImage.raycastTarget = false;
+        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete));
     }
 
-    private IEnumerator LoadRoutine(string sceneName, float fadeDuration)
+    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete)
     {
         running = true;
         yield return Fade(0f, 1f, fadeDuration);
 
-        AsyncOperation load = SceneManager.LoadSceneAsync(sceneName);
+        AsyncOperation load = null;
+        try
+        {
+            load = SceneManager.LoadSceneAsync(sceneName);
+        }
+        catch (ArgumentException exception)
+        {
+            Debug.LogException(exception, this);
+        }
+
         if (load == null)
         {
             Debug.LogError($"[Scene Fade] Could not load scene '{sceneName}'. Add it to Build Settings.");
             yield return Fade(1f, 0f, fadeDuration);
             running = false;
+            onComplete?.Invoke(false);
             yield break;
         }
 
         while (!load.isDone) yield return null;
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
+        onComplete?.Invoke(true);
+    }
+
+    private static void CreateRuntimeInstance()
+    {
+        GameObject root = new GameObject("Scene Fade Transition");
+        Canvas canvas = root.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = short.MaxValue;
+
+        CanvasScaler scaler = root.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        GameObject imageObject = new GameObject("Black Fade", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        RectTransform imageTransform = imageObject.GetComponent<RectTransform>();
+        imageTransform.SetParent(root.transform, false);
+        imageTransform.anchorMin = Vector2.zero;
+        imageTransform.anchorMax = Vector2.one;
+        imageTransform.offsetMin = Vector2.zero;
+        imageTransform.offsetMax = Vector2.zero;
+
+        Image image = imageObject.GetComponent<Image>();
+        image.color = new Color(0f, 0f, 0f, 0f);
+        image.raycastTarget = false;
+
+        root.AddComponent<SceneFadeTransition>();
     }
 
     private IEnumerator Fade(float from, float to, float duration)
@@ -77,6 +123,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
 
     private void SetAlpha(float alpha)
     {
+        if (fadeImage == null) return;
         Color color = fadeImage.color;
         color.a = alpha;
         fadeImage.color = color;

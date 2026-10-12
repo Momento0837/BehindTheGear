@@ -37,21 +37,8 @@ public sealed class PersistentPlayer2D : MonoBehaviour
         hasPendingTravel = true;
         isChangingScene = true;
 
-        try
-        {
-            SceneManager.LoadScene(sceneName);
-            return true;
-        }
-        catch (System.ArgumentException exception)
-        {
-            hasPendingTravel = false;
-            pendingSceneName = null;
-            pendingSpawnPointId = null;
-            isChangingScene = false;
-            Debug.LogError($"[Portal] Could not load scene '{sceneName}'. Add it to Build Settings.", this);
-            Debug.LogException(exception, this);
-            return false;
-        }
+        SceneFadeTransition.LoadScene(sceneName, .8f, OnTravelLoadFinished);
+        return true;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -84,6 +71,16 @@ public sealed class PersistentPlayer2D : MonoBehaviour
             }
         }
 
+        ClearPendingTravel();
+    }
+
+    private void OnTravelLoadFinished(bool succeeded)
+    {
+        if (!succeeded) ClearPendingTravel();
+    }
+
+    private void ClearPendingTravel()
+    {
         hasPendingTravel = false;
         pendingSceneName = null;
         pendingSpawnPointId = null;
