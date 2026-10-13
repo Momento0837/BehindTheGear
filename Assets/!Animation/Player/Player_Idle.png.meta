@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ff05f567efda00049b24a403bc4319b3
+guid: d3b96a1b5c7f333498181a8a53183fe6
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -8,6 +8,12 @@ TextureImporter:
   - first:
       213: -5258030014049578038
     second: Player_Idle_1
+  - first:
+      213: 6236088313408774587
+    second: Player_Idle_2
+  - first:
+      213: -1461283530703516926
+    second: Player_Idle_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -40,7 +46,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -54,7 +60,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 11
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -113,6 +119,19 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
     buildTarget: WindowsStoreApps
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -132,12 +151,12 @@ TextureImporter:
       name: Player_Idle_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 8
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 29
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -154,12 +173,12 @@ TextureImporter:
       name: Player_Idle_1
       rect:
         serializedVersion: 2
-        x: 32
+        x: 40
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 28
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -176,20 +195,20 @@ TextureImporter:
       name: Player_Idle_2
       rect:
         serializedVersion: 2
-        x: 64
+        x: 72
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 28
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 692af5e6051a7ea4d9cdd924bdae3c7a
-      internalID: -1810549580
+      spriteID: bb1e1b4e7490b8650800000000000000
+      internalID: 6236088313408774587
       vertices: []
       indices: 
       edges: []
@@ -198,20 +217,20 @@ TextureImporter:
       name: Player_Idle_3
       rect:
         serializedVersion: 2
-        x: 96
+        x: 104
         y: 0
-        width: 32
-        height: 32
+        width: 16
+        height: 29
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: a147d4d6342503945811393e201b396f
-      internalID: 348109562
+      spriteID: 20bc94cfe5a78bbe0800000000000000
+      internalID: -1461283530703516926
       vertices: []
       indices: 
       edges: []
@@ -220,7 +239,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: e75850f7ab410d641ada24686fcd05a7
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -228,14 +247,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
       Player_Idle_0: -467307283419413426
       Player_Idle_1: -5258030014049578038
-      Player_Idle_2: -1810549580
-      Player_Idle_3: 348109562
+      Player_Idle_2: 6236088313408774587
+      Player_Idle_3: -1461283530703516926
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
