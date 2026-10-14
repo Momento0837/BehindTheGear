@@ -11,6 +11,8 @@
 | 대화 | [03_Dialogue.md](03_Dialogue.md) | `ConversationDialogue`, `PlayerControlLock` |
 | 영상 컷신 | [04_Cutscene.md](04_Cutscene.md) | `CutsceneVideoSequence`, `PlayerControlLock` |
 | Unity 에디터 보조 | [05_Editor_Hierarchy.md](05_Editor_Hierarchy.md) | `HierarchyScriptControls` |
+| 대화 글자 흔들림·먼지 | [06_Dialogue_Text_Effects.md](06_Dialogue_Text_Effects.md) | `DialogueTextEffects` |
+| 현재 구현 명세 | [07_Project_Implementation_Spec.md](07_Project_Implementation_Spec.md) | 플레이어·전투·대화·퀘스트·씬 이동·인벤토리 |
 
 ## 확인된 데모 씬과 의존성
 
@@ -25,4 +27,4 @@
 
 - 스크립트는 필요한 컴포넌트를 `RequireComponent`로 명시하지만, Inspector 참조가 필요한 UI·컷신 항목은 씬에서 직접 연결해야 합니다.
 - `PlayerControlLock`에는 비활성화할 조작 컴포넌트와 플레이어 `Rigidbody2D`를 지정합니다. 대화와 컷신이 겹쳐도 잠금 횟수를 관리해 먼저 끝난 시스템이 조작을 잘못 풀지 않게 합니다.
-- 현재 전투 입력은 `UnityEvent`를 호출하는 연결 지점만 구현되어 있습니다. 실제 공격 판정·애니메이션·피해 처리는 별도 구현 대상입니다.
+- 데모 씬의 기본 공격 애니메이션은 `Player.controller`, 타격 판정은 `PlayerMeleeAttack`이 처리합니다. 보조 공격과 스킬의 별도 타격 동작은 현재 씬에 연결되어 있지 않습니다.

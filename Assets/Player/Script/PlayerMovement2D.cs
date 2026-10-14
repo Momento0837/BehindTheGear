@@ -261,6 +261,14 @@ public sealed class PlayerMovement2D : MonoBehaviour
         return box.Cast(Vector2.down, filter, groundHits, groundCheckDistance) > 0;
     }
 
+    internal void RefreshAnimationWhileControlLocked()
+    {
+        jumpRequested = false;
+        if (animator == null) return;
+        if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, false);
+        if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, IsGrounded());
+    }
+
     private IEnumerator DropThroughOneWayPlatform()
     {
         if (dropping) yield break;

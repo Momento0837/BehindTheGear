@@ -1,5 +1,7 @@
 # JSON 대화 시스템
 
+`Quest Giver NPC - Shaking Dialogue`의 글자 흔들림과 먼지 설정은 [대화 글자 흔들림·먼지 효과 설정](06_Dialogue_Text_Effects.md)에 정리되어 있습니다.
+
 ## 기능
 
 `ConversationDialogue`는 Inspector에 연결한 기존 Canvas/UI만 이용해 JSON 대화를 표시합니다. 대화 중에는 `PlayerControlLock`을 획득해 플레이어 조작을 잠그며, 종료 시 해제합니다.

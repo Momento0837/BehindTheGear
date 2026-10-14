@@ -35,7 +35,11 @@ public sealed class ConversationDialogue : MonoBehaviour
     [SerializeField] private GameObject[] dialogueUiObjects;
 
     public event Action Finished;
+    public event Action LineRevealStarted;
+    public event Action<char> CharacterRevealed;
+    public event Action LineRevealCompleted;
     public bool IsPlaying { get; private set; }
+    public TMP_Text BodyText => bodyText;
 
     private DialogueLine[] lines;
     private Coroutine routine;
@@ -308,6 +312,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         int character = 0;
         float characterTimer = 0f;
+        LineRevealStarted?.Invoke();
         while (character < fullText.Length)
         {
             // Check every frame so a short press can reveal the rest of the line immediately.
@@ -317,7 +322,9 @@ public sealed class ConversationDialogue : MonoBehaviour
             characterTimer += Time.unscaledDeltaTime;
             while (characterTimer >= characterInterval && character < fullText.Length)
             {
-                if (bodyText != null) bodyText.text += fullText[character];
+                char revealedCharacter = fullText[character];
+                if (bodyText != null) bodyText.text += revealedCharacter;
+                CharacterRevealed?.Invoke(revealedCharacter);
                 character++;
                 characterTimer -= characterInterval;
             }
@@ -325,6 +332,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         }
 
         if (bodyText != null) bodyText.text = fullText;
+        LineRevealCompleted?.Invoke();
         // A reveal press should not also advance the next dialogue line.
         if (character < fullText.Length)
             yield return null;
