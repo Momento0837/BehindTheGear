@@ -25,10 +25,13 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private float horizontal;
     private bool crouching;
+    private PlayerHealth playerHealth;
     private readonly List<RaycastResult> uiHits = new();
     private static int pointerSuppressedFrame = -1;
 
     public static void SuppressPointerForCurrentFrame() => pointerSuppressedFrame = Time.frameCount;
+
+    private void Awake() => playerHealth = GetComponent<PlayerHealth>();
 
     private void Update()
     {
@@ -48,6 +51,8 @@ public sealed class PlayerInputReader : MonoBehaviour
 
         bool nextCrouching = wasdScheme ? keyboard.sKey.isPressed : keyboard.downArrowKey.isPressed;
         SetCrouching(nextCrouching);
+
+        if (keyboard.kKey.wasPressedThisFrame) playerHealth?.TakeDamage(1);
 
         bool jumpPressed = (wasdScheme ? keyboard.wKey : keyboard.upArrowKey).wasPressedThisFrame
             || keyboard.spaceKey.wasPressedThisFrame;
