@@ -10,6 +10,14 @@ public sealed class PlayerControlLock : MonoBehaviour
     [SerializeField] private Rigidbody2D playerBody;
 
     private int lockCount;
+    private PlayerMovement2D playerMovement;
+
+    private void Awake()
+    {
+        playerMovement = playerBody != null
+            ? playerBody.GetComponent<PlayerMovement2D>()
+            : GetComponent<PlayerMovement2D>();
+    }
 
     public void Acquire()
     {
@@ -21,6 +29,14 @@ public sealed class PlayerControlLock : MonoBehaviour
 
         foreach (Behaviour control in controlsToDisable)
             if (control != null) control.enabled = false;
+
+        playerMovement?.RefreshAnimationWhileControlLocked();
+    }
+
+    private void FixedUpdate()
+    {
+        if (lockCount > 0)
+            playerMovement?.RefreshAnimationWhileControlLocked();
     }
 
     public void Release()

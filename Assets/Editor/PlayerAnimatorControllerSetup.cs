@@ -47,8 +47,6 @@ internal static class PlayerAnimatorControllerSetup
         changed |= EnsureParameter(controller, "IsMoving", AnimatorControllerParameterType.Bool);
         changed |= EnsureParameter(controller, "Attack", AnimatorControllerParameterType.Trigger);
         changed |= EnsureParameter(controller, "AttackIndex", AnimatorControllerParameterType.Int);
-        changed |= EnsureParameter(controller, "Jump", AnimatorControllerParameterType.Trigger);
-        changed |= EnsureParameter(controller, "IsGrounded", AnimatorControllerParameterType.Bool);
 
         for (int index = 1; index <= 3; index++)
         {
@@ -67,21 +65,6 @@ internal static class PlayerAnimatorControllerSetup
                 EditorUtility.SetDirty(standingAttack);
                 EditorUtility.SetDirty(runningAttack);
             }
-        }
-
-        AnimatorState jump = FindState(machine, "Jump");
-        AnimatorState runJump = FindState(machine, "Run_Jump");
-        if (jump != null && runJump != null)
-        {
-            changed |= EnsureJumpEntry(machine, jump, false);
-            changed |= EnsureJumpEntry(machine, runJump, true);
-            bool jumpChanged = EnsureJumpReturn(jump, idle, false);
-            jumpChanged |= EnsureJumpReturn(jump, running, true);
-            bool runJumpChanged = EnsureJumpReturn(runJump, idle, false);
-            runJumpChanged |= EnsureJumpReturn(runJump, running, true);
-            if (jumpChanged) EditorUtility.SetDirty(jump);
-            if (runJumpChanged) EditorUtility.SetDirty(runJump);
-            changed |= jumpChanged || runJumpChanged;
         }
 
         if (!changed) return;
@@ -186,92 +169,6 @@ internal static class PlayerAnimatorControllerSetup
         AnimatorCondition condition = transition.conditions[0];
         return condition.parameter == "IsMoving"
             && condition.mode == (moving ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot);
-    }
-
-    private static bool EnsureJumpEntry(AnimatorStateMachine machine, AnimatorState destination, bool moving)
-    {
-        bool valid = false;
-        bool changed = false;
-        foreach (AnimatorStateTransition transition in machine.anyStateTransitions)
-        {
-            if (transition.destinationState != destination) continue;
-            if (!valid && IsJumpEntry(transition, moving))
-            {
-                valid = true;
-                continue;
-            }
-            machine.RemoveAnyStateTransition(transition);
-            changed = true;
-        }
-        if (valid) return changed;
-
-        AnimatorStateTransition entry = machine.AddAnyStateTransition(destination);
-        entry.hasExitTime = false;
-        entry.duration = 0f;
-        entry.canTransitionToSelf = false;
-        entry.AddCondition(AnimatorConditionMode.If, 0f, "Jump");
-        entry.AddCondition(moving ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, "IsMoving");
-        return true;
-    }
-
-    private static bool IsJumpEntry(AnimatorStateTransition transition, bool moving)
-    {
-        if (transition.hasExitTime || !Mathf.Approximately(transition.duration, 0f)
-            || transition.conditions.Length != 2) return false;
-
-        bool jump = false;
-        bool isMoving = false;
-        foreach (AnimatorCondition condition in transition.conditions)
-        {
-            if (condition.parameter == "Jump" && condition.mode == AnimatorConditionMode.If)
-                jump = true;
-            else if (condition.parameter == "IsMoving"
-                && condition.mode == (moving ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot))
-                isMoving = true;
-        }
-        return jump && isMoving;
-    }
-
-    private static bool EnsureJumpReturn(AnimatorState source, AnimatorState destination, bool moving)
-    {
-        bool valid = false;
-        bool changed = false;
-        foreach (AnimatorStateTransition transition in source.transitions)
-        {
-            if (transition.destinationState != destination) continue;
-            if (!valid && IsJumpReturn(transition, moving))
-            {
-                valid = true;
-                continue;
-            }
-            source.RemoveTransition(transition);
-            changed = true;
-        }
-        if (valid) return changed;
-
-        AnimatorStateTransition exit = source.AddTransition(destination);
-        exit.hasExitTime = false;
-        exit.hasFixedDuration = true;
-        exit.duration = .05f;
-        exit.AddCondition(AnimatorConditionMode.If, 0f, "IsGrounded");
-        exit.AddCondition(moving ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, "IsMoving");
-        return true;
-    }
-
-    private static bool IsJumpReturn(AnimatorStateTransition transition, bool moving)
-    {
-        if (transition.hasExitTime || transition.conditions.Length != 2) return false;
-        bool grounded = false;
-        bool isMoving = false;
-        foreach (AnimatorCondition condition in transition.conditions)
-        {
-            if (condition.parameter == "IsGrounded" && condition.mode == AnimatorConditionMode.If)
-                grounded = true;
-            else if (condition.parameter == "IsMoving"
-                && condition.mode == (moving ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot))
-                isMoving = true;
-        }
-        return grounded && isMoving;
     }
 }
 
