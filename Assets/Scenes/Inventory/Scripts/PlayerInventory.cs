@@ -34,6 +34,9 @@ public sealed class PlayerInventory : MonoBehaviour
     [SerializeField] private InventoryItemDefinition equippedWeapon;
     [SerializeField] private InventoryItemDefinition equippedArmor;
     [SerializeField] private InventoryItemDefinition equippedAccessory;
+    [SerializeField] private InventoryItemDefinition equippedHead;
+    [SerializeField] private InventoryItemDefinition equippedShoes;
+    [SerializeField] private InventoryItemDefinition equippedOther;
 
     public event Action Changed;
     public event Action<InventoryItemDefinition, int> ItemCollected;
@@ -111,6 +114,9 @@ public sealed class PlayerInventory : MonoBehaviour
             InventoryItemDefinition.EquipmentSlot.Weapon => equippedWeapon,
             InventoryItemDefinition.EquipmentSlot.Armor => equippedArmor,
             InventoryItemDefinition.EquipmentSlot.Accessory => equippedAccessory,
+            InventoryItemDefinition.EquipmentSlot.Head => equippedHead,
+            InventoryItemDefinition.EquipmentSlot.Shoes => equippedShoes,
+            InventoryItemDefinition.EquipmentSlot.Other => equippedOther,
             _ => null
         };
     }
@@ -317,6 +323,15 @@ public sealed class PlayerInventory : MonoBehaviour
                 break;
             case InventoryItemDefinition.EquipmentSlot.Accessory:
                 equippedAccessory = item;
+                break;
+            case InventoryItemDefinition.EquipmentSlot.Head:
+                equippedHead = item;
+                break;
+            case InventoryItemDefinition.EquipmentSlot.Shoes:
+                equippedShoes = item;
+                break;
+            case InventoryItemDefinition.EquipmentSlot.Other:
+                equippedOther = item;
                 break;
         }
     }

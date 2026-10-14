@@ -35,8 +35,10 @@ public sealed class InventoryUI : MonoBehaviour
     [SerializeField] private TMP_Text statMessageText;
     [SerializeField] private TMP_Text[] statRows;
     [SerializeField] private Button[] statUpgradeButtons;
+    [SerializeField] private Image[] statBarFills;
     [SerializeField] private TMP_Text[] equipmentRows;
     [SerializeField] private Button[] equipmentUnequipButtons;
+    [SerializeField] private Image[] equipmentSlotIcons;
 
     private int dragSource = -1;
     private float toastUntil;
@@ -51,20 +53,29 @@ public sealed class InventoryUI : MonoBehaviour
     private static readonly Color Ink = new(.25f, .19f, .15f);
     private static readonly Color Cream = new(1f, .97f, .88f);
     private const int BaseSlotCount = 15;
-    private const float InventoryContentX = 28f;
-    private const float InventoryContentWidth = 432f;
-    private const float InfoRowY = -72f;
-    private const float FilterTabsY = -112f;
-    private const float SlotViewportY = -154f;
-    private const float SlotViewportHeight = 278f;
-    private const float DetailTextY = -444f;
-    private const float QuickSlotY = -526f;
+    private const float WindowWidth = 1040f;
+    private const float WindowHeight = 604f;
+    private const float LeftPanelX = 22f;
+    private const float LeftPanelY = -78f;
+    private const float LeftPanelWidth = 286f;
+    private const float LeftPanelHeight = 492f;
+    private const float CategoryX = 326f;
+    private const float CategoryY = -92f;
+    private const float CategoryWidth = 114f;
+    private const float InventoryContentX = 462f;
+    private const float InventoryContentWidth = 538f;
+    private const float InfoRowY = -82f;
+    private const float FilterTabsY = -92f;
+    private const float SlotViewportY = -124f;
+    private const float SlotViewportHeight = 356f;
+    private const float DetailTextY = -492f;
+    private const float QuickSlotY = -542f;
     private const float PairedWindowGap = 16f;
     private const float SlotPadding = 8f;
     private const float SlotSpacing = 8f;
     private const float MinSlotSpacing = 2f;
-    private const float MinSlotSize = 32f;
-    private const float MaxSlotSize = 82f;
+    private const float MinSlotSize = 70f;
+    private const float MaxSlotSize = 92f;
 
     public bool HasSceneUI => canvas != null;
     public bool CanCreateSceneUI => inventory != null;
@@ -72,6 +83,7 @@ public sealed class InventoryUI : MonoBehaviour
     public GameObject Window => window;
     public Button ShortcutButton => shortcutButton;
     public GameObject EquipmentStatsPanel => equipmentWindow;
+    public TMP_FontAsset UiFont => font;
 
     private void Awake()
     {
@@ -105,6 +117,7 @@ public sealed class InventoryUI : MonoBehaviour
         CaptureEquipmentSoloLayout();
         ArrangeInventoryWindowLayout();
         ApplyStaticLabels();
+        EnsureToastStyle();
         MatchSlotCount();
         for (int i = 0; i < slots.Length; i++) slots[i].Bind(this, i);
         AddButtonListeners();
@@ -148,7 +161,7 @@ public sealed class InventoryUI : MonoBehaviour
         if (!Application.isPlaying) return;
 
         if (window != null) window.SetActive(false);
-        if (equipmentWindow != null) equipmentWindow.SetActive(false);
+        if (!IsEmbeddedEquipmentWindow() && equipmentWindow != null) equipmentWindow.SetActive(false);
         if (ownsRuntimeCanvas && canvas != null) canvas.gameObject.SetActive(false);
     }
 
@@ -190,6 +203,12 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void ToggleEquipmentStats()
     {
+        if (IsEmbeddedEquipmentWindow())
+        {
+            ToggleInventory();
+            return;
+        }
+
         if (equipmentWindow != null && equipmentWindow.activeSelf)
         {
             CloseEquipmentStats();
@@ -214,6 +233,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void CloseEquipmentStats()
     {
+        if (IsEmbeddedEquipmentWindow()) return;
         if (equipmentWindow != null) equipmentWindow.SetActive(false);
         RestoreEquipmentSoloLayout();
     }
@@ -226,12 +246,12 @@ public sealed class InventoryUI : MonoBehaviour
 
     private bool IsAnyWindowOpen()
     {
-        return (window != null && window.activeSelf) || (equipmentWindow != null && equipmentWindow.activeSelf);
+        return (window != null && window.activeSelf) || (!IsEmbeddedEquipmentWindow() && equipmentWindow != null && equipmentWindow.activeSelf);
     }
 
     private void CaptureEquipmentSoloLayout()
     {
-        if (hasEquipmentSoloLayout || equipmentWindow == null) return;
+        if (hasEquipmentSoloLayout || equipmentWindow == null || IsEmbeddedEquipmentWindow()) return;
 
         RectTransform equipmentRect = (RectTransform)equipmentWindow.transform;
         equipmentSoloAnchorMin = equipmentRect.anchorMin;
@@ -243,7 +263,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void RestoreEquipmentSoloLayout()
     {
-        if (!hasEquipmentSoloLayout || equipmentWindow == null) return;
+        if (!hasEquipmentSoloLayout || equipmentWindow == null || IsEmbeddedEquipmentWindow()) return;
 
         RectTransform equipmentRect = (RectTransform)equipmentWindow.transform;
         equipmentRect.anchorMin = equipmentSoloAnchorMin;
@@ -255,6 +275,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void ArrangeEquipmentBesideInventory()
     {
         if (window == null || equipmentWindow == null) return;
+        if (IsEmbeddedEquipmentWindow()) return;
 
         CaptureEquipmentSoloLayout();
 
@@ -280,6 +301,11 @@ public sealed class InventoryUI : MonoBehaviour
         equipmentRect.anchoredPosition = target;
     }
 
+    private bool IsEmbeddedEquipmentWindow()
+    {
+        return equipmentWindow != null && window != null && equipmentWindow.transform.IsChildOf(window.transform);
+    }
+
     private void Refresh()
     {
         if (slots == null) return;
@@ -298,7 +324,8 @@ public sealed class InventoryUI : MonoBehaviour
             slots[i].ResetVisualState();
             slots[i].Refresh(GetDisplayedSlot(i));
         }
-        capacityText.text = $"가방 {used} / {inventory.Capacity}     퀘스트 {questUsed} / {inventory.QuestCapacity}     필터: {GetFilterLabel(currentFilter)}";
+        capacityText.text = $"가방 {used} / {inventory.Capacity}     퀘스트 {questUsed} / {inventory.QuestCapacity}     분류: {GetFilterLabel(currentFilter)}";
+        RefreshFilterButtons();
         RefreshQuickSlots();
         RefreshStats();
         RefreshEquipment();
@@ -346,7 +373,9 @@ public sealed class InventoryUI : MonoBehaviour
     public void Drop(int target)
     {
         if (dragSource < 0 || currentFilter == Filter.Quest) return;
-        inventory.Move(dragSource, target);
+        int sourceSlot = GetInventorySlotIndexForDisplay(dragSource);
+        int targetSlot = GetInventorySlotIndexForDisplay(target);
+        if (sourceSlot >= 0 && targetSlot >= 0) inventory.Move(sourceSlot, targetSlot);
         CancelDrag();
         ResetSlotHighlights();
         ShowDetails(target);
@@ -359,12 +388,14 @@ public sealed class InventoryUI : MonoBehaviour
         if (slot == null || slot.IsEmpty) return;
         if (slot.Item.IsConsumable)
         {
-            inventory.UseSlot(index, inventory.gameObject);
+            int slotIndex = GetInventorySlotIndexForDisplay(index);
+            if (slotIndex >= 0) inventory.UseSlot(slotIndex, inventory.gameObject);
             return;
         }
 
         InventoryItemDefinition item = slot.Item;
-        if (item.IsEquipment && inventory.EquipFromSlot(index))
+        int equipmentSlotIndex = GetInventorySlotIndexForDisplay(index);
+        if (item.IsEquipment && equipmentSlotIndex >= 0 && inventory.EquipFromSlot(equipmentSlotIndex))
         {
             Notify($"{item.DisplayName} 장착 완료");
             return;
@@ -393,6 +424,7 @@ public sealed class InventoryUI : MonoBehaviour
         EnsureInventoryExtras();
         EnsureEquipmentStatsWindow(false);
         ApplyStaticLabels();
+        EnsureToastStyle();
         MatchSlotCount();
         ArrangeInventoryWindowLayout();
         ApplySlotLayout(GetDisplayedSlotCount());
@@ -423,28 +455,30 @@ public sealed class InventoryUI : MonoBehaviour
         scaler.referenceResolution = new Vector2(1280, 720);
         scaler.matchWidthOrHeight = .5f;
 
-        Image panel = Box("Inventory Window", root.transform, new Vector2(488, 568), new Color(.68f, .40f, .19f));
+        Image panel = Box("Inventory Window", root.transform, new Vector2(WindowWidth, WindowHeight), new Color(.45f, .25f, .12f));
         window = panel.gameObject;
-        TopRight(panel.rectTransform, new Vector2(-24, -70));
+        panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = panel.rectTransform.pivot = new Vector2(.5f, .5f);
+        panel.rectTransform.anchoredPosition = Vector2.zero;
         Shadow shadow = window.AddComponent<Shadow>();
         shadow.effectColor = new Color(.12f, .08f, .04f, .35f);
         shadow.effectDistance = new Vector2(5, -7);
-        Image inside = Box("Parchment", panel.transform, new Vector2(480, 560), Cream);
-        Stretch(inside.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
-        Image header = Box("Header", panel.transform, new Vector2(480, 60), new Color(.94f, .62f, .22f));
+        Image inside = Box("Parchment", panel.transform, new Vector2(WindowWidth - 10f, WindowHeight - 10f), new Color(.86f, .76f, .57f));
+        Stretch(inside.rectTransform, new Vector2(5, 5), new Vector2(-5, -5));
+        Image header = Box("Header", panel.transform, new Vector2(WindowWidth - 10f, 58f), new Color(.64f, .37f, .17f));
         TopLeft(header.rectTransform, new Vector2(4, -4));
-        Label("Title", header.transform, "INVENTORY / 인벤토리", new Vector2(388, 56), new Vector2(18, 0), 24);
+        TMP_Text title = Label("Title", header.transform, "Inventory / 인벤토리", new Vector2(560, 56), new Vector2(20, 0), 25);
+        title.color = Cream;
         closeButton = MakeButton("Close", header.transform, "X", new Vector2(36, 36), new Color(.77f, .36f, .16f), Color.white);
         TopRight((RectTransform)closeButton.transform, new Vector2(-12, -12));
-        capacityText = Label("Capacity", panel.transform, "", new Vector2(432, 32), new Vector2(28, -72), 17);
+        capacityText = Label("Capacity", panel.transform, "", new Vector2(InventoryContentWidth, 30), new Vector2(InventoryContentX, InfoRowY), 16);
 
-        Image viewport = Box("Slot Viewport", panel.transform, new Vector2(432, 300), new Color(.82f, .73f, .56f));
-        TopLeft(viewport.rectTransform, new Vector2(28, -154));
+        Image viewport = Box("Slot Viewport", panel.transform, new Vector2(InventoryContentWidth, SlotViewportHeight), new Color(.58f, .43f, .28f));
+        TopLeft(viewport.rectTransform, new Vector2(InventoryContentX, SlotViewportY));
         viewport.gameObject.AddComponent<RectMask2D>();
         RectTransform content = new GameObject("Slots", typeof(RectTransform)).GetComponent<RectTransform>();
         content.SetParent(viewport.transform, false);
         int slotCount = Mathf.Max(BaseSlotCount, inventory.Capacity, inventory.QuestCapacity);
-        content.sizeDelta = new Vector2(432, Mathf.CeilToInt(slotCount / 6f) * 72 - 8);
+        content.sizeDelta = new Vector2(InventoryContentWidth, Mathf.CeilToInt(slotCount / 5f) * 92f);
         TopLeft(content, Vector2.zero);
         ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
         scroll.viewport = viewport.rectTransform;
@@ -455,20 +489,20 @@ public sealed class InventoryUI : MonoBehaviour
         slots = new InventorySlotUI[slotCount];
         for (int i = 0; i < slots.Length; i++)
         {
-            Image cell = Box($"Slot {i + 1:00}", content, new Vector2(64, 64), new Color(.98f, .94f, .83f));
-            TopLeft(cell.rectTransform, new Vector2(i % 6 * 72, -(i / 6) * 72));
+            Image cell = Box($"Slot {i + 1:00}", content, new Vector2(86, 86), new Color(.95f, .87f, .69f));
+            TopLeft(cell.rectTransform, new Vector2(i % 5 * 94, -(i / 5) * 94));
             Image icon = Box("Item Icon", cell.transform, new Vector2(42, 42), Color.white);
             icon.raycastTarget = false;
             icon.preserveAspect = true;
             icon.enabled = false;
-            TMP_Text amount = Label("Amount", cell.transform, "", new Vector2(56, 22), new Vector2(4, -40), 16);
+            TMP_Text amount = Label("Amount", cell.transform, "", new Vector2(78, 22), new Vector2(4, -58), 15);
             amount.alignment = TextAlignmentOptions.BottomRight;
-            amount.color = Color.white;
+            amount.color = Ink;
             slots[i] = cell.gameObject.AddComponent<InventorySlotUI>();
             slots[i].Initialize(this, i, icon, amount);
         }
 
-        detailText = Label("Item Details", panel.transform, "", new Vector2(432, 68), new Vector2(28, -468), 16);
+        detailText = Label("Item Details", panel.transform, "", new Vector2(InventoryContentWidth, 54), new Vector2(InventoryContentX, DetailTextY), 15);
         detailText.alignment = TextAlignmentOptions.TopLeft;
         detailText.textWrappingMode = TextWrappingModes.Normal;
 
@@ -484,6 +518,7 @@ public sealed class InventoryUI : MonoBehaviour
         toast.outlineWidth = .2f;
         toast.outlineColor = Ink;
         toast.gameObject.SetActive(false);
+        EnsureToastStyle();
         dragIcon = Box("Dragged Item", root.transform, new Vector2(48, 48), new Color(1, 1, 1, .85f));
         dragIcon.raycastTarget = false;
         dragIcon.preserveAspect = true;
@@ -495,11 +530,9 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (window == null) return;
         Transform parent = window.transform;
-        if (Application.isPlaying)
-        {
-            HideChildPanel(parent, "Equipment Panel");
-            HideChildPanel(parent, "Stats Panel");
-        }
+        EnsureFrame(parent, "Left Column Frame", new Vector2(LeftPanelWidth, LeftPanelHeight), new Vector2(LeftPanelX, LeftPanelY), new Color(.70f, .57f, .39f));
+        EnsureFrame(parent, "Category Frame", new Vector2(CategoryWidth, LeftPanelHeight), new Vector2(CategoryX, LeftPanelY), new Color(.55f, .36f, .22f));
+        EnsureFrame(parent, "Inventory Frame", new Vector2(InventoryContentWidth + 18f, LeftPanelHeight), new Vector2(InventoryContentX - 9f, LeftPanelY), new Color(.72f, .60f, .43f));
 
         if (filterButtons == null || filterButtons.Length != 5 || filterButtons[0] == null)
         {
@@ -507,14 +540,14 @@ public sealed class InventoryUI : MonoBehaviour
             string[] labels = { "전체", "잡화", "소비", "장비", "퀘스트" };
             for (int i = 0; i < filterButtons.Length; i++)
             {
-                filterButtons[i] = MakeButton("Filter " + labels[i], parent, labels[i], new Vector2(76, 30), new Color(.45f, .30f, .18f), Cream);
-                TopLeft((RectTransform)filterButtons[i].transform, new Vector2(28 + i * 82, -114));
+                filterButtons[i] = MakeButton("Filter " + labels[i], parent, labels[i], new Vector2(94, 42), new Color(.45f, .30f, .18f), Cream);
+                TopLeft((RectTransform)filterButtons[i].transform, new Vector2(CategoryX + 10f, CategoryY - i * 50f));
             }
         }
 
         if (quickSlotText == null)
         {
-            quickSlotText = Label("Quick Slots", parent, "", new Vector2(432, 32), new Vector2(28, -536), 15);
+            quickSlotText = Label("Quick Slots", parent, "", new Vector2(InventoryContentWidth, 26), new Vector2(InventoryContentX, QuickSlotY), 14);
         }
     }
 
@@ -522,9 +555,13 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (window == null) return;
 
+        RectTransform windowRect = (RectTransform)window.transform;
+        windowRect.sizeDelta = new Vector2(WindowWidth, WindowHeight);
+        windowRect.anchorMin = windowRect.anchorMax = windowRect.pivot = new Vector2(.5f, .5f);
+
         if (capacityText != null)
         {
-            capacityText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 32f);
+            capacityText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 30f);
             TopLeft(capacityText.rectTransform, new Vector2(InventoryContentX, InfoRowY));
         }
 
@@ -549,13 +586,13 @@ public sealed class InventoryUI : MonoBehaviour
 
         if (detailText != null)
         {
-            detailText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 70f);
+            detailText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 56f);
             TopLeft(detailText.rectTransform, new Vector2(InventoryContentX, DetailTextY));
         }
 
         if (quickSlotText != null)
         {
-            quickSlotText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 28f);
+            quickSlotText.rectTransform.sizeDelta = new Vector2(InventoryContentWidth, 26f);
             TopLeft(quickSlotText.rectTransform, new Vector2(InventoryContentX, QuickSlotY));
         }
     }
@@ -564,64 +601,72 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (filterButtons == null) return;
 
-        const float spacing = 8f;
-        float width = (InventoryContentWidth - spacing * 4f) / 5f;
         for (int i = 0; i < filterButtons.Length; i++)
         {
             if (filterButtons[i] == null) continue;
 
             RectTransform rect = (RectTransform)filterButtons[i].transform;
-            rect.sizeDelta = new Vector2(width, 30f);
-            TopLeft(rect, new Vector2(InventoryContentX + i * (width + spacing), FilterTabsY));
+            rect.sizeDelta = new Vector2(94f, 42f);
+            TopLeft(rect, new Vector2(CategoryX + 10f, FilterTabsY - i * 50f));
+        }
+    }
+
+    private void RefreshFilterButtons()
+    {
+        if (filterButtons == null) return;
+
+        for (int i = 0; i < filterButtons.Length; i++)
+        {
+            if (filterButtons[i] == null) continue;
+            bool selected = (int)currentFilter == i;
+            Image image = filterButtons[i].targetGraphic as Image;
+            if (image != null) image.color = selected ? new Color(.87f, .60f, .25f) : new Color(.45f, .30f, .18f);
+            TMP_Text label = filterButtons[i].GetComponentInChildren<TMP_Text>();
+            if (label != null)
+            {
+                label.color = selected ? Ink : Cream;
+                label.fontStyle = FontStyles.Normal;
+                label.fontWeight = FontWeight.Regular;
+            }
         }
     }
 
     private void EnsureEquipmentStatsWindow(bool hideAfterCreate = true)
     {
-        if (canvas == null) return;
+        if (window == null) return;
 
-        if (equipmentWindow == null)
+        if (equipmentWindow != null && !equipmentWindow.transform.IsChildOf(window.transform))
         {
-            Transform existing = canvas.transform.Find("Equipment Stats Panel");
-            if (existing == null) existing = canvas.transform.Find("Equipment Stats Window");
-            equipmentWindow = existing != null ? existing.gameObject : CreateEquipmentStatsWindow();
-            equipmentWindow.name = "Equipment Stats Panel";
+            equipmentWindow.SetActive(false);
+            equipmentWindow = null;
+            equipmentCloseButton = null;
         }
 
-        if (equipmentCloseButton == null)
+        Transform existing = window.transform.Find("Character Equipment Panel");
+        if (existing == null)
         {
-            Transform close = equipmentWindow.transform.Find("Header/Close");
-            if (close != null) equipmentCloseButton = close.GetComponent<Button>();
+            CreateEquipmentPanel(window.transform);
+            existing = window.transform.Find("Character Equipment Panel");
         }
 
-        if (IsInInventoryWindow(statPointText))
-        {
-            statPointText = null;
-            statMessageText = null;
-            statRows = null;
-            statUpgradeButtons = null;
-        }
+        equipmentWindow = existing != null ? existing.gameObject : equipmentWindow;
 
-        if (equipmentRows != null && equipmentRows.Length > 0 && IsInInventoryWindow(equipmentRows[0]))
+        if (equipmentRows == null || equipmentRows.Length != 6 || equipmentRows[0] == null || !equipmentRows[0].transform.IsChildOf(equipmentWindow.transform)
+            || equipmentUnequipButtons == null || equipmentUnequipButtons.Length != 6 || equipmentUnequipButtons[0] == null
+            || equipmentSlotIcons == null || equipmentSlotIcons.Length != 6 || equipmentSlotIcons[0] == null)
         {
-            equipmentRows = null;
-            equipmentUnequipButtons = null;
-        }
-
-        if (equipmentRows == null || equipmentRows.Length != 3 || equipmentRows[0] == null
-            || equipmentUnequipButtons == null || equipmentUnequipButtons.Length != 3 || equipmentUnequipButtons[0] == null)
-        {
-            CreateEquipmentPanel(equipmentWindow.transform);
+            CreateEquipmentPanel(window.transform);
         }
 
         if (statPointText == null || statRows == null || statRows.Length != 5 || statRows[0] == null
-            || statUpgradeButtons == null || statUpgradeButtons.Length != 5 || statUpgradeButtons[0] == null || statMessageText == null)
+            || statUpgradeButtons == null || statUpgradeButtons.Length != 5 || statUpgradeButtons[0] == null
+            || statBarFills == null || statBarFills.Length != 5 || statBarFills[0] == null || statMessageText == null)
         {
-            CreateStatsPanel(equipmentWindow.transform);
+            CreateStatsPanel(window.transform);
         }
 
         ArrangeStatsPanelLayout();
-        if (hideAfterCreate) equipmentWindow.SetActive(false);
+        if (equipmentWindow != null) equipmentWindow.SetActive(true);
     }
 
     private GameObject CreateEquipmentStatsWindow()
@@ -643,21 +688,52 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void CreateEquipmentPanel(Transform parent)
     {
-        Transform old = parent.Find("Equipment Panel");
+        Transform old = parent.Find("Character Equipment Panel");
         if (old != null) DestroyUiObject(old.gameObject);
 
-        Image equipmentPanel = Box("Equipment Panel", parent, new Vector2(320, 132), new Color(.82f, .76f, .68f));
-        TopLeft(equipmentPanel.rectTransform, new Vector2(20, -84));
-        Label("Equipment Title", equipmentPanel.transform, "장비 장착", new Vector2(280, 26), new Vector2(16, -10), 18);
+        Image equipmentPanel = Box("Character Equipment Panel", parent, new Vector2(LeftPanelWidth, 292), new Color(.78f, .65f, .46f));
+        equipmentWindow = equipmentPanel.gameObject;
+        TopLeft(equipmentPanel.rectTransform, new Vector2(LeftPanelX, LeftPanelY));
+        Label("Equipment Title", equipmentPanel.transform, "장비", new Vector2(80, 26), new Vector2(14, -10), 18);
 
-        equipmentRows = new TMP_Text[3];
-        equipmentUnequipButtons = new Button[3];
-        string[] labels = { "무기", "방어구", "장신구" };
+        Image preview = Box("Player Preview", equipmentPanel.transform, new Vector2(122, 176), new Color(.50f, .36f, .24f));
+        TopLeft(preview.rectTransform, new Vector2(82, -52));
+        TMP_Text previewText = Label("Preview Label", preview.transform, "PLAYER", new Vector2(112, 22), new Vector2(5, -142), 13);
+        previewText.alignment = TextAlignmentOptions.Center;
+        previewText.color = Cream;
+        Image body = Box("Preview Silhouette", preview.transform, new Vector2(46, 88), new Color(.24f, .17f, .12f, .88f));
+        body.rectTransform.anchorMin = body.rectTransform.anchorMax = body.rectTransform.pivot = new Vector2(.5f, .5f);
+        body.rectTransform.anchoredPosition = new Vector2(0, 18);
+        Image head = Box("Preview Head", preview.transform, new Vector2(36, 36), new Color(.31f, .22f, .16f, .9f));
+        head.rectTransform.anchorMin = head.rectTransform.anchorMax = head.rectTransform.pivot = new Vector2(.5f, .5f);
+        head.rectTransform.anchoredPosition = new Vector2(0, 74);
+
+        equipmentRows = new TMP_Text[6];
+        equipmentUnequipButtons = new Button[6];
+        equipmentSlotIcons = new Image[6];
+        string[] labels = { "무기", "방어구", "장신구", "머리", "신발", "기타" };
+        Vector2[] positions =
+        {
+            new(14, -52), new(14, -140), new(14, -228),
+            new(214, -52), new(214, -140), new(214, -228)
+        };
         for (int i = 0; i < equipmentRows.Length; i++)
         {
-            equipmentRows[i] = Label("Equipment Row " + i, equipmentPanel.transform, labels[i] + ": -", new Vector2(210, 24), new Vector2(16, -48 - i * 28), 14);
-            equipmentUnequipButtons[i] = MakeButton("Unequip Equipment " + i, equipmentPanel.transform, "해제", new Vector2(54, 24), new Color(.55f, .32f, .22f), Color.white);
-            TopLeft((RectTransform)equipmentUnequipButtons[i].transform, new Vector2(248, -48 - i * 28));
+            Button slotButton = MakeButton("Equipment Slot " + i, equipmentPanel.transform, "", new Vector2(58, 58), new Color(.34f, .23f, .15f), Cream);
+            TopLeft((RectTransform)slotButton.transform, positions[i]);
+            equipmentUnequipButtons[i] = slotButton;
+
+            Image icon = Box("Item Icon", slotButton.transform, new Vector2(38, 38), new Color(1f, 1f, 1f, .9f));
+            icon.raycastTarget = false;
+            icon.preserveAspect = true;
+            icon.enabled = false;
+            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = icon.rectTransform.pivot = new Vector2(.5f, .5f);
+            icon.rectTransform.anchoredPosition = new Vector2(0, 6);
+            equipmentSlotIcons[i] = icon;
+
+            equipmentRows[i] = Label("Equipment Row " + i, slotButton.transform, labels[i], new Vector2(56, 18), new Vector2(1, -39), 10);
+            equipmentRows[i].alignment = TextAlignmentOptions.Center;
+            equipmentRows[i].color = Cream;
         }
     }
 
@@ -666,22 +742,29 @@ public sealed class InventoryUI : MonoBehaviour
         Transform old = parent.Find("Stats Panel");
         if (old != null) DestroyUiObject(old.gameObject);
 
-        Image statPanel = Box("Stats Panel", parent, new Vector2(320, 250), new Color(.88f, .80f, .64f));
-        TopLeft(statPanel.rectTransform, new Vector2(20, -232));
-        Label("Stats Title", statPanel.transform, "스탯 강화", new Vector2(96, 26), new Vector2(16, -10), 18);
-        statPointText = Label("Stat Points", statPanel.transform, "", new Vector2(280, 24), new Vector2(16, -42), 14);
+        Image statPanel = Box("Stats Panel", parent, new Vector2(LeftPanelWidth, 184), new Color(.84f, .73f, .55f));
+        TopLeft(statPanel.rectTransform, new Vector2(LeftPanelX, -386));
+        Label("Stats Title", statPanel.transform, "스탯", new Vector2(80, 24), new Vector2(14, -8), 18);
+        statPointText = Label("Stat Points", statPanel.transform, "", new Vector2(172, 22), new Vector2(96, -10), 12);
+        statPointText.alignment = TextAlignmentOptions.MidlineRight;
         statRows = new TMP_Text[5];
         statUpgradeButtons = new Button[5];
+        statBarFills = new Image[5];
         for (int i = 0; i < 5; i++)
         {
-            statRows[i] = Label("Stat Row " + i, statPanel.transform, "", new Vector2(220, 34), new Vector2(16, -70 - i * 34), 13);
-            statRows[i].textWrappingMode = TextWrappingModes.Normal;
-            statUpgradeButtons[i] = MakeButton("Upgrade Stat " + i, statPanel.transform, "+", new Vector2(30, 30), new Color(.35f, .50f, .31f), Color.white);
-            TopLeft((RectTransform)statUpgradeButtons[i].transform, new Vector2(270, -70 - i * 34));
+            statRows[i] = Label("Stat Row " + i, statPanel.transform, "", new Vector2(72, 20), new Vector2(14, -42 - i * 26), 12);
+            Image barBack = Box("Stat Bar Back " + i, statPanel.transform, new Vector2(132, 12), new Color(.43f, .29f, .18f));
+            TopLeft(barBack.rectTransform, new Vector2(88, -46 - i * 26));
+            Image barFill = Box("Stat Bar Fill " + i, barBack.transform, new Vector2(10, 12), new Color(.93f, .66f, .28f));
+            Stretch(barFill.rectTransform, Vector2.zero, new Vector2(-90, 0));
+            statBarFills[i] = barFill;
+            statUpgradeButtons[i] = MakeButton("Upgrade Stat " + i, statPanel.transform, "+", new Vector2(24, 22), new Color(.35f, .50f, .31f), Color.white);
+            TopLeft((RectTransform)statUpgradeButtons[i].transform, new Vector2(236, -42 - i * 26));
         }
 
-        statMessageText = Label("Stat Result", statPanel.transform, "", new Vector2(186, 30), new Vector2(118, -8), 12);
-        statMessageText.textWrappingMode = TextWrappingModes.Normal;
+        statMessageText = Label("Stat Result", statPanel.transform, "", new Vector2(252, 20), new Vector2(14, -164), 11);
+        statMessageText.textWrappingMode = TextWrappingModes.NoWrap;
+        statMessageText.overflowMode = TextOverflowModes.Ellipsis;
         ArrangeStatsPanelLayout();
     }
 
@@ -694,24 +777,25 @@ public sealed class InventoryUI : MonoBehaviour
         TMP_Text title = statPanel.Find("Stats Title")?.GetComponent<TMP_Text>();
         if (title != null)
         {
-            title.text = "스탯 강화";
-            title.rectTransform.sizeDelta = new Vector2(96, 26);
-            TopLeft(title.rectTransform, new Vector2(16, -10));
+            title.text = "스탯";
+            title.rectTransform.sizeDelta = new Vector2(80, 24);
+            TopLeft(title.rectTransform, new Vector2(14, -8));
         }
 
         if (statMessageText != null)
         {
-            statMessageText.fontSize = 12;
-            statMessageText.alignment = TextAlignmentOptions.MidlineRight;
-            statMessageText.textWrappingMode = TextWrappingModes.Normal;
-            statMessageText.rectTransform.sizeDelta = new Vector2(186, 30);
-            TopLeft(statMessageText.rectTransform, new Vector2(118, -8));
+            statMessageText.fontSize = 11;
+            statMessageText.alignment = TextAlignmentOptions.MidlineLeft;
+            statMessageText.textWrappingMode = TextWrappingModes.NoWrap;
+            statMessageText.rectTransform.sizeDelta = new Vector2(252, 20);
+            TopLeft(statMessageText.rectTransform, new Vector2(14, -164));
         }
 
         if (statPointText != null)
         {
-            statPointText.rectTransform.sizeDelta = new Vector2(280, 24);
-            TopLeft(statPointText.rectTransform, new Vector2(16, -42));
+            statPointText.rectTransform.sizeDelta = new Vector2(172, 22);
+            statPointText.alignment = TextAlignmentOptions.MidlineRight;
+            TopLeft(statPointText.rectTransform, new Vector2(96, -10));
         }
 
         if (statRows != null)
@@ -719,8 +803,8 @@ public sealed class InventoryUI : MonoBehaviour
             for (int i = 0; i < statRows.Length; i++)
             {
                 if (statRows[i] == null) continue;
-                statRows[i].rectTransform.sizeDelta = new Vector2(220, 34);
-                TopLeft(statRows[i].rectTransform, new Vector2(16, -70 - i * 34));
+                statRows[i].rectTransform.sizeDelta = new Vector2(72, 20);
+                TopLeft(statRows[i].rectTransform, new Vector2(14, -42 - i * 26));
             }
         }
 
@@ -729,8 +813,8 @@ public sealed class InventoryUI : MonoBehaviour
         {
             if (statUpgradeButtons[i] == null) continue;
             RectTransform rect = (RectTransform)statUpgradeButtons[i].transform;
-            rect.sizeDelta = new Vector2(30, 30);
-            TopLeft(rect, new Vector2(270, -70 - i * 34));
+            rect.sizeDelta = new Vector2(24, 22);
+            TopLeft(rect, new Vector2(236, -42 - i * 26));
         }
     }
 
@@ -739,12 +823,29 @@ public sealed class InventoryUI : MonoBehaviour
         SetButtonLabel(shortcutButton, "가방 [I]");
 
         TMP_Text inventoryTitle = window != null ? window.transform.Find("Header/Title")?.GetComponent<TMP_Text>() : null;
-        if (inventoryTitle != null) inventoryTitle.text = "INVENTORY / 인벤토리";
+        if (inventoryTitle != null) inventoryTitle.text = "Inventory / 인벤토리";
 
         TMP_Text equipmentTitle = equipmentWindow != null ? equipmentWindow.transform.Find("Header/Title")?.GetComponent<TMP_Text>() : null;
         if (equipmentTitle != null) equipmentTitle.text = "EQUIPMENT / STATS";
 
         ApplyDetailTextStyle();
+    }
+
+    private void EnsureToastStyle()
+    {
+        if (toast == null) return;
+
+        Transform background = toast.transform.parent != null ? toast.transform.parent.Find("Pickup Message Back") : null;
+        if (background != null) DestroyUiObject(background.gameObject);
+
+        if (font != null) toast.font = font;
+        toast.fontSize = 20;
+        toast.fontStyle = FontStyles.Normal;
+        toast.fontWeight = FontWeight.Regular;
+        toast.alignment = TextAlignmentOptions.Center;
+        toast.color = Cream;
+        toast.outlineWidth = .2f;
+        toast.outlineColor = Ink;
     }
 
     private void AddButtonListeners()
@@ -760,18 +861,21 @@ public sealed class InventoryUI : MonoBehaviour
 
         if (statUpgradeButtons != null && statUpgradeButtons.Length >= 5)
         {
-            statUpgradeButtons[0].onClick.AddListener(() => Upgrade(PersonalStatType.Evasion));
-            statUpgradeButtons[1].onClick.AddListener(() => Upgrade(PersonalStatType.Stealth));
-            statUpgradeButtons[2].onClick.AddListener(() => Upgrade(PersonalStatType.Attack));
-            statUpgradeButtons[3].onClick.AddListener(() => Upgrade(PersonalStatType.Defense));
-            statUpgradeButtons[4].onClick.AddListener(() => Upgrade(PersonalStatType.Persuasion));
+            statUpgradeButtons[0].onClick.AddListener(() => Upgrade(GetUiStatType(0)));
+            statUpgradeButtons[1].onClick.AddListener(() => Upgrade(GetUiStatType(1)));
+            statUpgradeButtons[2].onClick.AddListener(() => Upgrade(GetUiStatType(2)));
+            statUpgradeButtons[3].onClick.AddListener(() => Upgrade(GetUiStatType(3)));
+            statUpgradeButtons[4].onClick.AddListener(() => Upgrade(GetUiStatType(4)));
         }
 
-        if (equipmentUnequipButtons != null && equipmentUnequipButtons.Length >= 3)
+        if (equipmentUnequipButtons != null && equipmentUnequipButtons.Length >= 6)
         {
             equipmentUnequipButtons[0].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Weapon));
             equipmentUnequipButtons[1].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Armor));
             equipmentUnequipButtons[2].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Accessory));
+            equipmentUnequipButtons[3].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Head));
+            equipmentUnequipButtons[4].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Shoes));
+            equipmentUnequipButtons[5].onClick.AddListener(() => Unequip(InventoryItemDefinition.EquipmentSlot.Other));
         }
     }
 
@@ -817,8 +921,33 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (index < 0) return null;
         if (currentFilter == Filter.Quest) return inventory.GetQuestSlot(index);
-        PlayerInventory.Slot slot = inventory.GetSlot(index);
-        return SlotMatchesFilter(slot) ? slot : null;
+        int inventoryIndex = GetInventorySlotIndexForDisplay(index);
+        return inventoryIndex >= 0 ? inventory.GetSlot(inventoryIndex) : null;
+    }
+
+    private int GetInventorySlotIndexForDisplay(int displayIndex)
+    {
+        if (displayIndex < 0) return -1;
+        if (currentFilter == Filter.All) return displayIndex < inventory.Capacity ? displayIndex : -1;
+
+        int logicalIndex = 0;
+        for (int i = 0; i < inventory.Capacity; i++)
+        {
+            PlayerInventory.Slot slot = inventory.GetSlot(i);
+            if (slot == null || slot.IsEmpty || !SlotMatchesFilter(slot)) continue;
+            if (logicalIndex == displayIndex) return i;
+            logicalIndex++;
+        }
+
+        for (int i = 0; i < inventory.Capacity; i++)
+        {
+            PlayerInventory.Slot slot = inventory.GetSlot(i);
+            if (slot == null || !slot.IsEmpty) continue;
+            if (logicalIndex == displayIndex) return i;
+            logicalIndex++;
+        }
+
+        return -1;
     }
 
     private bool SlotMatchesFilter(PlayerInventory.Slot slot)
@@ -866,21 +995,33 @@ public sealed class InventoryUI : MonoBehaviour
             return;
         }
 
-        statPointText.text = $"강화 포인트: {stats.AvailablePoints}     편차 제한: {stats.StatSpreadLimit}";
+        statPointText.text = $"POINT {stats.AvailablePoints}";
         for (int i = 0; i < statRows.Length; i++)
         {
-            PersonalStatType type = (PersonalStatType)i;
-            statRows[i].text = $"{PlayerStats.GetDisplayName(type)} {stats.GetValue(type)}\n{stats.GetEffectSummary(type)}";
+            PersonalStatType type = GetUiStatType(i);
+            int value = stats.GetValue(type);
+            statRows[i].text = $"{GetUiStatLabel(i)} {value}";
+            if (statBarFills != null && i < statBarFills.Length && statBarFills[i] != null)
+            {
+                RectTransform fill = statBarFills[i].rectTransform;
+                fill.anchorMin = Vector2.zero;
+                fill.anchorMax = new Vector2(Mathf.Clamp01(value / Mathf.Max(1f, stats.StatSpreadLimit + 5f)), 1f);
+                fill.offsetMin = Vector2.zero;
+                fill.offsetMax = Vector2.zero;
+            }
         }
     }
 
     private void RefreshEquipment()
     {
-        if (equipmentRows == null || equipmentRows.Length < 3) return;
+        if (equipmentRows == null || equipmentRows.Length < 6) return;
 
         SetEquipmentRow(0, InventoryItemDefinition.EquipmentSlot.Weapon);
         SetEquipmentRow(1, InventoryItemDefinition.EquipmentSlot.Armor);
         SetEquipmentRow(2, InventoryItemDefinition.EquipmentSlot.Accessory);
+        SetEquipmentRow(3, InventoryItemDefinition.EquipmentSlot.Head);
+        SetEquipmentRow(4, InventoryItemDefinition.EquipmentSlot.Shoes);
+        SetEquipmentRow(5, InventoryItemDefinition.EquipmentSlot.Other);
     }
 
     private void SetEquipmentRow(int index, InventoryItemDefinition.EquipmentSlot slot)
@@ -888,9 +1029,14 @@ public sealed class InventoryUI : MonoBehaviour
         if (index < 0 || index >= equipmentRows.Length || equipmentRows[index] == null) return;
 
         InventoryItemDefinition item = inventory.GetEquipped(slot);
-        equipmentRows[index].text = $"{GetEquipmentSlotLabel(slot)}: {(item != null ? item.DisplayName : "-")}";
+        equipmentRows[index].text = item != null ? item.DisplayName : GetEquipmentSlotLabel(slot);
         if (equipmentUnequipButtons != null && index < equipmentUnequipButtons.Length && equipmentUnequipButtons[index] != null)
             equipmentUnequipButtons[index].interactable = item != null;
+        if (equipmentSlotIcons != null && index < equipmentSlotIcons.Length && equipmentSlotIcons[index] != null)
+        {
+            equipmentSlotIcons[index].enabled = item != null;
+            equipmentSlotIcons[index].sprite = item != null ? item.Icon : null;
+        }
     }
 
     private void SetStatMessage(string message)
@@ -949,9 +1095,9 @@ public sealed class InventoryUI : MonoBehaviour
         Vector2 area = GetUsableRectSize(viewport != null ? viewport : content);
         content.anchorMin = content.anchorMax = content.pivot = new Vector2(0f, 1f);
         content.anchoredPosition = Vector2.zero;
-        content.sizeDelta = area;
-
         SlotGrid grid = CalculateSlotGrid(slotCount, area);
+        float contentHeight = Mathf.Max(area.y, grid.Rows * grid.CellSize + (grid.Rows - 1) * grid.Spacing + SlotPadding * 2f);
+        content.sizeDelta = new Vector2(area.x, contentHeight);
         GridLayoutGroup layout = EnsureSlotGridLayoutGroup(content);
         layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         layout.constraintCount = grid.Columns;
@@ -982,57 +1128,13 @@ public sealed class InventoryUI : MonoBehaviour
 
     private static SlotGrid CalculateSlotGrid(int slotCount, Vector2 area)
     {
-        int bestRows = 1;
-        int bestColumns = Mathf.Max(1, slotCount);
-        float bestCellSize = MinSlotSize;
-        float bestScore = float.NegativeInfinity;
-        float targetAspect = Mathf.Max(.1f, area.x / Mathf.Max(1f, area.y));
-
-        for (int rows = 1; rows <= slotCount; rows++)
-        {
-            int minimumColumns = Mathf.CeilToInt(slotCount / (float)rows);
-            int maximumColumns = Mathf.Min(slotCount, minimumColumns + 3);
-            for (int columns = minimumColumns; columns <= maximumColumns; columns++)
-            {
-                float spacing = CalculateSlotSpacing(area, columns, rows);
-                float availableWidth = area.x - SlotPadding * 2f - spacing * (columns - 1);
-                float availableHeight = area.y - SlotPadding * 2f - spacing * (rows - 1);
-                if (availableWidth <= 0f || availableHeight <= 0f) continue;
-
-                float rawCellSize = Mathf.Min(availableWidth / columns, availableHeight / rows);
-                if (rawCellSize <= 0f) continue;
-
-                float cellSize = Mathf.Floor(Mathf.Min(rawCellSize, MaxSlotSize));
-                int emptyCells = columns * rows - slotCount;
-                float gridWidth = columns * cellSize + (columns - 1) * spacing + SlotPadding * 2f;
-                float gridHeight = rows * cellSize + (rows - 1) * spacing + SlotPadding * 2f;
-                float widthUsage = Mathf.Clamp01(gridWidth / Mathf.Max(1f, area.x));
-                float heightUsage = Mathf.Clamp01(gridHeight / Mathf.Max(1f, area.y));
-                float areaUsage = widthUsage * heightUsage;
-                float gridAspect = columns / (float)rows;
-                float aspectPenalty = Mathf.Abs(Mathf.Log(gridAspect / targetAspect)) * 20f;
-                float emptyPenalty = emptyCells * 2f;
-                float smallCellPenalty = cellSize < MinSlotSize ? (MinSlotSize - cellSize) * 2f : 0f;
-                float largeCellPenalty = cellSize > 68f ? (cellSize - 68f) * .35f : 0f;
-                float score =
-                    cellSize * .8f
-                    + widthUsage * 35f
-                    + heightUsage * 20f
-                    + areaUsage * 25f
-                    - aspectPenalty
-                    - emptyPenalty
-                    - smallCellPenalty
-                    - largeCellPenalty;
-
-                if (score <= bestScore) continue;
-                bestScore = score;
-                bestRows = rows;
-                bestColumns = columns;
-                bestCellSize = cellSize;
-            }
-        }
-
-        return new SlotGrid(bestColumns, bestRows, bestCellSize, CalculateSlotSpacing(area, bestColumns, bestRows));
+        int columns = area.x >= 560f ? 6 : 5;
+        columns = Mathf.Clamp(columns, 1, Mathf.Max(1, slotCount));
+        int rows = Mathf.CeilToInt(slotCount / (float)columns);
+        float spacing = SlotSpacing;
+        float availableWidth = area.x - SlotPadding * 2f - spacing * (columns - 1);
+        float cellSize = Mathf.Clamp(Mathf.Floor(availableWidth / columns), MinSlotSize, MaxSlotSize);
+        return new SlotGrid(columns, rows, cellSize, spacing);
     }
 
     private static float CalculateSlotSpacing(Vector2 area, int columns, int rows)
@@ -1114,6 +1216,20 @@ public sealed class InventoryUI : MonoBehaviour
         if (child != null) child.gameObject.SetActive(false);
     }
 
+    private static void EnsureFrame(Transform parent, string name, Vector2 size, Vector2 position, Color color)
+    {
+        Transform existing = parent.Find(name);
+        Image image = existing != null ? existing.GetComponent<Image>() : null;
+        if (image == null) image = Box(name, parent, size, color);
+
+        image.color = color;
+        image.raycastTarget = false;
+        image.rectTransform.sizeDelta = size;
+        TopLeft(image.rectTransform, position);
+        Transform parchment = parent.Find("Parchment");
+        image.transform.SetSiblingIndex(parchment != null ? parchment.GetSiblingIndex() + 1 : 0);
+    }
+
     private static void DestroyUiObject(GameObject obj)
     {
         if (obj == null) return;
@@ -1147,7 +1263,37 @@ public sealed class InventoryUI : MonoBehaviour
             InventoryItemDefinition.EquipmentSlot.Weapon => "무기",
             InventoryItemDefinition.EquipmentSlot.Armor => "방어구",
             InventoryItemDefinition.EquipmentSlot.Accessory => "장신구",
+            InventoryItemDefinition.EquipmentSlot.Head => "머리",
+            InventoryItemDefinition.EquipmentSlot.Shoes => "신발",
+            InventoryItemDefinition.EquipmentSlot.Other => "기타",
             _ => "장비"
+        };
+    }
+
+    // The visible RPG labels map onto the project-specific stat model used by PlayerStats.
+    private static PersonalStatType GetUiStatType(int index)
+    {
+        return index switch
+        {
+            0 => PersonalStatType.Persuasion,
+            1 => PersonalStatType.Evasion,
+            2 => PersonalStatType.Attack,
+            3 => PersonalStatType.Defense,
+            4 => PersonalStatType.Stealth,
+            _ => PersonalStatType.Attack
+        };
+    }
+
+    private static string GetUiStatLabel(int index)
+    {
+        return index switch
+        {
+            0 => "PRS",
+            1 => "EVA",
+            2 => "ATK",
+            3 => "DEF",
+            4 => "STL",
+            _ => "STAT"
         };
     }
 

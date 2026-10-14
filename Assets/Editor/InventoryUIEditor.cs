@@ -12,7 +12,7 @@ public sealed class InventoryUIEditor : Editor
 
     static InventoryUIEditor()
     {
-        QueueSetup();
+        QueueSetupAfterEditorInitialization();
         EditorSceneManager.sceneOpened += OnSceneOpened;
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
     }
@@ -27,6 +27,13 @@ public sealed class InventoryUIEditor : Editor
     private static void QueueSetup()
     {
         if (queued || EditorApplication.isPlayingOrWillChangePlaymode) return;
+        queued = true;
+        EditorApplication.delayCall += SetupLoadedScenes;
+    }
+
+    private static void QueueSetupAfterEditorInitialization()
+    {
+        if (queued) return;
         queued = true;
         EditorApplication.delayCall += SetupLoadedScenes;
     }
