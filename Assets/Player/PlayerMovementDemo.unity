@@ -652,16 +652,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0930260d461ad842b75384421cae14b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttackController
+  onBasicAttack:
+    m_PersistentCalls:
+      m_Calls: []
+  onSecondaryAttack:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillOne:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillTwo:
+    m_PersistentCalls:
+      m_Calls: []
   onAttackZ:
     m_PersistentCalls:
       m_Calls: []
   onAttackX:
     m_PersistentCalls:
       m_Calls: []
+  onAttackC:
+    m_PersistentCalls:
+      m_Calls: []
+  onAttackV:
+    m_PersistentCalls:
+      m_Calls: []
   onPrimaryClick:
     m_PersistentCalls:
       m_Calls: []
   onSecondaryClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillQ:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillE:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &546280977
