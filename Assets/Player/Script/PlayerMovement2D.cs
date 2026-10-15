@@ -28,6 +28,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private float attackAnimationEndedAt = float.NegativeInfinity;
     private Animator animator;
     private PlayerInputReader playerInput;
+    private PlayerMeleeAttack meleeAttack;
     private PlayerHealth playerHealth;
     private int lastKnownHealth;
     private bool hasIsMovingParameter;
@@ -95,6 +96,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         standingOffset = box.offset;
         body.freezeRotation = true;
         playerInput = GetComponent<PlayerInputReader>();
+        meleeAttack = GetComponent<PlayerMeleeAttack>();
         playerInput.MoveChanged += value => horizontalInput = value;
         playerInput.CrouchChanged += value => crouchHeld = value;
         playerInput.JumpPressed += () => jumpRequested = true;
@@ -245,6 +247,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         animator.SetInteger(AttackIndexParameterHash, comboAttackIndex);
         animator.ResetTrigger(AttackTriggerHash);
         animator.SetTrigger(AttackTriggerHash);
+        meleeAttack?.PlayComboEffect(comboAttackIndex);
     }
 
     private void UpdateCrouch(bool shouldCrouch)

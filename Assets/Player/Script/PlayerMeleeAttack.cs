@@ -8,8 +8,10 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     [SerializeField, Min(.01f)] private float attackCooldown = 1f;
     [SerializeField, Min(.01f)] private float attackRange = 1.3f;
     [SerializeField] private LayerMask monsterLayers;
-    [SerializeField] private Sprite slashSprite;
-    [SerializeField, Min(.01f)] private float slashDuration = .25f;
+    [SerializeField] private RuntimeAnimatorController attackEffectController;
+    [SerializeField] private Sprite attackEffectReferenceSprite;
+    [SerializeField] private int attackEffectSortingOrder = 2;
+    [SerializeField, Min(0f)] private float attackEffectBackwardOffset = .2f;
 
     private BoxCollider2D playerCollider;
     private readonly Collider2D[] hitBuffer = new Collider2D[16];
@@ -17,6 +19,13 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     private ContactFilter2D monsterFilter;
     private float facingDirection = 1f;
     private float nextAttackTime;
+    private static readonly int[] AttackEffectStateHashes =
+    {
+        Animator.StringToHash("Base Layer.Attack01"),
+        Animator.StringToHash("Base Layer.Attack02"),
+        Animator.StringToHash("Base Layer.Attack03")
+    };
+    private static readonly float[] AttackEffectDurations = { .5f, .5f, .62f };
 
     private void Awake()
     {
@@ -33,9 +42,8 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         if (Time.time < nextAttackTime) return;
         nextAttackTime = Time.time + attackCooldown;
 
-        Bounds bounds = playerCollider.bounds;
-        Vector2 size = new(attackRange, bounds.size.y);
-        Vector2 center = bounds.center + Vector3.right * facingDirection * (bounds.extents.x + attackRange * .5f);
+        Vector2 size = new(attackRange, playerCollider.bounds.size.y);
+        Vector2 center = GetAttackCenter();
         int hitCount = Physics2D.OverlapBox(center, size, 0f, monsterFilter, hitBuffer);
         hitMonsters.Clear();
         for (int i = 0; i < hitCount; i++)
@@ -43,8 +51,31 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
             MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
             if (monster != null && hitMonsters.Add(monster)) monster.TakeDamage(attackDamage);
         }
+    }
 
-        CreateSlashEffect(center);
+    public void PlayComboEffect(int attackIndex)
+    {
+        int index = attackIndex - 1;
+        if (index < 0 || index >= AttackEffectStateHashes.Length
+            || attackEffectController == null || attackEffectReferenceSprite == null)
+            return;
+
+        GameObject effect = new("Player Attack Effect", typeof(SpriteRenderer), typeof(Animator));
+        effect.transform.SetParent(transform, true);
+        effect.transform.position = GetAttackCenter()
+            - Vector2.right * facingDirection * attackEffectBackwardOffset;
+        float scale = attackRange / Mathf.Max(.01f, attackEffectReferenceSprite.bounds.size.x);
+        effect.transform.localScale = new Vector3(scale, scale, 1f);
+
+        SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
+        renderer.sprite = attackEffectReferenceSprite;
+        renderer.sortingOrder = attackEffectSortingOrder;
+        renderer.flipX = facingDirection < 0f;
+
+        Animator effectAnimator = effect.GetComponent<Animator>();
+        effectAnimator.runtimeAnimatorController = attackEffectController;
+        effectAnimator.Play(AttackEffectStateHashes[index], 0, 0f);
+        Destroy(effect, AttackEffectDurations[index]);
     }
 
     private void UpdateFacing(float direction)
@@ -52,19 +83,10 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         if (direction != 0f) facingDirection = Mathf.Sign(direction);
     }
 
-    private void CreateSlashEffect(Vector2 position)
+    private Vector2 GetAttackCenter()
     {
-        if (slashSprite == null) return;
-        GameObject effect = new GameObject("Player Slash Effect", typeof(SpriteRenderer));
-        effect.transform.position = position;
-        float scale = attackRange / slashSprite.bounds.size.x;
-        effect.transform.localScale = new Vector3(scale, scale, 1f);
-
-        SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
-        renderer.sprite = slashSprite;
-        renderer.sortingOrder = 2;
-        renderer.flipX = facingDirection < 0f;
-        Destroy(effect, slashDuration);
+        Bounds bounds = playerCollider.bounds;
+        return bounds.center + Vector3.right * facingDirection * (bounds.extents.x + attackRange * .5f);
     }
 
     private void OnDrawGizmos()

@@ -948,8 +948,10 @@ MonoBehaviour:
   monsterLayers:
     serializedVersion: 2
     m_Bits: 512
-  slashSprite: {fileID: 21300000, guid: a6c4b43f3fa04b1cb1c8cd93e7920d57, type: 3}
-  slashDuration: 0.25
+  attackEffectController: {fileID: 9100000, guid: 488f239b03ab1e146af4f5b8ceae8b1b, type: 2}
+  attackEffectReferenceSprite: {fileID: -3407855339725634011, guid: 2b8a9451d6648fd4395d571c6efd43b2, type: 3}
+  attackEffectSortingOrder: 2
+  attackEffectBackwardOffset: 0.2
 --- !u!114 &546280988
 MonoBehaviour:
   m_ObjectHideFlags: 0
