@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 580000}
   - component: {fileID: 21200000}
   m_Layer: 8
-  m_Name: Quest Object (Temporary)
+  m_Name: Pickup - Sky Crystal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,6 +46,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e051f47d9991479f89dfe0c8c3f9ac67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestPickup2D
+  questItem: {fileID: 11400000, guid: 509a4e4686b34fae82f7b67091f78168, type: 2}
+  amount: 1
 --- !u!58 &580000
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -130,7 +132,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 0.68, b: 0.18, a: 1}
   m_FlipX: 0
   m_FlipY: 0

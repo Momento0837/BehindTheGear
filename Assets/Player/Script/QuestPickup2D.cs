@@ -4,13 +4,19 @@ using UnityEngine;
 [RequireComponent(typeof(CircleCollider2D), typeof(SpriteRenderer))]
 public sealed class QuestPickup2D : MonoBehaviour
 {
+    [SerializeField] private InventoryItemDefinition questItem;
+    [SerializeField, Min(1)] private int amount = 1;
+
     private QuestGiver2D questGiver;
     private bool collected;
 
     private void Awake()
     {
         GetComponent<CircleCollider2D>().isTrigger = true;
-        GetComponent<SpriteRenderer>().sortingOrder = 10;
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.sortingLayerName = "ForeGround";
+        spriteRenderer.sortingOrder = 20;
+        if (questItem != null) spriteRenderer.sprite = questItem.Icon;
     }
 
     public void Bind(QuestGiver2D owner) => questGiver = owner;
@@ -19,6 +25,13 @@ public sealed class QuestPickup2D : MonoBehaviour
     {
         if (collected || questGiver == null || other.GetComponentInParent<PlayerMovement2D>() == null)
             return;
+
+        PlayerInventory inventory = other.GetComponentInParent<PlayerInventory>();
+        if (questItem != null)
+        {
+            int requiredAmount = Mathf.Max(1, amount);
+            if (inventory == null || inventory.Add(questItem, requiredAmount) < requiredAmount) return;
+        }
 
         collected = true;
         questGiver.NotifyQuestItemCollected(this);
