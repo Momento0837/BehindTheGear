@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 1386402002}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -385,6 +386,29 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SceneSpawnPoint2D
   spawnPointId: FromDemoRightPortal
+--- !u!114 &1386402002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0182a8b84de47e5afb1883d93d463a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollow2D
+  target: {fileID: 0}
+  followOffset: {x: 0, y: -2.5}
+  followVertical: 0
+  risingCameraY: 0.5
+  fallingCameraY: 0.1
+  verticalSpeedThreshold: 0.05
+  smoothTime: 0.22
+  maxFollowSpeed: 100
+  lookAheadDistance: 1.25
+  lookAheadSmoothTime: 0.25
+  lookAheadSpeedThreshold: 0.1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
