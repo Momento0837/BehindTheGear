@@ -401,6 +401,9 @@ MonoBehaviour:
   target: {fileID: 0}
   followOffset: {x: 0, y: -2.5}
   followVertical: 0
+  risingCameraY: 0.5
+  fallingCameraY: 0.1
+  verticalSpeedThreshold: 0.05
   smoothTime: 0.22
   maxFollowSpeed: 100
   lookAheadDistance: 1.25

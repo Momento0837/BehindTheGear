@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Keeps the 2D camera centered near the player with gentle damping and horizontal look-ahead.</summary>
+/// <summary>Follows the player horizontally and frames jumps with a small vertical camera shift.</summary>
 [DisallowMultipleComponent]
 public sealed class PlayerCameraFollow2D : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private Vector2 followOffset = new(0f, -2.5f);
     [SerializeField] private bool followVertical;
+    [SerializeField] private float risingCameraY = .5f;
+    [SerializeField] private float fallingCameraY = .1f;
+    [SerializeField, Min(0f)] private float verticalSpeedThreshold = .05f;
     [SerializeField] private bool clampToHorizontalBounds;
     [SerializeField] private Vector2 horizontalWorldBounds = new(-26.18f, 26.18f);
     [SerializeField, Min(.01f)] private float smoothTime = .22f;
@@ -22,13 +25,11 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float lookAhead;
     private float lookAheadVelocity;
     private float cameraZ;
-    private float fixedCameraY;
     private float nextTargetSearchTime;
 
     private void Awake()
     {
         cameraZ = transform.position.z;
-        fixedCameraY = transform.position.y;
         attachedCamera = GetComponent<Camera>();
         CacheTargetBody();
     }
@@ -64,7 +65,14 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             Time.deltaTime);
 
         Vector3 desiredPosition = target.position + new Vector3(followOffset.x + lookAhead, followOffset.y, 0f);
-        if (!followVertical) desiredPosition.y = fixedCameraY;
+        if (!followVertical)
+        {
+            float verticalSpeed = targetBody != null ? targetBody.linearVelocity.y : 0f;
+            float desiredCameraY = verticalSpeed > verticalSpeedThreshold
+                ? risingCameraY
+                : fallingCameraY;
+            desiredPosition.y = desiredCameraY;
+        }
         desiredPosition.z = cameraZ;
         Vector3 smoothedPosition = Vector3.SmoothDamp(
             transform.position,
@@ -73,11 +81,6 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             smoothTime,
             maxFollowSpeed,
             Time.deltaTime);
-        if (!followVertical)
-        {
-            smoothedPosition.y = fixedCameraY;
-            followVelocity.y = 0f;
-        }
 
         float clampedX = ClampHorizontalPosition(smoothedPosition.x);
         if (!Mathf.Approximately(clampedX, smoothedPosition.x)) followVelocity.x = 0f;
@@ -120,7 +123,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         lookAheadVelocity = 0f;
         followVelocity = Vector3.zero;
         Vector3 position = target.position + new Vector3(followOffset.x, followOffset.y, 0f);
-        if (!followVertical) position.y = fixedCameraY;
+        if (!followVertical) position.y = fallingCameraY;
         position.x = ClampHorizontalPosition(position.x);
         position.z = cameraZ;
         transform.position = position;
