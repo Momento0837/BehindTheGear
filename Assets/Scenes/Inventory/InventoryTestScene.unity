@@ -6635,16 +6635,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0930260d461ad842b75384421cae14b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttackController
+  onBasicAttack:
+    m_PersistentCalls:
+      m_Calls: []
+  onSecondaryAttack:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillOne:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillTwo:
+    m_PersistentCalls:
+      m_Calls: []
   onAttackZ:
     m_PersistentCalls:
       m_Calls: []
   onAttackX:
     m_PersistentCalls:
       m_Calls: []
+  onAttackC:
+    m_PersistentCalls:
+      m_Calls: []
+  onAttackV:
+    m_PersistentCalls:
+      m_Calls: []
   onPrimaryClick:
     m_PersistentCalls:
       m_Calls: []
   onSecondaryClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillQ:
+    m_PersistentCalls:
+      m_Calls: []
+  onSkillE:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &546280977
@@ -6708,7 +6732,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.2920592, y: 2.3418574}
+    oldSize: {x: 1.4545455, y: 2.6363637}
     newSize: {x: 2.5625, y: 2.3417969}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -21588,7 +21612,6 @@ MonoBehaviour:
   characterInterval: 0.05
   playerControlLock: {fileID: 546280982}
   dialogueGroup: {fileID: 0}
-  dialoguePanelImage: {fileID: 2100000001}
   portraitImage: {fileID: 2100000011}
   speakerText: {fileID: 2994672402}
   bodyText: {fileID: 1994672402}

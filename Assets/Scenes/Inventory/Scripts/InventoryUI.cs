@@ -42,6 +42,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private int dragSource = -1;
     private float toastUntil;
+    private bool toastResourceWarningLogged;
     private bool ready;
     private bool ownsRuntimeCanvas;
     private Filter currentFilter;
@@ -515,8 +516,6 @@ public sealed class InventoryUI : MonoBehaviour
         toast.rectTransform.anchoredPosition = new Vector2(0, -16);
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        toast.outlineWidth = .2f;
-        toast.outlineColor = Ink;
         toast.gameObject.SetActive(false);
         EnsureToastStyle();
         dragIcon = Box("Dragged Item", root.transform, new Vector2(48, 48), new Color(1, 1, 1, .85f));
@@ -838,14 +837,52 @@ public sealed class InventoryUI : MonoBehaviour
         Transform background = toast.transform.parent != null ? toast.transform.parent.Find("Pickup Message Back") : null;
         if (background != null) DestroyUiObject(background.gameObject);
 
-        if (font != null) toast.font = font;
+        // A disabled TMP object can retain its font while its material instance is gone.
+        // Assigning the same font again is a no-op in TMP, so repair the material explicitly.
+        TMP_FontAsset toastFont = font != null ? font : toast.font;
+        Material toastMaterial = toast.fontSharedMaterial;
+        if (toastFont == null || toastFont.atlasTexture == null)
+        {
+            WarnMissingToastResource("Font Asset or font atlas texture");
+            return;
+        }
+
+        if (toastMaterial == null)
+            toastMaterial = toastFont.material;
+
+        if (toastMaterial == null || toastMaterial.shader == null
+            || !toastMaterial.HasProperty("_MainTex")
+            || toastMaterial.GetTexture("_MainTex") != toastFont.atlasTexture
+            || !toastMaterial.HasProperty("_OutlineWidth") || !toastMaterial.HasProperty("_OutlineColor"))
+        {
+            WarnMissingToastResource("compatible Font Material (atlas / outline shader properties)");
+            return;
+        }
+
+        if (toast.font != toastFont) toast.font = toastFont;
+        if (toast.fontSharedMaterial != toastMaterial) toast.fontSharedMaterial = toastMaterial;
+        toastResourceWarningLogged = false;
         toast.fontSize = 20;
         toast.fontStyle = FontStyles.Normal;
         toast.fontWeight = FontWeight.Regular;
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        toast.outlineWidth = .2f;
-        toast.outlineColor = Ink;
+        if (!Mathf.Approximately(toast.outlineWidth, .2f) || !toast.outlineColor.Equals((Color32)Ink))
+        {
+            // TMP owns and reuses this instance; never write to the shared font/preset asset.
+            // Establish it before the outline setters, including on inactive text objects.
+            _ = toast.fontMaterial;
+            if (!Mathf.Approximately(toast.outlineWidth, .2f)) toast.outlineWidth = .2f;
+            if (!toast.outlineColor.Equals((Color32)Ink)) toast.outlineColor = Ink;
+        }
+    }
+
+    private void WarnMissingToastResource(string missing)
+    {
+        if (toastResourceWarningLogged) return;
+        toastResourceWarningLogged = true;
+        Debug.LogWarning($"[InventoryUI] '{toast.name}' in scene '{toast.gameObject.scene.path}': missing {missing}. "
+            + "Check InventoryUI.Font and the toast TMP Font Asset / Material Preset in the Inspector.", toast);
     }
 
     private void AddButtonListeners()
