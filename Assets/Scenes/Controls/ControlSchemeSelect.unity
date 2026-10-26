@@ -1691,7 +1691,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 476ac932a2e6473b8a6517d60b03ab12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControlSchemeSelectScene
-  gameSceneName: PlayerMovementDemo
+  gameSceneName: Forest
   fadeDuration: 0.8
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

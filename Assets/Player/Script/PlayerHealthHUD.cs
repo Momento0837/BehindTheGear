@@ -5,9 +5,15 @@ using UnityEngine.UI;
 [RequireComponent(typeof(PlayerHealth))]
 public sealed class PlayerHealthHUD : MonoBehaviour
 {
+    public GameObject CanvasRoot => canvasRoot;
     private PlayerHealth playerHealth;
     private TMP_Text healthText;
     private GameObject canvasRoot;
+
+    public void PreserveHud()
+    {
+        if (canvasRoot != null) DontDestroyOnLoad(canvasRoot);
+    }
 
     private void Awake()
     {
