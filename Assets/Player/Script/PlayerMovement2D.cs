@@ -259,7 +259,10 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private bool IsGrounded()
     {
         ContactFilter2D filter = new();
-        filter.SetLayerMask(groundLayers);
+        int groundMask = groundLayers.value;
+        int monsterLayer = LayerMask.NameToLayer("Monster");
+        if (monsterLayer >= 0) groundMask &= ~(1 << monsterLayer);
+        filter.SetLayerMask(groundMask);
         filter.useTriggers = false;
         return box.Cast(Vector2.down, filter, groundHits, groundCheckDistance) > 0;
     }

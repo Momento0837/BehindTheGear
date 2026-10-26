@@ -1,8 +1,11 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering;
+using System.Collections.Generic;
 
 /// <summary>Follows the player horizontally and frames jumps with a small vertical camera shift.</summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(1000)]
 public sealed class PlayerCameraFollow2D : MonoBehaviour
 {
     [SerializeField] private Transform target;
@@ -26,6 +29,26 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float lookAheadVelocity;
     private float cameraZ;
     private float nextTargetSearchTime;
+    private readonly List<Bounds> mapArtwork = new();
+
+    public void SetStoryBounds(Vector2 bounds)
+    {
+        horizontalWorldBounds = bounds;
+        clampToHorizontalBounds = true;
+        mapArtwork.Clear();
+        foreach (var renderer in FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
+        {
+            if (renderer.gameObject.scene != gameObject.scene || !renderer.enabled || renderer.sprite == null) continue;
+            bool isMapArt = renderer.sprite.name.Contains("Layer") ||
+                (renderer.sprite.texture != null && renderer.sprite.texture.name.Contains("Layer"));
+            Bounds art = renderer.bounds;
+            float overlap = Mathf.Min(bounds.y, art.max.x) - Mathf.Max(bounds.x, art.min.x);
+            if (isMapArt && art.size.x > 10f && overlap > (bounds.y - bounds.x) * .5f)
+                mapArtwork.Add(art);
+        }
+        target = null;
+        if (TryFindTarget()) SnapToTarget();
+    }
 
     private void Awake()
     {
@@ -37,15 +60,20 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += HandleSceneLoaded;
+        RenderPipelineManager.beginCameraRendering -= ClampAtRender;
+        RenderPipelineManager.beginCameraRendering += ClampAtRender;
     }
 
     private void Start()
     {
         if (TryFindTarget()) SnapToTarget();
+        RenderPipelineManager.beginCameraRendering -= ClampAtRender;
+        RenderPipelineManager.beginCameraRendering += ClampAtRender;
     }
 
     private void LateUpdate()
     {
+        if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
         if (target == null)
         {
             if (Time.unscaledTime < nextTargetSearchTime || !TryFindTarget()) return;
@@ -124,27 +152,63 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         followVelocity = Vector3.zero;
         Vector3 position = target.position + new Vector3(followOffset.x, followOffset.y, 0f);
         if (!followVertical) position.y = fallingCameraY;
-        position.x = ClampHorizontalPosition(position.x);
         position.z = cameraZ;
+        transform.position = position;
+        if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
+        position.x = ClampHorizontalPosition(position.x);
         transform.position = position;
     }
 
     private float ClampHorizontalPosition(float x)
     {
-        if (!clampToHorizontalBounds || attachedCamera == null || !attachedCamera.orthographic)
+        if (!clampToHorizontalBounds || attachedCamera == null)
             return x;
 
-        float halfCameraWidth = attachedCamera.orthographicSize * attachedCamera.aspect;
-        float minCameraX = horizontalWorldBounds.x + halfCameraWidth;
-        float maxCameraX = horizontalWorldBounds.y - halfCameraWidth;
+        float minCameraX = float.NegativeInfinity;
+        float maxCameraX = float.PositiveInfinity;
+        LimitForPlane(horizontalWorldBounds.x, horizontalWorldBounds.y, 0f, ref minCameraX, ref maxCameraX);
+        foreach (Bounds art in mapArtwork)
+            LimitForPlane(art.min.x + .03f, art.max.x - .03f, art.center.z, ref minCameraX, ref maxCameraX);
         if (minCameraX > maxCameraX)
-            return (horizontalWorldBounds.x + horizontalWorldBounds.y) * .5f;
+            return (minCameraX + maxCameraX) * .5f;
 
         return Mathf.Clamp(x, minCameraX, maxCameraX);
+    }
+
+    private void LimitForPlane(float left, float right, float z, ref float minX, ref float maxX)
+    {
+        Plane plane = new Plane(Vector3.forward, new Vector3(0, 0, z));
+        float renderedX = attachedCamera.cameraToWorldMatrix.MultiplyPoint(Vector3.zero).x;
+        float leftOffset = float.PositiveInfinity;
+        float rightOffset = float.NegativeInfinity;
+        for (int i = 0; i < 4; i++)
+        {
+            Ray ray = attachedCamera.ViewportPointToRay(new Vector3(i % 2, i / 2, 0));
+            if (!plane.Raycast(ray, out float distance)) return;
+            float offset = ray.GetPoint(distance).x - renderedX;
+            leftOffset = Mathf.Min(leftOffset, offset);
+            rightOffset = Mathf.Max(rightOffset, offset);
+        }
+        minX = Mathf.Max(minX, left - leftOffset);
+        maxX = Mathf.Min(maxX, right - rightOffset);
+    }
+
+    private void ClampAtRender(ScriptableRenderContext context, Camera camera)
+    {
+        if (camera != attachedCamera || !clampToHorizontalBounds) return;
+        float renderedX = camera.cameraToWorldMatrix.MultiplyPoint(Vector3.zero).x;
+        float deltaX = ClampHorizontalPosition(renderedX) - renderedX;
+        if (Mathf.Abs(deltaX) < .00001f) return;
+        Matrix4x4 view = camera.worldToCameraMatrix;
+        transform.position += Vector3.right * deltaX;
+        camera.worldToCameraMatrix = view * Matrix4x4.Translate(Vector3.left * deltaX);
+        followVelocity.x = 0f;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= HandleSceneLoaded;
+        RenderPipelineManager.beginCameraRendering -= ClampAtRender;
+        if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
     }
 }

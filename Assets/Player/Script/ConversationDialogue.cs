@@ -34,6 +34,8 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Tooltip("Existing dialogue UI objects to enable only while dialogue is playing.")]
     [SerializeField] private GameObject[] dialogueUiObjects;
 
+    public void BindPlayer(PlayerControlLock value) => playerControlLock = value;
+
     public event Action Finished;
     public event Action LineRevealStarted;
     public event Action<char> CharacterRevealed;

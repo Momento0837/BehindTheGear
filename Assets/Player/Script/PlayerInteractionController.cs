@@ -15,6 +15,11 @@ public sealed class PlayerInteractionController : MonoBehaviour
     private ContactFilter2D interactionFilter;
     private readonly Collider2D[] interactionHits = new Collider2D[16];
 
+    public void PreservePrompt()
+    {
+        if (interactionPrompt != null) DontDestroyOnLoad(interactionPrompt.transform.root.gameObject);
+    }
+
     private void Awake()
     {
         playerHitbox = GetComponent<BoxCollider2D>();

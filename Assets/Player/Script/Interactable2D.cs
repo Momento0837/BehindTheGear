@@ -8,6 +8,9 @@ public sealed class Interactable2D : MonoBehaviour
 
     public void Interact(GameObject interactor)
     {
+        StoryInteraction2D story = GetComponent<StoryInteraction2D>();
+        if (story != null) { story.Interact(interactor); return; }
+
         onInteract?.Invoke();
 
         ScenePortal2D portal = GetComponent<ScenePortal2D>();

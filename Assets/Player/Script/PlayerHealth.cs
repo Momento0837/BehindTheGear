@@ -24,6 +24,15 @@ public sealed class PlayerHealth : MonoBehaviour
         CurrentHealth = maxHealth;
     }
 
+    public void ReviveAfterSceneRestart()
+    {
+        if (!IsDead) return;
+        CurrentHealth = maxHealth;
+        invincibilityEndTime = 0f;
+        playerControlLock.Release();
+        HealthChanged?.Invoke(CurrentHealth, maxHealth);
+    }
+
     public void TakeDamage(int attackPower)
     {
         if (attackPower <= 0 || IsDead || Time.time < invincibilityEndTime) return;

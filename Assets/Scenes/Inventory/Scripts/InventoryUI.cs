@@ -340,6 +340,7 @@ public sealed class InventoryUI : MonoBehaviour
     {
         toast.text = message;
         toast.gameObject.SetActive(true);
+        EnsureToastStyle();
         toastUntil = Time.unscaledTime + 3.5f;
     }
 
@@ -515,8 +516,8 @@ public sealed class InventoryUI : MonoBehaviour
         toast.rectTransform.anchoredPosition = new Vector2(0, -16);
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        toast.outlineWidth = .2f;
-        toast.outlineColor = Ink;
+        if (toast.isActiveAndEnabled) toast.outlineWidth = .2f;
+        if (toast.isActiveAndEnabled) toast.outlineColor = Ink;
         toast.gameObject.SetActive(false);
         EnsureToastStyle();
         dragIcon = Box("Dragged Item", root.transform, new Vector2(48, 48), new Color(1, 1, 1, .85f));
@@ -844,8 +845,8 @@ public sealed class InventoryUI : MonoBehaviour
         toast.fontWeight = FontWeight.Regular;
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        toast.outlineWidth = .2f;
-        toast.outlineColor = Ink;
+        if (toast.isActiveAndEnabled) toast.outlineWidth = .2f;
+        if (toast.isActiveAndEnabled) toast.outlineColor = Ink;
     }
 
     private void AddButtonListeners()

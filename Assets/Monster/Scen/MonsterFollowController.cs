@@ -18,6 +18,7 @@ public sealed class MonsterFollowController : MonoBehaviour
     [Header("Drops")]
     [SerializeField] private GameObject[] dropPrefabs;
 
+    private MonsterRangeTrigger2D attackSensor;
     private Rigidbody2D body;
     private PlayerHealth playerHealth;
     private bool hasRecognizedPlayer;
@@ -25,21 +26,40 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     public int CurrentHealth { get; private set; }
 
+    public void BindPlayer(Transform target)
+    {
+        player = target;
+        playerHealth = target != null ? target.GetComponent<PlayerHealth>() : null;
+        IgnorePlayerBodyCollision();
+    }
+
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
         body.freezeRotation = true;
         CurrentHealth = maxHealth;
+        CreateSensor(recognitionRange, false);
+        attackSensor = CreateSensor(attackRange, true);
         playerHealth = player != null ? player.GetComponent<PlayerHealth>() : null;
+        IgnorePlayerBodyCollision();
+    }
+
+    private void OnEnable() => IgnorePlayerBodyCollision();
+
+    private void IgnorePlayerBodyCollision()
+    {
+        if (player == null) return;
+        foreach (var monsterCollider in GetComponentsInChildren<Collider2D>(true))
+        {
+            if (monsterCollider.isTrigger) continue;
+            foreach (var playerCollider in player.GetComponentsInChildren<Collider2D>(true))
+                if (!playerCollider.isTrigger)
+                    Physics2D.IgnoreCollision(monsterCollider, playerCollider, true);
+        }
     }
 
     private void FixedUpdate()
     {
-        if (!hasRecognizedPlayer && IsPlayerInsideRecognitionRange())
-        {
-            hasRecognizedPlayer = true;
-        }
-
         if (!hasRecognizedPlayer || player == null || CurrentHealth <= 0)
         {
             Stop();
@@ -52,7 +72,7 @@ public sealed class MonsterFollowController : MonoBehaviour
             return;
         }
 
-        if (IsPlayerInsideAttackRange())
+        if (attackSensor != null && attackSensor.HasPlayer)
         {
             Stop();
             Attack();
@@ -62,16 +82,37 @@ public sealed class MonsterFollowController : MonoBehaviour
         MoveTowardsCurrentPlayerPosition();
     }
 
-    private bool IsPlayerInsideRecognitionRange()
+    public void RecognizePlayer(PlayerHealth health)
     {
-        return recognitionRange != null && player != null && recognitionRange.bounds.Contains(player.position);
+        if (health == null || health.IsDead) return;
+        player = health.transform;
+        playerHealth = health;
+        IgnorePlayerBodyCollision();
+        hasRecognizedPlayer = true;
     }
 
-    private bool IsPlayerInsideAttackRange()
+    private MonsterRangeTrigger2D CreateSensor(BoxCollider2D source, bool attack)
     {
-        return attackRange != null && player != null && attackRange.bounds.Contains(player.position);
+        if (source == null) return null;
+        string sensorName = attack ? "Attack Trigger" : "Recognition Trigger";
+        Transform child = transform.Find(sensorName);
+        if (child == null)
+        {
+            child = new GameObject(sensorName).transform;
+            child.SetParent(transform, false);
+        }
+        child.gameObject.layer = gameObject.layer;
+        var collider = child.GetComponent<BoxCollider2D>();
+        if (collider == null) collider = child.gameObject.AddComponent<BoxCollider2D>();
+        collider.size = source.size;
+        collider.offset = source.offset;
+        collider.isTrigger = true;
+        source.enabled = false;
+        var sensor = child.GetComponent<MonsterRangeTrigger2D>();
+        if (sensor == null) sensor = child.gameObject.AddComponent<MonsterRangeTrigger2D>();
+        sensor.Configure(this, attack);
+        return sensor;
     }
-
     private bool IsSightBlocked()
     {
         Vector2 origin = body.position;
