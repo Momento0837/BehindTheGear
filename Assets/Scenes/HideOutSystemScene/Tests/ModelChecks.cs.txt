@@ -1,0 +1,56 @@
+using System;
+using System.Collections.Generic;
+using BehindTheGear.HideOut;
+static class ModelChecks
+{
+    sealed class Catalog : IHideOutItems
+    {
+        public int MaxStack(string id) => id == "weapon" ? 1 : id == "bad" ? 0 : 50;
+        public string Name(string id) => id;
+    }
+    static int checks;
+    static void Check(bool value, string title) { if (!value) throw new Exception(title); checks++; Console.WriteLine("PASS " + title); }
+    static void Main()
+    {
+        var items = new Catalog();
+        var rules = new HideOutRules { facilities = new[] { new FacilityDefinition { facility = Facility.Storage, upgrades = new[] { new UpgradeCost(), new UpgradeCost() } } } };
+        var state = new HideOutSave(); HideOutModel.Normalize(state, rules);
+        Check(state.inventory.Count == 15 && state.storage.Count == 10, "default / legacy initialization");
+        Check(!HideOutModel.Upgrade(state,rules,Facility.Storage,out _) && state.levels[3] == 0 && state.coins == 0, "insufficient cost leaves all state intact");
+        state.coins = 50; state.actionPoints = 5; HideOutModel.Add(state.inventory,"hideout_scrap",4,items);
+        Check(HideOutModel.Upgrade(state,rules,Facility.Storage,out _) && state.coins == 40 && state.actionPoints == 4 && HideOutModel.Count(state.inventory,"hideout_scrap") == 2, "upgrade consumes full cost once");
+        Check(state.inventory.Count == 17 && state.storage.Count == 15, "storage upgrade +2 / +5");
+        for(int i=0;i<10;i++) HideOutModel.Normalize(state,rules);
+        Check(state.inventory.Count == 17 && state.storage.Count == 15, "reapply bonuses does not accumulate");
+        var source = new List<ItemStack>{ new("a",50),new("b",50) }; var target = new List<ItemStack>{new("a",49)};
+        Check(HideOutModel.Move(source,target,0,items) == 1 && source[0].count == 49 && target[0].count == 50, "partial transfer conserves quantity");
+        Check(HideOutModel.Move(source,target,0,items) == 0 && source[0].count == 49, "repeated full storage transfer loses nothing");
+        Check(HideOutModel.Move(source,source,0,items) == 0, "self-transfer cannot duplicate");
+        state.inventory = new(){new("a",4),new("b",5)}; state.storage = new(){new("a",1),new(),new()};
+        Check(HideOutModel.DepositExisting(state,items) == 4 && state.inventory[1].count == 5 && HideOutModel.Count(state.storage,"b") == 0, "deposit uses initial ID set");
+        var weapons = new List<ItemStack>{new(),new()};
+        Check(HideOutModel.Add(weapons,"weapon",3,items)==2 && weapons[0].count==1 && weapons[1].count==1, "equipment occupies individual slots");
+        state.hp=9;
+        Check(HideOutModel.Heal(state,rules,10,100,out _) && state.hp==10 && state.clinicReadyAt==700, "heal clamps max HP and starts 600 second cooldown");
+        Check(!HideOutModel.Heal(state,rules,10,800,out _) && state.clinicReadyAt==700, "full HP does not consume cooldown");
+        state.hp=1;
+        Check(!HideOutModel.Heal(state,rules,10,101,out _) && state.hp==1, "cooldown prevents repeated healing");
+        state.inventory=new(){new("a",50)};
+        Check(!HideOutModel.ReceivePotions(state,rules,items,1000,out _) && state.potionsReadyAt==0, "Selena lock");
+        state.selenaRecruited=true;
+        Check(!HideOutModel.ReceivePotions(state,rules,items,1000,out _) && state.potionsReadyAt==0, "full inventory preserves potion opportunity");
+        state.inventory.Add(new());
+        Check(HideOutModel.ReceivePotions(state,rules,items,1000,out _) && state.potionsReadyAt==1900 && HideOutModel.Count(state.inventory,"health_potion")==2, "delivery is atomic with 900 second cooldown");
+        state.levels[4]=100;
+        Check(HideOutModel.PotionCooldown(state,rules)==60 && state.potionsReadyAt==1900, "cooldown floor and ongoing deadline unchanged by upgrade");
+        state.levels[5]=3;
+        Check(HideOutModel.MaxMana(state,rules)==103 && HideOutModel.MaxMana(state,rules)==103,"gym scales base MP without compounding");
+        Check(HideOutModel.Tier(0)==0 && HideOutModel.Tier(2)==1 && HideOutModel.Tier(4)==2 && HideOutModel.Tier(6)==3 && HideOutModel.Tier(10)==3,"appearance 0/2/4/6 and above");
+        Check(!HideOutModel.Upgrade(state,rules,Facility.Dining,out _) && !HideOutModel.Upgrade(state,rules,Facility.Workshop,out _),"excluded facilities cannot upgrade");
+        var random = new Random(42); var a = new List<ItemStack>(); var b = new List<ItemStack>();
+        HideOutModel.Resize(a,10); HideOutModel.Resize(b,7); HideOutModel.Add(a,"a",173,items); HideOutModel.Add(a,"weapon",4,items);
+        for(int i=0;i<3000;i++) { var x=i%2==0?a:b; var y=i%2==0?b:a; HideOutModel.Move(x,y,random.Next(x.Count),items); }
+        Check(HideOutModel.Count(a,"a")+HideOutModel.Count(b,"a")==173 && HideOutModel.Count(a,"weapon")+HideOutModel.Count(b,"weapon")==4,"3000 mixed transfers conserve stacks and equipment");
+        Console.WriteLine($"{checks} checks passed");
+    }
+}
