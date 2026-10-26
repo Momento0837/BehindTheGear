@@ -1,0 +1,12 @@
+Font: PF Stardust ExtraBold  Style: Regular
+Point Size: 274   Padding: 24   SP/PD Ratio: 8.8%
+
+Characters included: 71/71
+Missing characters: 0
+Excluded characters: 0
+
+Characters missing from font file:
+----------------------------------------
+
+Characters excluded from packing:
+----------------------------------------
