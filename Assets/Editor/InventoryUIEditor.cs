@@ -47,6 +47,11 @@ public sealed class InventoryUIEditor : Editor
         {
             if (EditorUtility.IsPersistent(ui) || !ui.gameObject.scene.IsValid() || !ui.gameObject.scene.isLoaded
                 || EditorSceneManager.IsPreviewScene(ui.gameObject.scene)) continue;
+            if (HasDesignedCanvas(ui))
+            {
+                RemoveLegacyCanvas(ui);
+                continue;
+            }
             if (!ui.HasSceneUI && ui.CanCreateSceneUI) CreateUI(ui);
             else if (ui.HasSceneUI) RefreshEditableUI(ui);
         }
@@ -77,6 +82,11 @@ public sealed class InventoryUIEditor : Editor
         EditorGUILayout.Space();
         using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
         {
+            if (!ui.HasSceneUI && HasDesignedCanvas(ui))
+            {
+                EditorGUILayout.HelpBox("Inventory_Canvas is present. The legacy editable inventory canvas is disabled for this scene.", MessageType.Info);
+                return;
+            }
             if (!ui.HasSceneUI)
             {
                 EditorGUILayout.HelpBox("Create scene UI once to edit its layout before Play. Assign Inventory first.", MessageType.Info);
@@ -146,5 +156,26 @@ public sealed class InventoryUIEditor : Editor
         Selection.activeGameObject = obj;
         Tools.current = Tool.Rect;
         SceneView.lastActiveSceneView?.FrameSelected();
+    }
+
+    private static bool HasDesignedCanvas(InventoryUI ui)
+    {
+        foreach (Canvas candidate in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (candidate.gameObject.scene == ui.gameObject.scene && candidate.name == "Inventory_Canvas")
+                return true;
+        }
+        return false;
+    }
+
+    private static void RemoveLegacyCanvas(InventoryUI ui)
+    {
+        if (ui.gameObject.scene.path != "Assets/Scenes/Inventory/InventoryTestScene.unity") return;
+        foreach (Canvas candidate in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (candidate.gameObject.scene != ui.gameObject.scene || candidate.name != "Inventory Canvas") continue;
+            Undo.DestroyObjectImmediate(candidate.gameObject);
+            EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
+        }
     }
 }

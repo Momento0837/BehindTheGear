@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface IMeleeDamageModifier { int MeleeDamageBonus { get; } }
+public interface IMeleeDamageReceiver { void ReceiveMeleeDamage(int damage); }
+
 [RequireComponent(typeof(PlayerInputReader), typeof(BoxCollider2D))]
 public sealed class PlayerMeleeAttack : MonoBehaviour
 {
@@ -26,6 +29,25 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         Animator.StringToHash("Base Layer.Attack03")
     };
     private static readonly float[] AttackEffectDurations = { .5f, .5f, .62f };
+    public int ResolvedDamage
+    {
+        get
+        {
+            int result = attackDamage;
+            foreach (MonoBehaviour component in GetComponents<MonoBehaviour>())
+                if (component is IMeleeDamageModifier modifier) result += modifier.MeleeDamageBonus;
+            return Mathf.Max(1, result);
+        }
+    }
+
+    // Targeted training uses exactly the same damage and cooldown as normal melee attacks.
+    public bool TryAttackTarget(IMeleeDamageReceiver target)
+    {
+        if (target == null || Time.time < nextAttackTime) return false;
+        nextAttackTime = Time.time + attackCooldown;
+        target.ReceiveMeleeDamage(ResolvedDamage);
+        return true;
+    }
 
     private void Awake()
     {
@@ -49,7 +71,12 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
-            if (monster != null && hitMonsters.Add(monster)) monster.TakeDamage(attackDamage);
+            if (monster != null && hitMonsters.Add(monster)) monster.TakeDamage(ResolvedDamage);
+            else if (monster == null)
+            {
+                foreach (MonoBehaviour component in hitBuffer[i].GetComponents<MonoBehaviour>())
+                    if (component is IMeleeDamageReceiver receiver) { receiver.ReceiveMeleeDamage(ResolvedDamage); break; }
+            }
         }
     }
 

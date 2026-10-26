@@ -13,20 +13,25 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     [SerializeField] private TMP_Text itemName;
     private Color normal;
     private bool hasNormal;
+    private bool generateNameLabel = true;
+    private bool useLockedAlpha;
+    private bool locked;
     private static readonly Color DefaultNormal = new(.98f, .94f, .83f);
     private static readonly Color Hover = new(1f, .82f, .43f);
     private static readonly Color Amount = new(.08f, .06f, .04f);
 
     private void Awake() => CacheBackground();
 
-    public void Initialize(InventoryUI ui, int slotIndex, Image iconImage, TMP_Text amountText)
+    public void Initialize(InventoryUI ui, int slotIndex, Image iconImage, TMP_Text amountText, bool createNameLabel = true, bool applyLockedAlpha = false)
     {
         owner = ui;
         index = slotIndex;
         icon = iconImage;
         amount = amountText;
+        generateNameLabel = createNameLabel;
+        useLockedAlpha = applyLockedAlpha;
         CacheBackground();
-        EnsureNameLabel();
+        if (generateNameLabel) EnsureNameLabel();
         ApplyOwnerFont();
     }
 
@@ -35,7 +40,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         owner = ui;
         index = slotIndex;
         CacheBackground();
-        EnsureNameLabel();
+        if (generateNameLabel) EnsureNameLabel();
         ApplyOwnerFont();
     }
 
@@ -61,7 +66,16 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     public void ResetVisualState()
     {
         CacheBackground();
-        if (background != null) background.color = normal;
+        if (background != null)
+            background.color = useLockedAlpha
+                ? locked ? new Color(1f, 1f, 1f, .35f) : Color.white
+                : normal;
+    }
+
+    public void SetLocked(bool value)
+    {
+        locked = value;
+        ResetVisualState();
     }
 
     public void SetVisualSize(float slotSize)
@@ -119,16 +133,17 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         itemName.font = owner.UiFont;
     }
 
-    public void OnBeginDrag(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left) owner.BeginDrag(index, data); }
-    public void OnDrag(PointerEventData data) => owner.Drag(data);
+    public void OnBeginDrag(PointerEventData data) { if (!locked && data.button == PointerEventData.InputButton.Left) owner.BeginDrag(index, data); }
+    public void OnDrag(PointerEventData data) { if (!locked) owner.Drag(data); }
     public void OnEndDrag(PointerEventData data) => owner.CancelDrag();
-    public void OnDrop(PointerEventData data) { if (data.button == PointerEventData.InputButton.Left) owner.Drop(index); }
+    public void OnDrop(PointerEventData data) { if (!locked && data.button == PointerEventData.InputButton.Left) owner.Drop(index); }
     public void OnPointerClick(PointerEventData data)
     {
-        if (data.button == PointerEventData.InputButton.Left && data.clickCount >= 2) owner.DoubleClick(index);
+        if (!locked && data.button == PointerEventData.InputButton.Left && data.clickCount >= 2) owner.DoubleClick(index);
     }
     public void OnPointerEnter(PointerEventData data)
     {
+        if (locked) return;
         background.color = Hover;
         owner.ShowDetails(index);
     }

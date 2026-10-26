@@ -15,11 +15,13 @@ public sealed class InventoryUI : MonoBehaviour
     [SerializeField] private PlayerStats stats;
     [SerializeField] private TMP_FontAsset font;
     [SerializeField] private TMP_FontAsset detailFont;
+    [SerializeField] private TextAsset displayTextJson;
     [Header("Scene UI references (created by the editor setup)")]
     [SerializeField] private Canvas canvas;
     [SerializeField] private GameObject window;
     [SerializeField] private Button shortcutButton;
     [SerializeField] private Button closeButton;
+    [SerializeField] private Button[] additionalCloseButtons;
     [SerializeField] private InventorySlotUI[] slots;
     [SerializeField] private TMP_Text capacityText;
     [SerializeField] private TMP_Text detailText;
@@ -42,10 +44,14 @@ public sealed class InventoryUI : MonoBehaviour
 
     private int dragSource = -1;
     private float toastUntil;
+    private bool toastResourceWarningLogged;
     private bool ready;
     private bool ownsRuntimeCanvas;
     private Filter currentFilter;
     private bool hasEquipmentSoloLayout;
+    private bool usesDesignedCanvas;
+    private Canvas legacyCanvas;
+    private InventoryUITextCatalog textCatalog;
     private Vector2 equipmentSoloAnchorMin;
     private Vector2 equipmentSoloAnchorMax;
     private Vector2 equipmentSoloPivot;
@@ -85,6 +91,88 @@ public sealed class InventoryUI : MonoBehaviour
     public GameObject EquipmentStatsPanel => equipmentWindow;
     public TMP_FontAsset UiFont => font;
 
+    public void BindDesignedCanvas(
+        Canvas designedCanvas,
+        GameObject designedWindow,
+        Button primaryCloseButton,
+        Button[] extraCloseButtons,
+        InventorySlotUI[] designedSlots,
+        TMP_Text designedCapacityText,
+        TMP_Text designedDetailText,
+        Image designedDragIcon,
+        Button[] designedFilterButtons,
+        GameObject designedEquipmentWindow,
+        TMP_Text designedStatPointText,
+        TMP_Text designedStatMessageText,
+        TMP_Text[] designedStatRows,
+        Button[] designedStatButtons,
+        Button[] designedEquipmentButtons,
+        Image[] designedEquipmentIcons)
+    {
+        if (designedCanvas == null || designedWindow == null || primaryCloseButton == null
+            || designedSlots == null || designedSlots.Length == 0) return;
+
+        legacyCanvas = canvas != designedCanvas ? canvas : null;
+        canvas = designedCanvas;
+        window = designedWindow;
+        shortcutButton = null;
+        closeButton = primaryCloseButton;
+        additionalCloseButtons = extraCloseButtons;
+        slots = designedSlots;
+        capacityText = designedCapacityText;
+        detailText = designedDetailText;
+        toast = null;
+        dragIcon = designedDragIcon;
+        filterButtons = designedFilterButtons;
+        quickSlotText = null;
+        equipmentWindow = designedEquipmentWindow;
+        equipmentCloseButton = null;
+        statPointText = designedStatPointText;
+        statMessageText = designedStatMessageText;
+        statRows = designedStatRows;
+        statUpgradeButtons = designedStatButtons;
+        statBarFills = System.Array.Empty<Image>();
+        equipmentRows = System.Array.Empty<TMP_Text>();
+        equipmentUnequipButtons = designedEquipmentButtons;
+        equipmentSlotIcons = designedEquipmentIcons;
+        usesDesignedCanvas = true;
+
+        if (legacyCanvas != null) legacyCanvas.gameObject.SetActive(false);
+    }
+
+    internal string StatNameForBinding(int index)
+    {
+        PersonalStatType type = GetUiStatType(index);
+        return textCatalog != null ? textCatalog.StatName(type, GetUiStatLabel(index)) : GetUiStatLabel(index);
+    }
+
+    internal string CategoryNameForBinding(int index)
+    {
+        Filter filter = GetDesignedFilter(index);
+        return GetFilterLabel(filter);
+    }
+
+    internal void ShowStatDetailsForBinding(int index)
+    {
+        if (stats == null || index < 0 || index >= 5) return;
+        PersonalStatType type = GetUiStatType(index);
+        if (statPointText != null) statPointText.text = $"{StatNameForBinding(index)} {stats.GetValue(type)}";
+        if (statMessageText != null)
+            statMessageText.text = textCatalog != null
+                ? textCatalog.StatDescription(type, stats.GetEffectSummary(type))
+                : stats.GetEffectSummary(type);
+    }
+
+    internal void ShowEquipmentDetailsForBinding(int index)
+    {
+        if (detailText == null || index < 0 || index >= 6) return;
+        InventoryItemDefinition item = inventory.GetEquipped(GetEquipmentSlotForIndex(index));
+        if (item == null) return;
+        ApplyDetailTextStyle();
+        detailText.text = FormatUi("equipmentTooltipFormat", "<size=105%>{0}</size>\n{1}",
+            GetItemName(item), GetItemDescription(item) + GetEquipmentEffectDescription(item));
+    }
+
     private void Awake()
     {
         if (inventory == null)
@@ -97,14 +185,25 @@ public sealed class InventoryUI : MonoBehaviour
         if (stats == null) stats = inventory.Stats != null ? inventory.Stats : inventory.GetComponent<PlayerStats>();
         if (stats == null) stats = inventory.gameObject.AddComponent<PlayerStats>();
 
+        textCatalog = InventoryUITextCatalog.Load(displayTextJson);
+        bool designedCanvasBound = InventoryCanvasAdapter.TryBind(this);
+
         if (canvas == null)
         {
+            if (gameObject.scene.name == "InventoryTestScene")
+            {
+                Debug.LogError(designedCanvasBound
+                    ? "[InventoryUI] Inventory_Canvas binding did not assign its Canvas."
+                    : "[InventoryUI] Inventory_Canvas binding failed. Legacy inventory UI creation is disabled in InventoryTestScene.", this);
+                enabled = false;
+                return;
+            }
             CreateSceneUI();
             ownsRuntimeCanvas = true;
         }
 
-        if (window == null || shortcutButton == null || closeButton == null || capacityText == null
-            || detailText == null || toast == null || dragIcon == null || slots == null || slots.Length == 0)
+        if (window == null || closeButton == null || capacityText == null
+            || detailText == null || dragIcon == null || slots == null || slots.Length == 0)
         {
             Debug.LogError("[InventoryUI] Scene UI references are missing. Check this component in the Inspector.", this);
             enabled = false;
@@ -112,8 +211,11 @@ public sealed class InventoryUI : MonoBehaviour
         }
 
         EnsureEventSystem();
-        EnsureInventoryExtras();
-        EnsureEquipmentStatsWindow();
+        if (!usesDesignedCanvas)
+        {
+            EnsureInventoryExtras();
+            EnsureEquipmentStatsWindow();
+        }
         CaptureEquipmentSoloLayout();
         ArrangeInventoryWindowLayout();
         ApplyStaticLabels();
@@ -125,7 +227,7 @@ public sealed class InventoryUI : MonoBehaviour
         Refresh();
         CloseInventory();
         CloseEquipmentStats();
-        toast.gameObject.SetActive(false);
+        if (toast != null) toast.gameObject.SetActive(false);
         CancelDrag();
     }
 
@@ -137,10 +239,17 @@ public sealed class InventoryUI : MonoBehaviour
         inventory.ItemUsed += Used;
         inventory.InventoryFull += Full;
         if (stats != null) stats.Changed += Refresh;
-        shortcutButton.onClick.AddListener(ToggleInventoryFromButton);
+        if (shortcutButton != null) shortcutButton.onClick.AddListener(ToggleInventoryFromButton);
         closeButton.onClick.AddListener(CloseInventoryFromButton);
+        if (additionalCloseButtons != null)
+            foreach (Button button in additionalCloseButtons)
+                if (button != null) button.onClick.AddListener(CloseInventoryFromButton);
         if (equipmentCloseButton != null) equipmentCloseButton.onClick.AddListener(CloseEquipmentStatsFromButton);
-        if (canvas != null) { canvas.gameObject.SetActive(true); Refresh(); }
+        if (canvas != null)
+        {
+            if (canvas.gameObject != window) canvas.gameObject.SetActive(true);
+            Refresh();
+        }
     }
 
     private void OnDisable()
@@ -156,6 +265,9 @@ public sealed class InventoryUI : MonoBehaviour
         if (stats != null) stats.Changed -= Refresh;
         if (shortcutButton != null) shortcutButton.onClick.RemoveListener(ToggleInventoryFromButton);
         if (closeButton != null) closeButton.onClick.RemoveListener(CloseInventoryFromButton);
+        if (additionalCloseButtons != null)
+            foreach (Button button in additionalCloseButtons)
+                if (button != null) button.onClick.RemoveListener(CloseInventoryFromButton);
         if (equipmentCloseButton != null) equipmentCloseButton.onClick.RemoveListener(CloseEquipmentStatsFromButton);
         CancelDrag();
         if (!Application.isPlaying) return;
@@ -179,7 +291,7 @@ public sealed class InventoryUI : MonoBehaviour
         if (Keyboard.current?.digit1Key.wasPressedThisFrame == true) UseQuickSlot(0);
         if (Keyboard.current?.digit2Key.wasPressedThisFrame == true) UseQuickSlot(1);
         if (Keyboard.current?.digit3Key.wasPressedThisFrame == true) UseQuickSlot(2);
-        if (toast.gameObject.activeSelf && Time.unscaledTime >= toastUntil) toast.gameObject.SetActive(false);
+        if (toast != null && toast.gameObject.activeSelf && Time.unscaledTime >= toastUntil) toast.gameObject.SetActive(false);
     }
 
     private void OnApplicationFocus(bool focused) { if (!focused) CancelDrag(); }
@@ -198,6 +310,11 @@ public sealed class InventoryUI : MonoBehaviour
 
         Refresh();
         window.SetActive(true);
+        if (usesDesignedCanvas)
+        {
+            InventoryCanvasAdapter.RefreshStatHoverBindings(this);
+            InventoryHoverReveal.HideAll(window);
+        }
         if (equipmentWindow != null && equipmentWindow.activeSelf) ArrangeEquipmentBesideInventory();
     }
 
@@ -317,14 +434,23 @@ public sealed class InventoryUI : MonoBehaviour
         int questUsed = CountUsed(true);
         for (int i = 0; i < slots.Length; i++)
         {
-            bool visible = i < displayedSlotCount;
+            bool visible = usesDesignedCanvas || i < displayedSlotCount;
             slots[i].gameObject.SetActive(visible);
             if (!visible) continue;
 
+            bool unlocked = i < (currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity);
+            slots[i].SetLocked(!unlocked);
             slots[i].ResetVisualState();
-            slots[i].Refresh(GetDisplayedSlot(i));
+            slots[i].Refresh(unlocked ? GetDisplayedSlot(i) : null);
         }
-        capacityText.text = $"가방 {used} / {inventory.Capacity}     퀘스트 {questUsed} / {inventory.QuestCapacity}     분류: {GetFilterLabel(currentFilter)}";
+        capacityText.text = FormatUi(
+            "capacityFormat",
+            "가방 {0} / {1}     퀘스트 {2} / {3}     분류: {4}",
+            used,
+            inventory.Capacity,
+            questUsed,
+            inventory.QuestCapacity,
+            GetFilterLabel(currentFilter));
         RefreshFilterButtons();
         RefreshQuickSlots();
         RefreshStats();
@@ -332,15 +458,19 @@ public sealed class InventoryUI : MonoBehaviour
         ShowDetails(-1);
     }
 
-    private void Collected(InventoryItemDefinition item, int amount) => Notify($"{item.DisplayName} +{amount} | [I] 인벤토리");
-    private void Used(InventoryItemDefinition item) => Notify($"{item.DisplayName}을 사용했습니다.");
+    private void Collected(InventoryItemDefinition item, int amount) => Notify($"{GetItemName(item)} +{amount} | {UiText("inventoryHint", "[I] 인벤토리")}");
+    private void Used(InventoryItemDefinition item) => Notify($"{GetItemName(item)}을 사용했습니다.");
     private void Full() => Notify("인벤토리가 가득 찼습니다.");
 
     private void Notify(string message)
     {
+        if (toast == null)
+        {
+            if (detailText != null) detailText.text = message;
+            return;
+        }
         toast.text = message;
         toast.gameObject.SetActive(true);
-        EnsureToastStyle();
         toastUntil = Time.unscaledTime + 3.5f;
     }
 
@@ -349,8 +479,14 @@ public sealed class InventoryUI : MonoBehaviour
         ApplyDetailTextStyle();
         PlayerInventory.Slot slot = GetDisplayedSlot(index);
         detailText.text = slot == null || slot.IsEmpty
-            ? "아이템 위에 마우스를 올리면 이름, 카테고리, 설명이 표시됩니다.\n소비 아이템은 더블클릭 또는 숫자키 1~3으로 사용할 수 있습니다."
-            : $"<size=105%>{slot.Item.DisplayName}</size>  x{slot.Amount}\n카테고리: {slot.Item.GetCategoryLabel()}\n{slot.Item.Description}";
+            ? UiText("emptyTooltip", "아이템 위에 마우스를 올리면 설명을 확인할 수 있습니다.")
+            : FormatUi(
+                "tooltipFormat",
+                "<size=105%>{0}</size>  x{1}\n카테고리: {2}\n{3}",
+                GetItemName(slot.Item),
+                slot.Amount,
+                GetItemCategoryName(slot.Item),
+                GetItemDescription(slot.Item) + GetEquipmentEffectDescription(slot.Item));
     }
 
     public void BeginDrag(int index, PointerEventData data)
@@ -398,7 +534,7 @@ public sealed class InventoryUI : MonoBehaviour
         int equipmentSlotIndex = GetInventorySlotIndexForDisplay(index);
         if (item.IsEquipment && equipmentSlotIndex >= 0 && inventory.EquipFromSlot(equipmentSlotIndex))
         {
-            Notify($"{item.DisplayName} 장착 완료");
+            Notify($"{GetItemName(item)} 장착 완료");
             return;
         }
 
@@ -516,8 +652,6 @@ public sealed class InventoryUI : MonoBehaviour
         toast.rectTransform.anchoredPosition = new Vector2(0, -16);
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        if (toast.isActiveAndEnabled) toast.outlineWidth = .2f;
-        if (toast.isActiveAndEnabled) toast.outlineColor = Ink;
         toast.gameObject.SetActive(false);
         EnsureToastStyle();
         dragIcon = Box("Dragged Item", root.transform, new Vector2(48, 48), new Color(1, 1, 1, .85f));
@@ -555,6 +689,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void ArrangeInventoryWindowLayout()
     {
         if (window == null) return;
+        if (usesDesignedCanvas) return;
 
         RectTransform windowRect = (RectTransform)window.transform;
         windowRect.sizeDelta = new Vector2(WindowWidth, WindowHeight);
@@ -601,6 +736,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void ArrangeFilterTabs()
     {
         if (filterButtons == null) return;
+        if (usesDesignedCanvas) return;
 
         for (int i = 0; i < filterButtons.Length; i++)
         {
@@ -619,7 +755,10 @@ public sealed class InventoryUI : MonoBehaviour
         for (int i = 0; i < filterButtons.Length; i++)
         {
             if (filterButtons[i] == null) continue;
-            bool selected = (int)currentFilter == i;
+            bool selected = usesDesignedCanvas
+                ? currentFilter == GetDesignedFilter(i)
+                : (int)currentFilter == i;
+            if (usesDesignedCanvas) continue;
             Image image = filterButtons[i].targetGraphic as Image;
             if (image != null) image.color = selected ? new Color(.87f, .60f, .25f) : new Color(.45f, .30f, .18f);
             TMP_Text label = filterButtons[i].GetComponentInChildren<TMP_Text>();
@@ -839,19 +978,64 @@ public sealed class InventoryUI : MonoBehaviour
         Transform background = toast.transform.parent != null ? toast.transform.parent.Find("Pickup Message Back") : null;
         if (background != null) DestroyUiObject(background.gameObject);
 
-        if (font != null) toast.font = font;
+        // A disabled TMP object can retain its font while its material instance is gone.
+        // Assigning the same font again is a no-op in TMP, so repair the material explicitly.
+        TMP_FontAsset toastFont = font != null ? font : toast.font;
+        Material toastMaterial = toast.fontSharedMaterial;
+        if (toastFont == null || toastFont.atlasTexture == null)
+        {
+            WarnMissingToastResource("Font Asset or font atlas texture");
+            return;
+        }
+
+        if (toastMaterial == null)
+            toastMaterial = toastFont.material;
+
+        if (toastMaterial == null || toastMaterial.shader == null
+            || !toastMaterial.HasProperty("_MainTex")
+            || toastMaterial.GetTexture("_MainTex") != toastFont.atlasTexture
+            || !toastMaterial.HasProperty("_OutlineWidth") || !toastMaterial.HasProperty("_OutlineColor"))
+        {
+            WarnMissingToastResource("compatible Font Material (atlas / outline shader properties)");
+            return;
+        }
+
+        if (toast.font != toastFont) toast.font = toastFont;
+        if (toast.fontSharedMaterial != toastMaterial) toast.fontSharedMaterial = toastMaterial;
+        toastResourceWarningLogged = false;
         toast.fontSize = 20;
         toast.fontStyle = FontStyles.Normal;
         toast.fontWeight = FontWeight.Regular;
         toast.alignment = TextAlignmentOptions.Center;
         toast.color = Cream;
-        if (toast.isActiveAndEnabled) toast.outlineWidth = .2f;
-        if (toast.isActiveAndEnabled) toast.outlineColor = Ink;
+        if (!Mathf.Approximately(toast.outlineWidth, .2f) || !toast.outlineColor.Equals((Color32)Ink))
+        {
+            // TMP owns and reuses this instance; never write to the shared font/preset asset.
+            // Establish it before the outline setters, including on inactive text objects.
+            _ = toast.fontMaterial;
+            if (!Mathf.Approximately(toast.outlineWidth, .2f)) toast.outlineWidth = .2f;
+            if (!toast.outlineColor.Equals((Color32)Ink)) toast.outlineColor = Ink;
+        }
+    }
+
+    private void WarnMissingToastResource(string missing)
+    {
+        if (toastResourceWarningLogged) return;
+        toastResourceWarningLogged = true;
+        Debug.LogWarning($"[InventoryUI] '{toast.name}' in scene '{toast.gameObject.scene.path}': missing {missing}. "
+            + "Check InventoryUI.Font and the toast TMP Font Asset / Material Preset in the Inspector.", toast);
     }
 
     private void AddButtonListeners()
     {
-        if (filterButtons != null && filterButtons.Length >= 5)
+        if (usesDesignedCanvas && filterButtons != null && filterButtons.Length >= 4)
+        {
+            filterButtons[0].onClick.AddListener(() => SetFilter(Filter.Misc));
+            filterButtons[1].onClick.AddListener(() => SetFilter(Filter.Consumable));
+            filterButtons[2].onClick.AddListener(() => SetFilter(Filter.Equipment));
+            filterButtons[3].onClick.AddListener(() => SetFilter(Filter.Quest));
+        }
+        else if (filterButtons != null && filterButtons.Length >= 5)
         {
             filterButtons[0].onClick.AddListener(() => SetFilter(Filter.All));
             filterButtons[1].onClick.AddListener(() => SetFilter(Filter.Misc));
@@ -978,13 +1162,13 @@ public sealed class InventoryUI : MonoBehaviour
     private void RefreshQuickSlots()
     {
         if (quickSlotText == null) return;
-        string text = "퀵슬롯  ";
+        string text = string.Empty;
         for (int i = 0; i < inventory.QuickSlotCount; i++)
         {
             InventoryItemDefinition item = inventory.GetQuickSlot(i);
-            text += $"[{i + 1}] {(item != null ? item.DisplayName : "-")}  ";
+            text += $"[{i + 1}] {(item != null ? GetItemName(item) : "-")}  ";
         }
-        quickSlotText.text = text;
+        quickSlotText.text = FormatUi("quickSlotFormat", "퀵슬롯 {0}", text);
     }
 
     private void RefreshStats()
@@ -1001,7 +1185,7 @@ public sealed class InventoryUI : MonoBehaviour
         {
             PersonalStatType type = GetUiStatType(i);
             int value = stats.GetValue(type);
-            statRows[i].text = $"{GetUiStatLabel(i)} {value}";
+            statRows[i].text = $"{StatNameForBinding(i)} {value}";
             if (statBarFills != null && i < statBarFills.Length && statBarFills[i] != null)
             {
                 RectTransform fill = statBarFills[i].rectTransform;
@@ -1011,12 +1195,18 @@ public sealed class InventoryUI : MonoBehaviour
                 fill.offsetMax = Vector2.zero;
             }
         }
+
+        if (statMessageText != null && string.IsNullOrEmpty(statMessageText.text))
+        {
+            PersonalStatType first = GetUiStatType(0);
+            statMessageText.text = textCatalog != null
+                ? textCatalog.StatDescription(first, stats.GetEffectSummary(first))
+                : stats.GetEffectSummary(first);
+        }
     }
 
     private void RefreshEquipment()
     {
-        if (equipmentRows == null || equipmentRows.Length < 6) return;
-
         SetEquipmentRow(0, InventoryItemDefinition.EquipmentSlot.Weapon);
         SetEquipmentRow(1, InventoryItemDefinition.EquipmentSlot.Armor);
         SetEquipmentRow(2, InventoryItemDefinition.EquipmentSlot.Accessory);
@@ -1025,12 +1215,24 @@ public sealed class InventoryUI : MonoBehaviour
         SetEquipmentRow(5, InventoryItemDefinition.EquipmentSlot.Other);
     }
 
+    private static InventoryItemDefinition.EquipmentSlot GetEquipmentSlotForIndex(int index)
+    {
+        return index switch
+        {
+            0 => InventoryItemDefinition.EquipmentSlot.Weapon,
+            1 => InventoryItemDefinition.EquipmentSlot.Armor,
+            2 => InventoryItemDefinition.EquipmentSlot.Accessory,
+            3 => InventoryItemDefinition.EquipmentSlot.Head,
+            4 => InventoryItemDefinition.EquipmentSlot.Shoes,
+            _ => InventoryItemDefinition.EquipmentSlot.Other
+        };
+    }
+
     private void SetEquipmentRow(int index, InventoryItemDefinition.EquipmentSlot slot)
     {
-        if (index < 0 || index >= equipmentRows.Length || equipmentRows[index] == null) return;
-
         InventoryItemDefinition item = inventory.GetEquipped(slot);
-        equipmentRows[index].text = item != null ? item.DisplayName : GetEquipmentSlotLabel(slot);
+        if (equipmentRows != null && index >= 0 && index < equipmentRows.Length && equipmentRows[index] != null)
+            equipmentRows[index].text = item != null ? GetItemName(item) : GetEquipmentSlotLabel(slot);
         if (equipmentUnequipButtons != null && index < equipmentUnequipButtons.Length && equipmentUnequipButtons[index] != null)
             equipmentUnequipButtons[index].interactable = item != null;
         if (equipmentSlotIcons != null && index < equipmentSlotIcons.Length && equipmentSlotIcons[index] != null)
@@ -1049,6 +1251,11 @@ public sealed class InventoryUI : MonoBehaviour
     private void ApplyDetailTextStyle()
     {
         if (detailText == null) return;
+        if (usesDesignedCanvas)
+        {
+            detailText.richText = true;
+            return;
+        }
 
         if (detailFont != null) detailText.font = detailFont;
         detailText.fontStyle = FontStyles.Normal;
@@ -1058,6 +1265,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void MatchSlotCount()
     {
+        if (usesDesignedCanvas) return;
         int count = Mathf.Max(inventory.Capacity, inventory.QuestCapacity);
         int previousCount = slots.Length;
         if (count == previousCount) return;
@@ -1082,11 +1290,13 @@ public sealed class InventoryUI : MonoBehaviour
 
     private int GetDisplayedSlotCount()
     {
+        if (usesDesignedCanvas) return slots != null ? slots.Length : 0;
         return currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity;
     }
 
     private void ApplySlotLayout(int slotCount)
     {
+        if (usesDesignedCanvas) return;
         if (slotCount <= 0 || slots == null || slots.Length == 0 || slots[0] == null) return;
 
         RectTransform content = GetSlotContent();
@@ -1245,9 +1455,21 @@ public sealed class InventoryUI : MonoBehaviour
         else DestroyImmediate(component);
     }
 
-    private static string GetFilterLabel(Filter filter)
+    private static Filter GetDesignedFilter(int index)
     {
-        return filter switch
+        return index switch
+        {
+            0 => Filter.Misc,
+            1 => Filter.Consumable,
+            2 => Filter.Equipment,
+            3 => Filter.Quest,
+            _ => Filter.All
+        };
+    }
+
+    private string GetFilterLabel(Filter filter)
+    {
+        string fallback = filter switch
         {
             Filter.Misc => "잡화",
             Filter.Consumable => "소비",
@@ -1255,11 +1477,12 @@ public sealed class InventoryUI : MonoBehaviour
             Filter.Quest => "퀘스트",
             _ => "전체"
         };
+        return textCatalog != null ? textCatalog.CategoryName(filter.ToString(), fallback) : fallback;
     }
 
-    private static string GetEquipmentSlotLabel(InventoryItemDefinition.EquipmentSlot slot)
+    private string GetEquipmentSlotLabel(InventoryItemDefinition.EquipmentSlot slot)
     {
-        return slot switch
+        string fallback = slot switch
         {
             InventoryItemDefinition.EquipmentSlot.Weapon => "무기",
             InventoryItemDefinition.EquipmentSlot.Armor => "방어구",
@@ -1269,6 +1492,56 @@ public sealed class InventoryUI : MonoBehaviour
             InventoryItemDefinition.EquipmentSlot.Other => "기타",
             _ => "장비"
         };
+        return textCatalog != null ? textCatalog.EquipmentSlotName(slot, fallback) : fallback;
+    }
+
+    private string GetItemName(InventoryItemDefinition item)
+    {
+        return textCatalog != null ? textCatalog.ItemName(item) : item != null ? item.DisplayName : string.Empty;
+    }
+
+    private string GetItemDescription(InventoryItemDefinition item)
+    {
+        return textCatalog != null ? textCatalog.ItemDescription(item) : item != null ? item.Description : string.Empty;
+    }
+
+    private string GetItemCategoryName(InventoryItemDefinition item)
+    {
+        if (item == null) return string.Empty;
+        string fallback = item.GetCategoryLabel();
+        return textCatalog != null ? textCatalog.CategoryName(item.Category, fallback) : fallback;
+    }
+
+    private string GetEquipmentEffectDescription(InventoryItemDefinition item)
+    {
+        if (item == null || !item.IsEquipment || !item.HasStatModifiers || item.StatModifiers == null) return string.Empty;
+
+        string result = string.Empty;
+        foreach (ItemStatModifier modifier in item.StatModifiers)
+        {
+            if (modifier.Increase <= 0) continue;
+            string statName = textCatalog != null
+                ? textCatalog.StatName(modifier.StatType, PlayerStats.GetDisplayName(modifier.StatType))
+                : PlayerStats.GetDisplayName(modifier.StatType);
+            result += "\n" + FormatUi("equipmentEffectFormat", "{0} +{1}", statName, modifier.Increase);
+        }
+        return result;
+    }
+
+    private string UiText(string id, string fallback)
+    {
+        return textCatalog != null ? textCatalog.Ui(id, fallback) : fallback;
+    }
+
+    private string FormatUi(string id, string fallback, params object[] values)
+    {
+        string format = UiText(id, fallback);
+        try { return string.Format(format, values); }
+        catch (System.FormatException)
+        {
+            Debug.LogWarning($"[InventoryUI] Invalid display format '{id}' in inventory_ui_text.json.", this);
+            return string.Format(fallback, values);
+        }
     }
 
     // The visible RPG labels map onto the project-specific stat model used by PlayerStats.

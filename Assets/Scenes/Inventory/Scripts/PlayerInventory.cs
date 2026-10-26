@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -42,6 +43,24 @@ public sealed class PlayerInventory : MonoBehaviour
     public event Action<InventoryItemDefinition, int> ItemCollected;
     public event Action<InventoryItemDefinition> ItemUsed;
     public event Action InventoryFull;
+    private readonly Dictionary<string, int> capacityBonuses = new();
+
+    public void SetCapacityBonus(string source, int amount)
+    {
+        if (capacityBonuses.TryGetValue(source, out int previous) && previous == amount) return;
+        capacityBonuses[source] = Mathf.Max(0, amount);
+        EnsureSlots();
+        Changed?.Invoke();
+    }
+
+    // Used by transactional storage/save adapters after validating the entire snapshot.
+    public void RestoreEquipmentAndQuickSlots(InventoryItemDefinition[] equipment, InventoryItemDefinition[] quick)
+    {
+        for (int i = 1; i <= 6; i++) SetEquipped((InventoryItemDefinition.EquipmentSlot)i, equipment[i - 1]);
+        for (int i = 0; i < QuickSlotCount; i++) quickSlots[i] = quick[i];
+    }
+
+    public void NotifyContentsChanged() => Changed?.Invoke();
 
     public PlayerStats Stats => stats;
     public int ConfiguredCapacity => Mathf.Clamp(capacity, 1, 120);
@@ -75,7 +94,11 @@ public sealed class PlayerInventory : MonoBehaviour
     private void EnsureSlots()
     {
         int generalCapacity = ConfiguredCapacity + (stats != null ? stats.Attack * slotsPerAttackStat : 0);
-        ResizeSlots(ref slots, Mathf.Clamp(generalCapacity, 1, 120));
+        foreach (int bonus in capacityBonuses.Values) generalCapacity += bonus;
+        // Never truncate occupied slots when a temporary bonus is removed.
+        int occupiedLength = 0;
+        if (slots != null) for (int i = 0; i < slots.Length; i++) if (slots[i] != null && !slots[i].IsEmpty) occupiedLength = i + 1;
+        ResizeSlots(ref slots, Mathf.Max(generalCapacity, occupiedLength));
         ResizeSlots(ref questSlots, Mathf.Clamp(questCapacity, 1, 30));
 
         if (quickSlots == null || quickSlots.Length != QuickSlotCount)

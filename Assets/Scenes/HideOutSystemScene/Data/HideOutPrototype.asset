@@ -1,0 +1,364 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 380c65a68f8d4685bf695c06e4e92a51, type: 3}
+  m_Name: HideOutPrototype
+  m_EditorClassIdentifier:
+  rules:
+    baseHealing: 5
+    baseStorageSlots: 10
+    bedHPPerLevel: 10
+    inventorySlotsPerLevel: 2
+    storageSlotsPerLevel: 5
+    clinicCooldown: 600
+    potionCooldown: 900
+    potionReduction: 30
+    minimumPotionCooldown: 60
+    clinicPercentPerLevel: 0.01
+    gymPercentPerLevel: 0.01
+    baseMana: 100
+    potionCount: 2
+    potionId: health_potion
+    offlineCooldown: 1
+    facilities:
+    - facility: 0
+      title: 치료 부스
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+    - facility: 1
+      title: 침대
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+    - facility: 2
+      title: 허수아비
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+    - facility: 3
+      title: 창고
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+    - facility: 4
+      title: 물약 보관대
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+    - facility: 5
+      title: 체력단련실
+      upgrades:
+      - coins: 10
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 2
+      - coins: 20
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 4
+      - coins: 30
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 6
+      - coins: 40
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 8
+      - coins: 50
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 10
+      - coins: 60
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 12
+      - coins: 70
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 14
+      - coins: 80
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 16
+      - coins: 90
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 18
+      - coins: 100
+        actionPoints: 1
+        materials:
+        - itemId: hideout_scrap
+          amount: 20
+  font: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  items:
+  - {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}
+  - {fileID: 11400000, guid: 827c77effb72482181f134b6e55728dd, type: 2}
+  - {fileID: 11400000, guid: 644e5b747a684e5695f7129042e0ecb5, type: 2}
+  - {fileID: 11400000, guid: 509a4e4686b34fae82f7b67091f78168, type: 2}
+  - {fileID: 11400000, guid: a5a85a23e3084a11a6f4ccd7793b1164, type: 2}
+  - {fileID: 11400000, guid: f1e592654b504720a15535c7edc8a3a9, type: 2}
+  scenePath: Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity
+  testWeaponId: hideout_test_weapon
+  appearanceSprites:
+  - {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
+  - {fileID: 21300000, guid: a794e29c376f470f91bf1495869971a5, type: 3}
+  - {fileID: 21300000, guid: 631adc26a4664548bbce5dc635905579, type: 3}
+  - {fileID: 21300000, guid: 42fc3752047943788f7576bd3ac7512b, type: 3}
