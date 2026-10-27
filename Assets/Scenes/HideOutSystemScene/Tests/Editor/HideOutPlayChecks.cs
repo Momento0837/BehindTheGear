@@ -26,7 +26,7 @@ public static class HideOutPlayChecks
     [MenuItem("Tools/HideOut/Run isolated play checks %#F9")]
     public static void Run()
     {
-        if (!Application.isPlaying || running) { Debug.LogWarning("Enter Play mode in HideOut first."); return; }
+        if (!Application.isPlaying || running) { Debug.LogWarning("Enter Play mode before running HideOut checks."); return; }
         if (Application.unityVersion != "6000.3.23f1") throw new InvalidOperationException("Required Unity: 6000.3.23f1");
         running = true; checks = 0; Report.Clear();
         runtimeErrors = eventSystemWarnings = 0; Application.logMessageReceived += ObserveLog;
@@ -133,10 +133,21 @@ public static class HideOutPlayChecks
 
         // Unsaved runtime origin: exercises the real prefab and real HideOut asset without editing teammate scenes.
         yield return null;
+        var startupPlayer = Object.FindFirstObjectByType<PersistentPlayer2D>();
+        if (startupPlayer != null)
+        {
+            // Normal Play mode starts in Forest and creates its own persistent player.
+            // Remove only that runtime copy so the isolated actor can own persistence.
+            Object.Destroy(startupPlayer.gameObject);
+            yield return null;
+        }
         b.gameObject.AddComponent<PersistentPlayer2D>();
         var body = b.gameObject.AddComponent<Rigidbody2D>(); body.gravityScale = 0;
         var input = b.GetComponent<PlayerInputReader>(); input.enabled = true;
-        Scene original = SceneManager.GetSceneByPath(settings.scenePath);
+        // ProjectStartupScene routes normal Play mode through Forest. Capture and
+        // unload whichever runtime scene actually started so this check remains
+        // isolated without changing the project's shared startup-scene policy.
+        Scene original = SceneManager.GetActiveScene();
         Scene origin = SceneManager.CreateScene("HideOut Validation Origin"); SceneManager.SetActiveScene(origin);
         var sentinel = new GameObject("Origin state retained"); var inactive = new GameObject("Origin inactive retained"); inactive.SetActive(false);
         var sourceEvents = new GameObject("Origin EventSystem"); sourceEvents.SetActive(false);
@@ -147,6 +158,9 @@ public static class HideOutPlayChecks
         Check(entrance.settings == settings && entrance.GetComponent<BoxCollider2D>().isTrigger, "entrance prefab references and trigger");
         var unload = SceneManager.UnloadSceneAsync(original); while (!unload.isDone) yield return null;
         sourceEvents.SetActive(true);
+        // The last save-failure probe and the entrance both use the same
+        // same-frame command guard; advance once before beginning travel.
+        yield return null;
         int hpBeforeTravel=b.Health.CurrentHealth, bagBeforeTravel=b.Inventory.Capacity;
         string weaponBeforeTravel=b.State.equipment[0];
         entrance.GetComponent<Interactable2D>().Interact(b.gameObject);

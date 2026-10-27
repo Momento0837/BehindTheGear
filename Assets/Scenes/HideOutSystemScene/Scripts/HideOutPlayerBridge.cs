@@ -242,6 +242,29 @@ namespace BehindTheGear.HideOut
             if (!Sandbox) { SetMessage("테스트 자원은 직접 실행 샌드박스에서만 사용할 수 있습니다."); return; }
             Change(s => { s.coins += 1000; s.actionPoints += 100; HideOutModel.Add(s.inventory, "hideout_scrap", 100, Settings); s.equipment[0] = Settings.testWeaponId; s.hp = Math.Max(1, Health.MaxHealth / 2); return "테스트 자원 지급 · 연습 무기 장착 · HP 50%"; });
         }
+        public void ResetTestProgress()
+        {
+            if (!Sandbox) { SetMessage("테스트 초기화는 직접 실행 샌드박스에서만 사용할 수 있습니다."); return; }
+            Change(s =>
+            {
+                s.levels = new int[8];
+                s.coins = 0;
+                s.actionPoints = 0;
+                s.inventory = new List<ItemStack>();
+                s.questInventory = new List<ItemStack>();
+                s.storage = new List<ItemStack>();
+                s.equipment = new string[6];
+                s.quickSlots = new string[3];
+                s.selenaRecruited = false;
+                s.clinicReadyAt = 0;
+                s.potionsReadyAt = 0;
+                s.activeClock = 0;
+                s.baseMana = Settings.rules.baseMana;
+                s.mana = s.baseMana;
+                HideOutModel.Normalize(s, Settings.rules);
+                return "테스트 초기화 완료 · 시설/자원/창고/해금/쿨타임 초기화";
+            });
+        }
         public void TestRecruit() { if (Sandbox) SetSelenaRecruited(); }
         public void TestResetCooldowns() { if (Sandbox) Change(s => { s.clinicReadyAt = s.potionsReadyAt = 0; return "테스트 쿨타임 초기화"; }); }
 #endif

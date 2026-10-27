@@ -362,3 +362,20 @@ MonoBehaviour:
   - {fileID: 21300000, guid: a794e29c376f470f91bf1495869971a5, type: 3}
   - {fileID: 21300000, guid: 631adc26a4664548bbce5dc635905579, type: 3}
   - {fileID: 21300000, guid: 42fc3752047943788f7576bd3ac7512b, type: 3}
+  prototypeFacilities:
+  - facilityId: management_desk
+    facility: 3
+    displayName: 관리 책상
+    icon: {fileID: 0}
+    facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
+    currentEffectOverride:
+    nextEffectOverride:
+    prototypeLocked: 0
+  - facilityId: medical_cabinet
+    facility: 0
+    displayName: 의료 수납장
+    icon: {fileID: 0}
+    facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
+    currentEffectOverride:
+    nextEffectOverride:
+    prototypeLocked: 0
