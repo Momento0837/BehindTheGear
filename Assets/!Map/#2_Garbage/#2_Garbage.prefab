@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1312980284363859190}
   m_Layer: 0
-  m_Name: '#2 BG'
+  m_Name: '#2_Garbage'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

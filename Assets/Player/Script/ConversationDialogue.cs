@@ -40,6 +40,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     public event Action LineRevealStarted;
     public event Action<char> CharacterRevealed;
     public event Action LineRevealCompleted;
+    public event Action<bool> ChoiceSelected;
     public bool IsPlaying { get; private set; }
     public TMP_Text BodyText => bodyText;
 
@@ -159,6 +160,13 @@ public sealed class ConversationDialogue : MonoBehaviour
     }
 
     /// <summary>Shows a dialogue prompt with two mouse-selectable choices.</summary>
+    public void ShowChoicesForCurrentLine(string firstChoice, string secondChoice, Action<bool> onChoice)
+    {
+        ShowChoices(speakerText != null ? speakerText.text : string.Empty,
+            bodyText != null ? bodyText.text : string.Empty, firstChoice, secondChoice, onChoice);
+    }
+
+    /// <summary>Shows a dialogue prompt with two mouse-selectable choices.</summary>
     public void ShowChoices(string speaker, string prompt, string firstChoice, string secondChoice, Action<bool> onChoice)
     {
         if (IsPlaying || onChoice == null || dialogueCanvasRoot == null || bodyText == null)
@@ -254,6 +262,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         IsPlaying = false;
         advanceRequested = false;
         playerControlLock?.Release();
+        ChoiceSelected?.Invoke(accepted);
         callback?.Invoke(accepted);
     }
 

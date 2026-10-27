@@ -22,6 +22,8 @@ public sealed class InventoryItemDefinition : ScriptableObject, IItemStatModifie
     [SerializeField] private ConsumableEffect consumableEffect;
     [SerializeField, Min(0)] private int consumablePower = 25;
     private Sprite generatedIcon;
+    // HP/MP use integers, so round fractional recovery up to the next point.
+    private const float PotionRecoveryFraction = .25f;
 
     public string ItemId => itemId;
     public string DisplayName => displayName;
@@ -54,17 +56,27 @@ public sealed class InventoryItemDefinition : ScriptableObject, IItemStatModifie
 
     public bool Use(GameObject user)
     {
-        if (!IsConsumable) return false;
+        if (!IsConsumable || user == null) return false;
+        var health = user.GetComponent<PlayerHealth>();
+        var mana = user.GetComponent<PlayerMana>();
         string targetName = user != null ? user.name : "Unknown";
         switch (consumableEffect)
         {
             case ConsumableEffect.RestoreHealth:
+                if (health == null || health.IsDead) return false;
+                health.RestoreHealth(Mathf.CeilToInt(health.MaxHealth * PotionRecoveryFraction));
                 Debug.Log($"[Inventory] {targetName} restored {consumablePower} health with {DisplayName}.", this);
                 return true;
             case ConsumableEffect.RestoreMana:
+                if (mana == null) mana = user.AddComponent<PlayerMana>();
+                mana.RestoreMana(Mathf.CeilToInt(mana.MaxMana * PotionRecoveryFraction));
                 Debug.Log($"[Inventory] {targetName} restored {consumablePower} mana with {DisplayName}.", this);
                 return true;
             case ConsumableEffect.RestoreHealthAndMana:
+                if (health == null || health.IsDead) return false;
+                if (mana == null) mana = user.AddComponent<PlayerMana>();
+                health.RestoreHealth(Mathf.CeilToInt(health.MaxHealth * PotionRecoveryFraction));
+                mana.RestoreMana(Mathf.CeilToInt(mana.MaxMana * PotionRecoveryFraction));
                 Debug.Log($"[Inventory] {targetName} restored {consumablePower} health and mana with {DisplayName}.", this);
                 return true;
             default:

@@ -85,6 +85,13 @@ public static class StoryFlowSmokeCheck
                     dialogue.GetComponent<Interactable2D>().Interact(player.gameObject);
                     SessionState.SetInt(Key, 6); break;
                 case 6:
+                    var npcDialogue = (ConversationDialogue)Read(flow, "dialogue");
+                    if (Read(npcDialogue, "choiceCallback") != null)
+                    {
+                        typeof(ConversationDialogue).GetMethod("SelectChoice", BindingFlags.NonPublic | BindingFlags.Instance)
+                            .Invoke(npcDialogue, new object[] { true });
+                        return;
+                    }
                     FinishDialogue(flow);
                     if (!(bool)Read(flow, "ready")) return;
                     Require(portal.activeSelf, "NPC did not unlock final portal");

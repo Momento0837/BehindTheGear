@@ -16,6 +16,12 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     private bool generateNameLabel = true;
     private bool useLockedAlpha;
     private bool locked;
+    private bool ownsNameLabel;
+    private Material registrationFlashMaterial;
+    private Material originalIconMaterial;
+    private float registrationFlashStartedAt;
+    private bool registrationFlashing;
+    private static readonly int FlashAmount = Shader.PropertyToID("_FlashAmount");
     private static readonly Color DefaultNormal = new(.98f, .94f, .83f);
     private static readonly Color Hover = new(1f, .82f, .43f);
     private static readonly Color Amount = new(.08f, .06f, .04f);
@@ -56,11 +62,66 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     public void Refresh(PlayerInventory.Slot slot)
     {
         bool empty = slot == null || slot.IsEmpty;
+        if (registrationFlashing && (empty || icon.sprite != slot.Item.Icon)) StopRegistrationFlash();
         icon.enabled = !empty;
         icon.sprite = empty ? null : slot.Item.Icon;
         amount.text = empty || slot.Item.MaxStack == 1 ? "" : slot.Amount.ToString();
         amount.color = Amount;
         if (itemName != null) itemName.text = empty ? "" : slot.Item.DisplayName;
+    }
+
+    public void PlayRegistrationFlash()
+    {
+        if (icon == null || !icon.enabled || icon.sprite == null) return;
+        if (registrationFlashMaterial == null)
+        {
+            Shader shader = Shader.Find("BehindTheGear/UI/HotbarItemFlash");
+            if (shader == null)
+            {
+                Debug.LogWarning("[InventoryUI] Registration flash shader is missing.", this);
+                return;
+            }
+            registrationFlashMaterial = new Material(shader) { name = "Inventory Item Registration Flash" };
+        }
+        if (!registrationFlashing) originalIconMaterial = icon.material;
+        icon.material = registrationFlashMaterial;
+        registrationFlashStartedAt = Time.unscaledTime;
+        registrationFlashing = true;
+        SetRegistrationFlashAmount(1f);
+    }
+
+    private void LateUpdate()
+    {
+        if (!registrationFlashing) return;
+        float progress = Mathf.Clamp01((Time.unscaledTime - registrationFlashStartedAt) / .3f);
+        SetRegistrationFlashAmount(1f - Mathf.SmoothStep(0f, 1f, progress));
+        if (progress >= 1f) StopRegistrationFlash();
+    }
+
+    private void StopRegistrationFlash()
+    {
+        if (!registrationFlashing) return;
+        SetRegistrationFlashAmount(0f);
+        registrationFlashing = false;
+        if (icon != null) icon.material = originalIconMaterial;
+    }
+
+    private void SetRegistrationFlashAmount(float value)
+    {
+        if (registrationFlashMaterial == null) return;
+        registrationFlashMaterial.SetFloat(FlashAmount, value);
+        // A UI Mask may render a stencil-material copy instead of the assigned material.
+        Material rendered = icon != null ? icon.materialForRendering : null;
+        if (rendered != null && rendered != registrationFlashMaterial && rendered.HasProperty(FlashAmount))
+            rendered.SetFloat(FlashAmount, value);
+    }
+
+    private void OnDestroy()
+    {
+        StopRegistrationFlash();
+        if (registrationFlashMaterial == null) return;
+        if (Application.isPlaying) Destroy(registrationFlashMaterial);
+        else DestroyImmediate(registrationFlashMaterial);
     }
 
     public void ResetVisualState()
@@ -117,6 +178,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         GameObject labelObject = new("Item Name", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         labelObject.transform.SetParent(transform, false);
         itemName = labelObject.GetComponent<TMP_Text>();
+        ownsNameLabel = true;
         itemName.raycastTarget = false;
         itemName.alignment = TextAlignmentOptions.Center;
         itemName.color = Amount;
@@ -129,7 +191,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
 
     private void ApplyOwnerFont()
     {
-        if (owner == null || owner.UiFont == null || itemName == null) return;
+        if (!ownsNameLabel || owner == null || owner.UiFont == null || itemName == null) return;
         itemName.font = owner.UiFont;
     }
 
@@ -144,15 +206,22 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     public void OnPointerEnter(PointerEventData data)
     {
         if (locked) return;
+        owner.SetHoveredSlot(index, true);
         background.color = Hover;
         owner.ShowDetails(index);
     }
     public void OnPointerExit(PointerEventData data)
     {
+        owner.SetHoveredSlot(index, false);
         ResetVisualState();
         owner.ShowDetails(-1);
     }
-    private void OnDisable() => ResetVisualState();
+    private void OnDisable()
+    {
+        StopRegistrationFlash();
+        if (owner != null) owner.SetHoveredSlot(index, false);
+        ResetVisualState();
+    }
 
     private static bool IsHoverColor(Color color)
     {

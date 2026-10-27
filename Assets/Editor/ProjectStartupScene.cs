@@ -2,18 +2,20 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// <summary>Enters Play mode through the first story map except for approved test scenes.</summary>
+/// <summary>
+/// Starts production scenes from Forest while allowing approved test scenes to run directly.
+/// </summary>
 [InitializeOnLoad]
 public static class ProjectStartupScene
 {
     private const string FirstMapPath = "Assets/Scenes/Main/Forest.unity";
     private const string InventoryTestPath = "Assets/Scenes/Inventory/InventoryTestScene.unity";
+    private const string UiTestPath = "Assets/UI/UITest.unity";
     private const string HideOutTestPath = "Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity";
 
-    // Temporary direct-play switch for HideOut development. Set to false to
-    // restore the original behavior that always starts production scenes in Forest.
+    // Temporary direct-play switch for HideOut development.
+    // Set to false to restore the original Forest startup behavior.
     private const bool AllowHideOutDirectPlay = true;
-
     static ProjectStartupScene()
     {
         SetStartupScene();
@@ -28,9 +30,13 @@ public static class ProjectStartupScene
 
     private static bool SetStartupScene()
     {
+        // The inventory sandbox must start from the open scene. All production
+        // scenes continue to enter Play mode through the first story map.
         string activeScenePath = EditorSceneManager.GetActiveScene().path;
+
         if (activeScenePath == InventoryTestPath
-            || AllowHideOutDirectPlay && activeScenePath == HideOutTestPath)
+            || activeScenePath == UiTestPath
+            || (AllowHideOutDirectPlay && activeScenePath == HideOutTestPath))
         {
             EditorSceneManager.playModeStartScene = null;
             return true;

@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>Uses the editable scene canvas without resetting its layout when entering Play mode.</summary>
+[DefaultExecutionOrder(-100)]
 public sealed class InventoryUI : MonoBehaviour
 {
     private enum Filter { All, Misc, Consumable, Equipment, Quest }
@@ -43,6 +44,16 @@ public sealed class InventoryUI : MonoBehaviour
     [SerializeField] private Image[] equipmentSlotIcons;
 
     private int dragSource = -1;
+    private int hoveredDisplaySlot = -1;
+    private PlayerControlLock inventoryControlLock;
+    private bool holdsInventoryLock;
+    private Image inventoryDimmer;
+    private float dimmerElapsed;
+    private const float DimmerFadeDuration = .25f;
+    private static int gameplaySuppressedFrame = -1;
+    private static int escapeHandledFrame = -1;
+    public static bool GameplayInputSuppressedThisFrame => gameplaySuppressedFrame == Time.frameCount;
+    public static bool EscapeHandledThisFrame => escapeHandledFrame == Time.frameCount;
     private float toastUntil;
     private bool toastResourceWarningLogged;
     private bool ready;
@@ -52,6 +63,11 @@ public sealed class InventoryUI : MonoBehaviour
     private bool usesDesignedCanvas;
     private Canvas legacyCanvas;
     private InventoryUITextCatalog textCatalog;
+    private readonly System.Collections.Generic.Dictionary<TMP_Text, string> authoredText = new();
+    private RectTransform authoredEquipmentGroup;
+    private Vector3 authoredEquipmentPosition;
+    private RectTransform authoredPlayerPanel;
+    private Vector3 authoredPlayerPanelPosition;
     private Vector2 equipmentSoloAnchorMin;
     private Vector2 equipmentSoloAnchorMax;
     private Vector2 equipmentSoloPivot;
@@ -136,6 +152,15 @@ public sealed class InventoryUI : MonoBehaviour
         equipmentUnequipButtons = designedEquipmentButtons;
         equipmentSlotIcons = designedEquipmentIcons;
         usesDesignedCanvas = true;
+        authoredEquipmentGroup = designedCanvas.transform.Find("BG/Player/Equipments") as RectTransform;
+        if (authoredEquipmentGroup != null)
+        {
+            authoredEquipmentPosition = authoredEquipmentGroup.anchoredPosition3D;
+            authoredPlayerPanel = authoredEquipmentGroup.parent as RectTransform;
+            if (authoredPlayerPanel != null) authoredPlayerPanelPosition = authoredPlayerPanel.anchoredPosition3D;
+        }
+        foreach (TMP_Text label in designedCanvas.GetComponentsInChildren<TMP_Text>(true))
+            authoredText[label] = label.text;
 
         if (legacyCanvas != null) legacyCanvas.gameObject.SetActive(false);
     }
@@ -168,10 +193,18 @@ public sealed class InventoryUI : MonoBehaviour
         if (detailText == null || index < 0 || index >= 6) return;
         InventoryItemDefinition item = inventory.GetEquipped(GetEquipmentSlotForIndex(index));
         if (item == null) return;
+        if (usesDesignedCanvas)
+        {
+            detailText.text = GetItemDescription(item);
+            return;
+        }
         ApplyDetailTextStyle();
         detailText.text = FormatUi("equipmentTooltipFormat", "<size=105%>{0}</size>\n{1}",
             GetItemName(item), GetItemDescription(item) + GetEquipmentEffectDescription(item));
     }
+
+    private bool RequiresDesignedCanvas() =>
+        gameObject.scene.name == "UITest" || gameObject.scene.name == "InventoryTestScene";
 
     private void Awake()
     {
@@ -190,11 +223,11 @@ public sealed class InventoryUI : MonoBehaviour
 
         if (canvas == null)
         {
-            if (gameObject.scene.name == "InventoryTestScene")
+            if (RequiresDesignedCanvas())
             {
                 Debug.LogError(designedCanvasBound
                     ? "[InventoryUI] Inventory_Canvas binding did not assign its Canvas."
-                    : "[InventoryUI] Inventory_Canvas binding failed. Legacy inventory UI creation is disabled in InventoryTestScene.", this);
+                    : $"[InventoryUI] Inventory_Canvas binding failed. Legacy inventory UI creation is disabled in {gameObject.scene.name}.", this);
                 enabled = false;
                 return;
             }
@@ -234,6 +267,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void OnEnable()
     {
         if (!ready) return;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnInventorySceneLoaded;
         inventory.Changed += Refresh;
         inventory.ItemCollected += Collected;
         inventory.ItemUsed += Used;
@@ -254,6 +288,9 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
+        SetInventoryModal(false);
+        hoveredDisplaySlot = -1;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnInventorySceneLoaded;
         if (inventory != null)
         {
             inventory.Changed -= Refresh;
@@ -277,21 +314,60 @@ public sealed class InventoryUI : MonoBehaviour
         if (ownsRuntimeCanvas && canvas != null) canvas.gameObject.SetActive(false);
     }
 
+    private void LateUpdate()
+    {
+        if (!usesDesignedCanvas || authoredEquipmentGroup == null) return;
+        // Preserve this scene instance's authored positions; never apply a hard-coded offset.
+        if (authoredPlayerPanel != null && authoredPlayerPanel.anchoredPosition3D != authoredPlayerPanelPosition)
+            authoredPlayerPanel.anchoredPosition3D = authoredPlayerPanelPosition;
+        if (authoredEquipmentGroup.anchoredPosition3D != authoredEquipmentPosition)
+            authoredEquipmentGroup.anchoredPosition3D = authoredEquipmentPosition;
+    }
+
+    private void OnInventorySceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (!usesDesignedCanvas || canvas == null || GetComponent<PersistentPlayer2D>() == null
+            || gameObject.scene == scene) return;
+        // The persistent player's bound canvas remains authoritative during travel.
+        DontDestroyOnLoad(canvas.transform.root.gameObject);
+        foreach (Canvas candidate in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (candidate != canvas && candidate.gameObject.scene == scene
+                && (candidate.name == "Inventory_Canvas" || candidate.name == "Inventory Canvas"))
+                candidate.gameObject.SetActive(false);
+    }
+
     private void OnDestroy()
     {
+        SetInventoryModal(false);
+        if (inventoryDimmer != null) Destroy(inventoryDimmer.gameObject);
         if (ownsRuntimeCanvas && canvas != null) Destroy(canvas.gameObject);
     }
 
     private void Update()
     {
         if (!ready) return;
+        SetInventoryModal(window != null && window.activeInHierarchy);
         if (Keyboard.current?.iKey.wasPressedThisFrame == true) ToggleInventory();
-        if (Keyboard.current?.eKey.wasPressedThisFrame == true) ToggleEquipmentStats();
-        if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && IsAnyWindowOpen()) CloseAllWindows();
-        if (Keyboard.current?.digit1Key.wasPressedThisFrame == true) UseQuickSlot(0);
-        if (Keyboard.current?.digit2Key.wasPressedThisFrame == true) UseQuickSlot(1);
-        if (Keyboard.current?.digit3Key.wasPressedThisFrame == true) UseQuickSlot(2);
+        if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && IsAnyWindowOpen())
+        {
+            escapeHandledFrame = Time.frameCount;
+            CloseAllWindows();
+        }
+        var keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) HandleQuickSlotKey(0);
+            if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) HandleQuickSlotKey(1);
+            if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) HandleQuickSlotKey(2);
+        }
         if (toast != null && toast.gameObject.activeSelf && Time.unscaledTime >= toastUntil) toast.gameObject.SetActive(false);
+        if (holdsInventoryLock && inventoryDimmer != null)
+        {
+            dimmerElapsed += Time.unscaledDeltaTime;
+            Color color = inventoryDimmer.color;
+            color.a = (211f / 255f) * Mathf.Clamp01(dimmerElapsed / DimmerFadeDuration);
+            inventoryDimmer.color = color;
+        }
     }
 
     private void OnApplicationFocus(bool focused) { if (!focused) CancelDrag(); }
@@ -310,6 +386,7 @@ public sealed class InventoryUI : MonoBehaviour
 
         Refresh();
         window.SetActive(true);
+        SetInventoryModal(true);
         if (usesDesignedCanvas)
         {
             InventoryCanvasAdapter.RefreshStatHoverBindings(this);
@@ -342,6 +419,8 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void CloseInventory()
     {
+        SetInventoryModal(false);
+        hoveredDisplaySlot = -1;
         CancelDrag();
         ShowDetails(-1);
         if (window != null) window.SetActive(false);
@@ -366,8 +445,57 @@ public sealed class InventoryUI : MonoBehaviour
         return (window != null && window.activeSelf) || (!IsEmbeddedEquipmentWindow() && equipmentWindow != null && equipmentWindow.activeSelf);
     }
 
+    private void SetInventoryModal(bool open)
+    {
+        if (!Application.isPlaying) return;
+        if (open) gameplaySuppressedFrame = Time.frameCount;
+        if (open == holdsInventoryLock) return;
+        holdsInventoryLock = open;
+        gameplaySuppressedFrame = Time.frameCount;
+        if (open)
+        {
+            inventoryControlLock = inventory != null ? inventory.GetComponent<PlayerControlLock>() : null;
+            inventoryControlLock?.Acquire();
+            EnsureInventoryDimmer();
+            dimmerElapsed = 0f;
+            if (inventoryDimmer != null)
+            {
+                inventoryDimmer.color = new Color(40f / 255f, 20f / 255f, 20f / 255f, 0f);
+                inventoryDimmer.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            inventoryControlLock?.Release();
+            inventoryControlLock = null;
+            if (inventoryDimmer != null)
+            {
+                Color color = inventoryDimmer.color;
+                color.a = 0f;
+                inventoryDimmer.color = color;
+                inventoryDimmer.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void EnsureInventoryDimmer()
+    {
+        if (inventoryDimmer != null || canvas == null) return;
+        GameObject backdrop = new("Inventory Dimmer", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        backdrop.transform.SetParent(canvas.transform, false);
+        backdrop.transform.SetAsFirstSibling();
+        RectTransform rect = (RectTransform)backdrop.transform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        inventoryDimmer = backdrop.GetComponent<Image>();
+        inventoryDimmer.raycastTarget = true;
+    }
+
     private void CaptureEquipmentSoloLayout()
     {
+        if (usesDesignedCanvas) return;
         if (hasEquipmentSoloLayout || equipmentWindow == null || IsEmbeddedEquipmentWindow()) return;
 
         RectTransform equipmentRect = (RectTransform)equipmentWindow.transform;
@@ -380,6 +508,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void RestoreEquipmentSoloLayout()
     {
+        if (usesDesignedCanvas) return;
         if (!hasEquipmentSoloLayout || equipmentWindow == null || IsEmbeddedEquipmentWindow()) return;
 
         RectTransform equipmentRect = (RectTransform)equipmentWindow.transform;
@@ -391,6 +520,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void ArrangeEquipmentBesideInventory()
     {
+        if (usesDesignedCanvas) return;
         if (window == null || equipmentWindow == null) return;
         if (IsEmbeddedEquipmentWindow()) return;
 
@@ -443,7 +573,8 @@ public sealed class InventoryUI : MonoBehaviour
             slots[i].ResetVisualState();
             slots[i].Refresh(unlocked ? GetDisplayedSlot(i) : null);
         }
-        capacityText.text = FormatUi(
+        if (usesDesignedCanvas) RefreshAuthoredNumbers(capacityText, used, inventory.Capacity);
+        else capacityText.text = FormatUi(
             "capacityFormat",
             "가방 {0} / {1}     퀘스트 {2} / {3}     분류: {4}",
             used,
@@ -466,7 +597,7 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (toast == null)
         {
-            if (detailText != null) detailText.text = message;
+            if (!usesDesignedCanvas && detailText != null) detailText.text = message;
             return;
         }
         toast.text = message;
@@ -476,6 +607,14 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void ShowDetails(int index)
     {
+        if (usesDesignedCanvas)
+        {
+            // Equip_Desc is an authored description field, not a replacement inventory layout.
+            PlayerInventory.Slot selected = GetDisplayedSlot(index);
+            if (detailText != null) detailText.text = selected == null || selected.IsEmpty
+                ? AuthoredText(detailText) : GetItemDescription(selected.Item);
+            return;
+        }
         ApplyDetailTextStyle();
         PlayerInventory.Slot slot = GetDisplayedSlot(index);
         detailText.text = slot == null || slot.IsEmpty
@@ -557,6 +696,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void EnsureEditableSceneUI()
     {
+        if (usesDesignedCanvas) return;
         if (canvas == null) CreateSceneUI();
         EnsureInventoryExtras();
         EnsureEquipmentStatsWindow(false);
@@ -582,6 +722,12 @@ public sealed class InventoryUI : MonoBehaviour
     public void CreateSceneUI()
     {
         if (canvas != null || inventory == null) return;
+        if (RequiresDesignedCanvas())
+        {
+            if (!InventoryCanvasAdapter.TryBind(this))
+                Debug.LogError($"[InventoryUI] Place the authored Inventory_Canvas prefab in {gameObject.scene.name}. Legacy UI creation is disabled.", this);
+            return;
+        }
         GameObject root = new("Inventory Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         SceneManager.MoveGameObjectToScene(root, gameObject.scene);
         canvas = root.GetComponent<Canvas>();
@@ -960,6 +1106,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void ApplyStaticLabels()
     {
+        if (!ownsRuntimeCanvas) return;
         SetButtonLabel(shortcutButton, "가방 [I]");
 
         TMP_Text inventoryTitle = window != null ? window.transform.Find("Header/Title")?.GetComponent<TMP_Text>() : null;
@@ -973,6 +1120,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void EnsureToastStyle()
     {
+        if (!ownsRuntimeCanvas) return;
         if (toast == null) return;
 
         Transform background = toast.transform.parent != null ? toast.transform.parent.Find("Pickup Message Back") : null;
@@ -1096,6 +1244,32 @@ public sealed class InventoryUI : MonoBehaviour
         Notify("해제할 장비가 없거나 가방이 가득 찼습니다.");
     }
 
+    public void SetHoveredSlot(int index, bool hovered)
+    {
+        if (hovered) hoveredDisplaySlot = index;
+        else if (hoveredDisplaySlot == index) hoveredDisplaySlot = -1;
+    }
+
+    private void HandleQuickSlotKey(int index)
+    {
+        if (window != null && window.activeInHierarchy)
+        {
+            if (hoveredDisplaySlot < 0 || dragSource >= 0 || currentFilter == Filter.Quest) return;
+            int displayIndex = hoveredDisplaySlot;
+            int inventoryIndex = GetInventorySlotIndexForDisplay(displayIndex);
+            if (inventory.AssignQuickSlot(inventoryIndex, index)
+                && slots != null && displayIndex < slots.Length && slots[displayIndex] != null)
+                slots[displayIndex].PlayRegistrationFlash();
+            return;
+        }
+        if (IsAnyWindowOpen() || GameplayInputSuppressedThisFrame) return;
+        var health = inventory.GetComponent<PlayerHealth>();
+        var input = inventory.GetComponent<PlayerInputReader>();
+        if ((health != null && health.IsDead) || (input != null && !input.isActiveAndEnabled)) return;
+        if (inventory.GetQuickSlotCooldownFill(index) > 0f) return;
+        UseQuickSlot(index);
+    }
+
     private void UseQuickSlot(int index)
     {
         if (inventory.UseQuickSlot(index, inventory.gameObject)) return;
@@ -1171,8 +1345,32 @@ public sealed class InventoryUI : MonoBehaviour
         quickSlotText.text = FormatUi("quickSlotFormat", "퀵슬롯 {0}", text);
     }
 
+    private string AuthoredText(TMP_Text label)
+    {
+        if (!authoredText.TryGetValue(label, out string template))
+            authoredText[label] = template = label.text;
+        return template;
+    }
+
+    private void RefreshAuthoredNumbers(TMP_Text label, params int[] values)
+    {
+        if (label == null) return;
+        int index = 0;
+        // Skip TMP markup so numbers in size/color tags are never treated as game values.
+        label.text = System.Text.RegularExpressions.Regex.Replace(AuthoredText(label), @"<[^>]*>|\d+", match =>
+            match.Value.StartsWith("<") || index >= values.Length
+                ? match.Value : values[index++].ToString());
+    }
+
     private void RefreshStats()
     {
+        if (usesDesignedCanvas)
+        {
+            if (stats == null || statRows == null) return;
+            for (int i = 0; i < statRows.Length; i++)
+                RefreshAuthoredNumbers(statRows[i], stats.GetValue(GetUiStatType(i)));
+            return;
+        }
         if (statPointText == null || statRows == null) return;
         if (stats == null)
         {
@@ -1244,13 +1442,13 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void SetStatMessage(string message)
     {
-        if (statMessageText != null) statMessageText.text = message;
+        if (!usesDesignedCanvas && statMessageText != null) statMessageText.text = message;
         if (!string.IsNullOrEmpty(message)) Notify(message);
     }
 
     private void ApplyDetailTextStyle()
     {
-        if (detailText == null) return;
+        if (detailText == null || !ownsRuntimeCanvas) return;
         if (usesDesignedCanvas)
         {
             detailText.richText = true;
@@ -1545,8 +1743,18 @@ public sealed class InventoryUI : MonoBehaviour
     }
 
     // The visible RPG labels map onto the project-specific stat model used by PlayerStats.
-    private static PersonalStatType GetUiStatType(int index)
+    private PersonalStatType GetUiStatType(int index)
     {
+        if (usesDesignedCanvas)
+            return index switch
+            {
+                0 => PersonalStatType.Evasion,
+                1 => PersonalStatType.Stealth,
+                2 => PersonalStatType.Attack,
+                3 => PersonalStatType.Defense,
+                4 => PersonalStatType.Persuasion,
+                _ => PersonalStatType.Attack
+            };
         return index switch
         {
             0 => PersonalStatType.Persuasion,

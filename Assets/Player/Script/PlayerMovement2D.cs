@@ -270,7 +270,13 @@ public sealed class PlayerMovement2D : MonoBehaviour
     internal void RefreshAnimationWhileControlLocked()
     {
         jumpRequested = false;
+        bufferedNextAttack = false;
+        attackAnimationPlaying = false;
+        attackStateObserved = false;
+        comboAttackIndex = 0;
+        attackAnimationEndedAt = float.NegativeInfinity;
         if (animator == null) return;
+        if (hasAttackTriggerParameter) animator.ResetTrigger(AttackTriggerHash);
         if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, false);
         if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, IsGrounded());
     }

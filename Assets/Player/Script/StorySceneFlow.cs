@@ -54,7 +54,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         }
         player.GetComponent<PlayerHealthHUD>()?.PreserveHud();
         player.GetComponent<PlayerInteractionController>()?.PreservePrompt();
-        dialogue = InScene<ConversationDialogue>().FirstOrDefault(d => d.name == "Quest Giver NPC");
+        dialogue = InScene<ConversationDialogue>().FirstOrDefault(d => d.GetComponent<BlackMarkerNpc>() != null)
+            ?? InScene<ConversationDialogue>().FirstOrDefault(d => d.name == "BlackMarker" || d.name == "Quest Giver NPC");
         cutscene = InScene<CutsceneVideoSequence>().FirstOrDefault();
         var oldPortal = InScene<ScenePortal2D>().FirstOrDefault();
         if (dialogue == null || oldPortal == null)
@@ -77,7 +78,9 @@ public sealed class StorySceneFlow : MonoBehaviour
         {
             npc.enabled = false;
             foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = false;
+            foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = false;
         }
+        dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(false);
         portal = oldPortal.gameObject;
         portal.AddComponent<StoryInteraction2D>().Activated = UsePortal;
         monsters = InScene<MonsterFollowController>();
@@ -169,6 +172,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         portal.SetActive(false);
         marketMap = true;
         PlacePlayer(new Vector3(49f, -2.5f, 0));
+        dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         portal.transform.position = new Vector3(94f, -2.4f, 0);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
@@ -181,7 +185,17 @@ public sealed class StorySceneFlow : MonoBehaviour
     private IEnumerator TalkToMarketNpc()
     {
         busy = true;
-        yield return Say("market_npc");
+        yield return Say("quest_offer");
+        bool? accepted = null;
+        // Retain the speaker and prompt from the authored JSON instead of adding prototype narration.
+        dialogue.ShowChoicesForCurrentLine("수락", "거절", choice => accepted = choice);
+        while (!accepted.HasValue) yield return null;
+        yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
+        if (!accepted.Value)
+        {
+            busy = false;
+            yield break;
+        }
         ready = true;
         portal.SetActive(true);
         busy = false;
