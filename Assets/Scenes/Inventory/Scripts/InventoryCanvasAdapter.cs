@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>Connects the authored Inventory_Canvas prefab hierarchy to the existing inventory controller.</summary>
@@ -76,7 +77,6 @@ public static class InventoryCanvasAdapter
             Transform row = stats != null ? stats.Find($"Stats{i + 1:00}") : null;
             statRows[i] = row != null ? row.Find("Stat")?.GetComponent<TMP_Text>() : null;
             statButtons[i] = row != null ? row.Find("Plus")?.GetComponent<Button>() : null;
-            ApplyFont(statRows[i], ui.UiFont);
             Button minus = row != null ? row.Find("Minus")?.GetComponent<Button>() : null;
             if (minus != null) minus.interactable = false;
         }
@@ -133,29 +133,7 @@ public static class InventoryCanvasAdapter
             equipmentButtons,
             equipmentIcons);
 
-        for (int i = 0; i < filters.Length; i++)
-        {
-            TMP_Text label = filters[i] != null ? filters[i].GetComponent<TMP_Text>() : null;
-            if (label != null)
-            {
-                ApplyFont(label, ui.UiFont);
-                label.text = ui.CategoryNameForBinding(i);
-            }
-        }
-        ApplyFont(capacity, ui.UiFont);
-        ApplyFont(details, ui.UiFont);
-        ApplyFont(statPoint, ui.UiFont);
-        ApplyFont(statMessage, ui.UiFont);
-        for (int i = 0; i < 5; i++)
-        {
-            Transform row = stats != null ? stats.Find($"Stats{i + 1:00}") : null;
-            TMP_Text koreanName = row != null ? row.Find("Kor")?.GetComponent<TMP_Text>() : null;
-            if (koreanName != null)
-            {
-                ApplyFont(koreanName, ui.UiFont);
-                koreanName.text = ui.StatNameForBinding(i);
-            }
-        }
+        // Authored labels, fonts and material presets belong to the prefab.
         return true;
     }
 
@@ -173,9 +151,15 @@ public static class InventoryCanvasAdapter
     private static void BindStatSquareHovers(Transform root, GameObject target, InventoryUI ui)
     {
         if (root == null || target == null) return;
+        InventoryStatTooltipCatalog catalog = InventoryStatTooltipCatalog.Load();
         List<Transform> sources = new();
         foreach (Transform candidate in root.GetComponentsInChildren<Transform>(true))
+            if (candidate.name == "Question_Interraction" || candidate.name == "Quest_Interraction")
+                sources.Add(candidate);
+        bool hasQuestionAreas = sources.Count > 0;
+        foreach (Transform candidate in root.GetComponentsInChildren<Transform>(true))
         {
+            if (hasQuestionAreas) break;
             if (candidate == root) continue;
             bool namedSquare = candidate.name.IndexOf("Square", System.StringComparison.OrdinalIgnoreCase) >= 0;
             bool rootStatImage = candidate.parent == root
@@ -193,7 +177,7 @@ public static class InventoryCanvasAdapter
             int statIndex = i;
             BindHover(sources[i].gameObject, target, null, basePosition,
                 GetTargetLocalY(sources[i], target) - referenceY,
-                () => ui.ShowStatDetailsForBinding(statIndex));
+                () => catalog.Show(target.transform, statIndex), true);
         }
     }
 
@@ -222,7 +206,7 @@ public static class InventoryCanvasAdapter
     }
 
     private static void BindHover(GameObject source, GameObject target, Image requiredIcon,
-        Vector2 basePosition, float verticalOffset, System.Action beforeReveal)
+        Vector2 basePosition, float verticalOffset, System.Action beforeReveal, bool followPointer = false)
     {
         if (source == null || target == null) return;
         Image sourceImage = source.GetComponent<Image>();
@@ -255,7 +239,7 @@ public static class InventoryCanvasAdapter
 
         InventoryHoverReveal hover = hoverSource.GetComponent<InventoryHoverReveal>();
         if (hover == null) hover = hoverSource.AddComponent<InventoryHoverReveal>();
-        hover.Configure(target, requiredIcon, basePosition, verticalOffset, beforeReveal);
+        hover.Configure(target, requiredIcon, basePosition, verticalOffset, beforeReveal, followPointer);
     }
 
     private static T Find<T>(Transform root, string path) where T : Component
@@ -291,6 +275,7 @@ public static class InventoryCanvasAdapter
     {
         Transform existing = parent.Find("Bound Amount");
         TMP_Text text = existing != null ? existing.GetComponent<TMP_Text>() : null;
+        if (text != null) return text;
         if (text == null)
         {
             GameObject created = new("Bound Amount", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
@@ -303,7 +288,17 @@ public static class InventoryCanvasAdapter
         rect.anchorMax = new Vector2(1f, .36f);
         rect.offsetMin = new Vector2(4f, 2f);
         rect.offsetMax = new Vector2(-4f, 0f);
-        if (font != null) text.font = font;
+        TMP_Text authoredStyle = parent.GetComponentInParent<Canvas>()?.GetComponentInChildren<TMP_Text>(true);
+        if (authoredStyle != null && authoredStyle != text)
+        {
+            text.font = authoredStyle.font;
+            text.fontSharedMaterial = authoredStyle.fontSharedMaterial;
+        }
+        else if (font != null)
+        {
+            text.font = font;
+            text.fontSharedMaterial = font.material;
+        }
         text.fontSize = 16f;
         text.alignment = TextAlignmentOptions.BottomRight;
         text.raycastTarget = false;
@@ -317,10 +312,6 @@ public static class InventoryCanvasAdapter
             graphic.raycastTarget = false;
     }
 
-    private static void ApplyFont(TMP_Text text, TMP_FontAsset font)
-    {
-        if (text != null && font != null) text.font = font;
-    }
 }
 
 /// <summary>Shows a bound information panel only while the pointer is over this UI image or 2D sprite.</summary>
@@ -333,9 +324,12 @@ public sealed class InventoryHoverReveal : MonoBehaviour, IPointerEnterHandler, 
     private Vector2 basePosition;
     private float verticalOffset;
     private System.Action beforeReveal;
+    private bool followPointer;
+    private bool hovered;
+    private Camera pointerCamera;
 
     public void Configure(GameObject revealTarget, Image contentIcon, Vector2 authoredPosition,
-        float sourceVerticalOffset, System.Action revealAction)
+        float sourceVerticalOffset, System.Action revealAction, bool followsPointer = false)
     {
         target = revealTarget;
         requiredIcon = contentIcon;
@@ -343,6 +337,7 @@ public sealed class InventoryHoverReveal : MonoBehaviour, IPointerEnterHandler, 
         basePosition = authoredPosition;
         verticalOffset = sourceVerticalOffset;
         beforeReveal = revealAction;
+        followPointer = followsPointer;
         SetVisible(false);
         SpriteRenderer sprite = GetComponent<SpriteRenderer>();
         if (sprite != null && GetComponent<Collider2D>() == null)
@@ -356,12 +351,54 @@ public sealed class InventoryHoverReveal : MonoBehaviour, IPointerEnterHandler, 
         }
     }
 
-    public void OnPointerEnter(PointerEventData eventData) => SetVisible(true);
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        pointerCamera = eventData.enterEventCamera;
+        SetVisible(true);
+    }
     public void OnPointerExit(PointerEventData eventData) => SetVisible(false);
     private void OnMouseEnter() => SetVisible(true);
     private void OnMouseExit() => SetVisible(false);
     private void OnEnable() => SetVisible(false);
     private void OnDisable() => SetVisible(false);
+
+    private void LateUpdate()
+    {
+        if (!hovered || !followPointer || target == null || !target.activeInHierarchy) return;
+        PositionAtPointer();
+    }
+
+    private void PositionAtPointer()
+    {
+        if (targetRect == null || Mouse.current == null || targetRect.parent is not RectTransform parent) return;
+        Canvas canvas = targetRect.GetComponentInParent<Canvas>();
+        Canvas rootCanvas = canvas != null ? canvas.rootCanvas : null;
+        Camera camera = rootCanvas != null && rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null : (pointerCamera != null ? pointerCamera : rootCanvas != null ? rootCanvas.worldCamera : null);
+        Vector2 screen = Mouse.current.position.ReadValue() + new Vector2(16f, -16f);
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, camera, out Vector2 local)) return;
+        // Place the authored panel's top-left at the pointer offset, preserving its pivot/size.
+        Vector3 topLeft = parent.InverseTransformPoint(targetRect.TransformPoint(new Vector3(targetRect.rect.xMin, targetRect.rect.yMax)));
+        targetRect.position += parent.TransformVector((Vector3)local - topLeft);
+        targetRect.SetAsLastSibling();
+
+        // Clamp the rendered corners in screen space (also supports scaled canvases).
+        Vector3[] corners = new Vector3[4];
+        targetRect.GetWorldCorners(corners);
+        Vector2 min = new(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new(float.NegativeInfinity, float.NegativeInfinity);
+        foreach (Vector3 corner in corners)
+        {
+            Vector2 point = RectTransformUtility.WorldToScreenPoint(camera, corner);
+            min = Vector2.Min(min, point);
+            max = Vector2.Max(max, point);
+        }
+        Vector2 correction = new(
+            min.x < 8f ? 8f - min.x : Mathf.Min(0f, Screen.width - 8f - max.x),
+            min.y < 8f ? 8f - min.y : Mathf.Min(0f, Screen.height - 8f - max.y));
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen + correction, camera, out Vector2 clamped))
+            targetRect.position += parent.TransformVector(clamped - local);
+    }
 
     public static void HideAll(GameObject root)
     {
@@ -377,9 +414,66 @@ public sealed class InventoryHoverReveal : MonoBehaviour, IPointerEnterHandler, 
             visible = false;
         if (visible)
         {
-            if (targetRect != null) targetRect.anchoredPosition = basePosition + Vector2.up * verticalOffset;
+            if (!followPointer && targetRect != null) targetRect.anchoredPosition = basePosition + Vector2.up * verticalOffset;
             beforeReveal?.Invoke();
         }
+        hovered = visible;
         if (target != null && target.activeSelf != visible) target.SetActive(visible);
+        if (visible && followPointer) PositionAtPointer();
+    }
+}
+
+/// <summary>Question areas 1..5, from top to bottom. Descriptions are limited to 26 text elements.</summary>
+[System.Serializable]
+public sealed class InventoryStatTooltipCatalog
+{
+    [System.Serializable]
+    public sealed class Entry
+    {
+        public string Stat_Name_Kor;
+        public string Stat_Name_Eng;
+        public string Stat_Desc;
+    }
+
+    public Entry[] stats;
+
+    public static InventoryStatTooltipCatalog Load()
+    {
+        TextAsset json = Resources.Load<TextAsset>("Inventory/stat_tooltips");
+        if (json != null)
+        {
+            try
+            {
+                var catalog = JsonUtility.FromJson<InventoryStatTooltipCatalog>(json.text);
+                if (catalog != null && catalog.stats != null && catalog.stats.Length == 5) return catalog;
+            }
+            catch (System.ArgumentException exception) { Debug.LogWarning("[InventoryUI] stat_tooltips.json: " + exception.Message); }
+        }
+        Debug.LogWarning("[InventoryUI] stat_tooltips.json requires five stats; using defaults.");
+        string[] names = { "회피", "은신", "공격", "방어", "설득" };
+        string[] english = { "(Eva)", "(Ste)", "(Atk)", "(Def)", "(Pers)" };
+        var fallback = new InventoryStatTooltipCatalog { stats = new Entry[5] };
+        for (int i = 0; i < 5; i++) fallback.stats[i] = new Entry { Stat_Name_Kor = names[i], Stat_Name_Eng = english[i], Stat_Desc = names[i] };
+        return fallback;
+    }
+
+    public void Show(Transform panel, int index)
+    {
+        if (stats == null || index < 0 || index >= stats.Length || stats[index] == null) return;
+        Entry entry = stats[index];
+        SetText(panel, "Stat_Name_Kor", entry.Stat_Name_Kor);
+        SetText(panel, "Stat_Name_Eng", entry.Stat_Name_Eng);
+        string description = entry.Stat_Desc ?? string.Empty;
+        int[] elements = System.Globalization.StringInfo.ParseCombiningCharacters(description);
+        if (elements.Length > 26) description = description.Substring(0, elements[26]);
+        SetText(panel, "Stat_Desc", description);
+    }
+
+    private static void SetText(Transform panel, string name, string value)
+    {
+        TMP_Text text = panel.Find(name)?.GetComponent<TMP_Text>();
+        if (text == null) return;
+        text.richText = false;
+        if (text.text != value) text.text = value ?? string.Empty;
     }
 }

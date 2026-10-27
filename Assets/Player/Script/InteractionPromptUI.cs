@@ -9,7 +9,6 @@ public sealed class InteractionPromptUI : MonoBehaviour
     public void Configure(TMP_Text text)
     {
         promptText = text;
-        promptText.text = "[F] Interact";
         SetVisible(false);
     }
 

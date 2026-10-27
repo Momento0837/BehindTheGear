@@ -64,6 +64,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         playerControlLock?.Acquire();
         ownsLock = playerControlLock != null;
         foreach (var hud in FindObjectsByType<PlayerHealthHUD>(FindObjectsSortMode.None)) IncludeUi(hud.CanvasRoot);
+        foreach (var hud in FindObjectsByType<InGameVitalsHUD>(FindObjectsSortMode.None)) IncludeUi(hud.gameObject);
         HideUiForVideo();
         CreateVideoUi();
         videoRoot.SetActive(true);

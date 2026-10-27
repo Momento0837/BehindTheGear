@@ -42,6 +42,11 @@ public sealed class PlayerInventory : MonoBehaviour
     public event Action Changed;
     public event Action<InventoryItemDefinition, int> ItemCollected;
     public event Action<InventoryItemDefinition> ItemUsed;
+    public event Action<int> QuickSlotAssigned;
+    public event Action<int> QuickSlotUsed;
+    public const float QuickSlotCooldown = .5f;
+    private readonly float[] quickSlotReadyAt = new float[3];
+    private readonly Dictionary<InventoryItemDefinition, float> itemReadyAt = new();
     public event Action InventoryFull;
     private readonly Dictionary<string, int> capacityBonuses = new();
 
@@ -57,7 +62,14 @@ public sealed class PlayerInventory : MonoBehaviour
     public void RestoreEquipmentAndQuickSlots(InventoryItemDefinition[] equipment, InventoryItemDefinition[] quick)
     {
         for (int i = 1; i <= 6; i++) SetEquipped((InventoryItemDefinition.EquipmentSlot)i, equipment[i - 1]);
-        for (int i = 0; i < QuickSlotCount; i++) quickSlots[i] = quick[i];
+        for (int i = 0; i < QuickSlotCount; i++) quickSlots[i] = null;
+        for (int i = 0; i < QuickSlotCount; i++)
+        {
+            var item = quick[i];
+            if (item == null || !item.IsConsumable) continue;
+            for (int j = 0; j < i; j++) if (quickSlots[j] == item) quickSlots[j] = null;
+            quickSlots[i] = item;
+        }
     }
 
     public void NotifyContentsChanged() => Changed?.Invoke();
@@ -189,7 +201,6 @@ public sealed class PlayerInventory : MonoBehaviour
         int accepted = amount - remaining;
         if (accepted > 0)
         {
-            AutoAssignQuickSlot(item);
             Changed?.Invoke();
             ItemCollected?.Invoke(item, accepted);
         }
@@ -271,11 +282,17 @@ public sealed class PlayerInventory : MonoBehaviour
     public bool UseQuickSlot(int quickIndex, GameObject user)
     {
         InventoryItemDefinition item = GetQuickSlot(quickIndex);
-        if (item == null) return false;
+        if (item == null || !item.IsConsumable || GetQuickSlotCooldownFill(quickIndex) > 0f) return false;
         for (int i = 0; i < Capacity; i++)
         {
             Slot slot = GetSlot(i);
-            if (slot != null && slot.Item == item) return UseSlot(i, user);
+            if (slot == null || slot.IsEmpty || slot.Item != item) continue;
+            if (!UseSlot(i, user)) return false;
+            float readyAt = Time.unscaledTime + QuickSlotCooldown;
+            quickSlotReadyAt[quickIndex] = readyAt;
+            itemReadyAt[item] = readyAt;
+            QuickSlotUsed?.Invoke(quickIndex);
+            return true;
         }
 
         quickSlots[quickIndex] = null;
@@ -288,24 +305,23 @@ public sealed class PlayerInventory : MonoBehaviour
         Slot slot = GetSlot(slotIndex);
         if (slot == null || slot.IsEmpty || !slot.Item.IsConsumable || quickIndex < 0 || quickIndex >= QuickSlotCount)
             return false;
+        for (int i = 0; i < QuickSlotCount; i++)
+            if (quickSlots[i] == slot.Item) quickSlots[i] = null;
         quickSlots[quickIndex] = slot.Item;
         Changed?.Invoke();
+        QuickSlotAssigned?.Invoke(quickIndex);
         return true;
     }
 
     public void NotifyInventoryFull() => InventoryFull?.Invoke();
 
-    private void AutoAssignQuickSlot(InventoryItemDefinition item)
+    public float GetQuickSlotCooldownFill(int quickIndex)
     {
-        if (item == null || !item.IsConsumable) return;
-        for (int i = 0; i < QuickSlotCount; i++)
-            if (quickSlots[i] == item) return;
-        for (int i = 0; i < QuickSlotCount; i++)
-        {
-            if (quickSlots[i] != null) continue;
-            quickSlots[i] = item;
-            return;
-        }
+        if (quickIndex < 0 || quickIndex >= QuickSlotCount) return 0f;
+        float readyAt = quickSlotReadyAt[quickIndex];
+        var item = GetQuickSlot(quickIndex);
+        if (item != null && itemReadyAt.TryGetValue(item, out float itemTime)) readyAt = Mathf.Max(readyAt, itemTime);
+        return Mathf.Clamp01((readyAt - Time.unscaledTime) / QuickSlotCooldown);
     }
 
     private void RemoveQuickSlotIfMissing(InventoryItemDefinition item)

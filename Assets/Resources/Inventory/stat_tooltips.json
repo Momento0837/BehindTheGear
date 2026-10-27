@@ -1,0 +1,29 @@
+{
+  "stats": [
+    {
+      "Stat_Name_Kor": "회피",
+      "Stat_Name_Eng": "(Eva)",
+      "Stat_Desc": "회피회피회피회피회피회피회피회피회피회피회피회피회피"
+    },
+    {
+      "Stat_Name_Kor": "은신",
+      "Stat_Name_Eng": "(Ste)",
+      "Stat_Desc": "은신은신은신은신은신은신은신은신은신은신은신은신은신"
+    },
+    {
+      "Stat_Name_Kor": "공격",
+      "Stat_Name_Eng": "(Atk)",
+      "Stat_Desc": "공격공격공격공격공격공격공격공격공격공격공격공격공격"
+    },
+    {
+      "Stat_Name_Kor": "방어",
+      "Stat_Name_Eng": "(Def)",
+      "Stat_Desc": "방어방어방어방어방어방어방어방어방어방어방어방어방어"
+    },
+    {
+      "Stat_Name_Kor": "설득",
+      "Stat_Name_Eng": "(Pers)",
+      "Stat_Desc": "설득설득설득설득설득설득설득설득설득설득설득설득설득"
+    }
+  ]
+}

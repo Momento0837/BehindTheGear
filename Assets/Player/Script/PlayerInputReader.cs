@@ -35,6 +35,12 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private void Update()
     {
+        if (InventoryUI.GameplayInputSuppressedThisFrame)
+        {
+            SetHorizontal(0f);
+            SetCrouching(false);
+            return;
+        }
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null)
         {
@@ -104,6 +110,12 @@ public sealed class PlayerInputReader : MonoBehaviour
         }
 
         if (keyboard.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
+    }
+
+    private void OnDisable()
+    {
+        SetHorizontal(0f);
+        SetCrouching(false);
     }
 
     private void SetHorizontal(float value)
