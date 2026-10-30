@@ -40,6 +40,7 @@ public static class LocationHUDCheck
             Require(group.alpha == 0f, "New arrival restarts the notice");
             var panel = (RectTransform)text.transform.parent;
             Require(panel.anchorMin == new Vector2(.5f, 1f) && panel.anchorMax == panel.anchorMin, "Top center placement");
+            Require(panel.anchoredPosition.y == -84f, "Arrival banner sits below the HP/MP bars");
             File.WriteAllText(result, "PASS Unity " + Application.unityVersion + "\nThree Korean location labels, top center placement, smooth fade-in/hold/fade-out, repeat arrival, non-blocking overlay. No scene saved.\n");
             Debug.Log("LOCATION_HUD_CHECK_PASS");
         }

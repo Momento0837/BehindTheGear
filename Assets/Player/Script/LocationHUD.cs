@@ -44,7 +44,8 @@ public sealed class LocationHUD : MonoBehaviour
         var rect = panel.GetComponent<RectTransform>();
         rect.SetParent(transform, false);
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, 1f);
-        rect.anchoredPosition = new Vector2(0, -24);
+        // Keep the arrival banner below the authored HP/MP bars at the top of the screen.
+        rect.anchoredPosition = new Vector2(0, -84);
         rect.sizeDelta = new Vector2(260, 60);
         var background = panel.GetComponent<Image>();
         background.color = new Color(.035f, .045f, .055f, .82f);
