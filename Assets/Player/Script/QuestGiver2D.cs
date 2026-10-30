@@ -29,6 +29,8 @@ public sealed class QuestGiver2D : MonoBehaviour
     [SerializeField] private TextAsset questCompletedDialogue;
 
     [Header("Quest object")]
+    [Tooltip("JSON containing the questName and objective fields.")]
+    [SerializeField] private TextAsset questDefinition;
     [SerializeField] private QuestPickup2D questItemPrefab;
     [SerializeField] private Transform questItemSpawnPoint;
 
@@ -118,6 +120,7 @@ public sealed class QuestGiver2D : MonoBehaviour
         {
             if (!SpawnQuestItem()) return;
             CurrentStage = QuestStage.WaitingForItem;
+            QuestTracker.Accept(this, questDefinition != null ? questDefinition : Resources.Load<TextAsset>("Quests/collection_quest"));
             onQuestAccepted?.Invoke();
         }
         else if (finishedPurpose == DialoguePurpose.Rejection)
@@ -127,6 +130,7 @@ public sealed class QuestGiver2D : MonoBehaviour
         else if (finishedPurpose == DialoguePurpose.Completion && CurrentStage == QuestStage.ReadyToComplete)
         {
             CurrentStage = QuestStage.Completed;
+            QuestTracker.Complete(this);
             onQuestCompleted?.Invoke();
         }
     }
