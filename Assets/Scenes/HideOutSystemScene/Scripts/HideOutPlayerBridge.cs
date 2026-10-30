@@ -28,24 +28,38 @@ namespace BehindTheGear.HideOut
         public bool Initialized => State != null;
         public string Message { get; private set; } = "시설을 선택하세요.";
         public event Action Changed;
+        public event Action<Facility, int> UpgradeSucceeded;
         private bool busy, saveBlocked;
         private int lastCommandFrame = -1;
+        private float nextDummyUpgradeTime;
+        private float nextStorageUpgradeTime;
         public double Now => Settings.rules.offlineCooldown ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000d : State.activeClock;
         public float RecoveryRateMultiplier => 1 + State.levels[0] * Settings.rules.clinicPercentPerLevel;
         public int MaxMana => HideOutModel.MaxMana(State, Settings.rules);
+        public InventoryItemDefinition EquippedWeapon => Inventory != null
+            ? Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Weapon) : null;
+        public int EquippedWeaponDummyBonus => Initialized && EquippedWeapon != null
+            ? HideOutModel.DummyBonus(State, EquippedWeapon.ItemId) : 0;
+        public int EquippedWeaponFinalDamage => EquippedWeapon != null && Melee != null ? Melee.ResolvedDamage : 0;
         public int MeleeDamageBonus
         {
             get
             {
                 if (!Initialized) return 0;
-                var weapon = Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Weapon);
-                return (weapon != null ? weapon.GetStatIncrease(PersonalStatType.Attack) + State.levels[2] : 0)
+                var weapon = EquippedWeapon;
+                return (weapon != null ? weapon.GetStatIncrease(PersonalStatType.Attack) + HideOutModel.DummyBonus(State, weapon.ItemId) : 0)
                     + (Inventory.Stats != null ? Inventory.Stats.AttackPowerBonus : 0);
             }
         }
         private string validationSavePath;
         public string SavePath => validationSavePath ?? Path.Combine(Application.persistentDataPath, "HideOutPrototype", Sandbox ? "sandbox-v1.json" : "player-v1.json");
 #if UNITY_EDITOR
+        public void InitializeEditorSample(HideOutSettings settings)
+        {
+            Settings = settings;
+            State = new HideOutSave { coins = 250, actionPoints = 10, baseMana = settings.rules.baseMana };
+            HideOutModel.Normalize(State, settings.rules);
+        }
         public void InitializeForValidation(HideOutSettings settings, string isolatedPath)
         {
             if (Initialized) throw new InvalidOperationException("Validation must use a fresh player.");
@@ -99,6 +113,7 @@ namespace BehindTheGear.HideOut
 
         public bool Change(Func<HideOutSave, string> operation)
         {
+            if (!Application.isPlaying) return false;
             if (busy || lastCommandFrame == Time.frameCount) return false;
             busy = true; lastCommandFrame = Time.frameCount;
             try
@@ -114,11 +129,62 @@ namespace BehindTheGear.HideOut
             catch (Exception e) { SetMessage(e.Message); return false; }
             finally { busy = false; }
         }
-        public void Upgrade(Facility f) => Change(s =>
+        public void Upgrade(Facility f)
         {
-            if (!HideOutModel.Upgrade(s, Settings.rules, f, out string message)) throw new InvalidOperationException(message);
-            return message;
-        });
+            if (HideOutModel.IsExhibition(f)) { SetMessage("추후 구현 시설입니다. 현재 이용·강화할 수 없습니다."); return; }
+            if (f == Facility.Dummy) { UpgradeDummy(); return; }
+            if (f == Facility.Storage) { UpgradeStorage(); return; }
+            bool upgraded = Change(s =>
+            {
+                if (!HideOutModel.Upgrade(s, Settings.rules, f, out string message)) throw new InvalidOperationException(message);
+                return message;
+            });
+            if (upgraded) UpgradeSucceeded?.Invoke(f, State.levels[(int)f]);
+        }
+        public void UpgradeStorage()
+        {
+            if (Time.unscaledTime < nextStorageUpgradeTime)
+            {
+                SetMessage("업그레이드 입력을 처리 중입니다.");
+                return;
+            }
+            bool changed = Change(s =>
+            {
+                if (!HideOutModel.Upgrade(s, Settings.rules, Facility.Storage, out string message))
+                    throw new InvalidOperationException(message);
+                return message;
+            });
+            if (changed)
+            {
+                nextStorageUpgradeTime = Time.unscaledTime + .25f;
+                UpgradeSucceeded?.Invoke(Facility.Storage, State.levels[(int)Facility.Storage]);
+            }
+        }
+        public void UpgradeDummy()
+        {
+            if (EquippedWeapon == null)
+            {
+                SetMessage("장착된 무기가 없습니다.");
+                return;
+            }
+            if (Time.unscaledTime < nextDummyUpgradeTime)
+            {
+                SetMessage("업그레이드 입력을 처리 중입니다.");
+                return;
+            }
+            nextDummyUpgradeTime = Time.unscaledTime + .25f;
+            bool upgraded = Change(s =>
+            {
+                string weaponId = s.equipment != null && s.equipment.Length > 0 ? s.equipment[0] : null;
+                var weapon = Settings.Find(weaponId);
+                if (weapon == null || !weapon.IsEquipment || weapon.Slot != InventoryItemDefinition.EquipmentSlot.Weapon)
+                    throw new InvalidOperationException("장착된 무기가 없습니다.");
+                if (!HideOutModel.UpgradeDummy(s, Settings.rules, weaponId, out string message))
+                    throw new InvalidOperationException(message);
+                return message;
+            });
+            if (upgraded) UpgradeSucceeded?.Invoke(Facility.Dummy, State.levels[(int)Facility.Dummy]);
+        }
         public void Heal() => Change(s =>
         {
             if (!HideOutModel.Heal(s, Settings.rules, Health.MaxHealth, Now, out string message)) throw new InvalidOperationException(message);
@@ -209,6 +275,14 @@ namespace BehindTheGear.HideOut
                         throw new InvalidDataException("미등록 아이템 또는 잘못된 스택입니다. Settings의 Items 목록을 확인하세요.");
             foreach (string id in s.equipment) if (!string.IsNullOrEmpty(id) && Settings.Find(id) == null) throw new InvalidDataException("미등록 장비: " + id);
             foreach (string id in s.quickSlots) if (!string.IsNullOrEmpty(id) && Settings.Find(id) == null) throw new InvalidDataException("미등록 퀵슬롯: " + id);
+            var weaponIds = new HashSet<string>();
+            foreach (var record in s.dummyWeaponBonuses)
+            {
+                var weapon = record != null ? Settings.Find(record.weaponId) : null;
+                if (record == null || record.bonus < 0 || weapon == null || !weapon.IsEquipment
+                    || weapon.Slot != InventoryItemDefinition.EquipmentSlot.Weapon || !weaponIds.Add(record.weaponId))
+                    throw new InvalidDataException("잘못되거나 중복된 허수아비 무기 강화 기록입니다.");
+            }
             foreach (var component in GetComponents<MonoBehaviour>())
                 if (component is IHideOutSaveParticipant participant)
                 { var entry = s.extensions.Find(x => x.key == participant.SaveKey); if (entry != null) participant.ValidateJson(entry.json); }

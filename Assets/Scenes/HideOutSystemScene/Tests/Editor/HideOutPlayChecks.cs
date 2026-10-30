@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text;
+using System.Linq;
 using BehindTheGear.HideOut;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 // Explicitly invoked; no auto-run, saved scenes or production saves are modified.
@@ -71,6 +73,8 @@ public static class HideOutPlayChecks
         Check(b.Health.CurrentHealth == 10 && b.Inventory.Capacity == 15, "fresh real Unity components");
         b.Upgrade(Facility.Storage);
         Check(b.State.levels[3] == 0 && b.State.coins == 0 && !File.Exists(save), "insufficient resources do not save or mutate"); yield return null;
+        b.UpgradeDummy();
+        Check(b.State.levels[2] == 0 && b.State.dummyWeaponBonuses.Count == 0 && !File.Exists(save), "missing weapon blocks dummy upgrade without saving or spending"); yield return null;
         b.GrantTestResources();
         Check(b.State.coins == 1000 && b.Health.CurrentHealth == 5 && File.Exists(save), "isolated transactional save and test grant"); yield return null;
         b.Heal();
@@ -80,16 +84,24 @@ public static class HideOutPlayChecks
         b.Upgrade(Facility.Bed);
         Check(b.Health.MaxHealth == 20 && b.Health.CurrentHealth == 10, "bed increases max HP without healing"); yield return null;
         int damage = b.Melee.ResolvedDamage;
+        int dummyCoins = b.State.coins;
         b.Upgrade(Facility.Dummy);
-        Check(b.Melee.ResolvedDamage == damage + 1, "equipped weapon damage modifier increases exactly once"); yield return null;
+        b.UpgradeDummy();
+        Check(b.Melee.ResolvedDamage == damage + 1 && b.EquippedWeaponDummyBonus == 1
+            && HideOutModel.DummyBonus(b.State, settings.testWeaponId) == 1 && b.State.levels[2] == 1
+            && b.State.coins == dummyCoins - 10,
+            "rapid duplicate input spends once and gives the equipped weapon one persistent bonus"); yield return null;
         var dummy = b.gameObject.AddComponent<HideOutDummy>();
         Check(b.Melee.TryAttackTarget(dummy) && dummy.LastDamage == damage + 1, "real melee target receives calculated damage");
         Check(!b.Melee.TryAttackTarget(dummy) && dummy.Hits == 1, "melee cooldown prevents immediate second hit");
         b.Inventory.SetCapacityBonus("ValidationOtherGrowth", 3);
         b.Health.SetMaxHealthBonus("ValidationOtherGrowth", 7);
         yield return null;
-        b.Upgrade(Facility.Storage);
-        Check(b.Inventory.Capacity == 20 && b.State.storage.Count == 15, "storage +2/+5 preserves other growth"); yield return null;
+        int storageCoins = b.State.coins;
+        b.Upgrade(Facility.Storage); b.UpgradeStorage();
+        Check(b.Inventory.Capacity == 20 && b.State.storage.Count == 15
+            && b.State.levels[(int)Facility.Storage] == 1 && b.State.coins == storageCoins - 10,
+            "rapid storage upgrade input applies one +2/+5 level and spends once"); yield return null;
         b.Upgrade(Facility.Gym); Check(b.MaxMana == 101 && b.Health.MaxHealth == 27, "gym changes MP, not HP"); yield return null;
         b.Transfer(true, 0);
         int total = HideOutModel.Count(b.State.inventory,"hideout_scrap") + HideOutModel.Count(b.State.storage,"hideout_scrap");
@@ -99,14 +111,23 @@ public static class HideOutPlayChecks
         b.ReceivePotions(); Check(b.State.potionsReadyAt == 0, "Selena starts locked"); yield return null;
         b.TestRecruit(); yield return null;
         b.ReceivePotions(); Check(HideOutModel.Count(b.State.inventory,"health_potion") == 2 && b.State.potionsReadyAt > b.Now, "recruitment unlocks persisted potion delivery"); yield return null;
+        b.Transfer(true, 0); yield return null;
+        int storedBeforeSave = HideOutModel.Count(b.State.storage, "hideout_scrap");
+        Check(storedBeforeSave > 0, "storage contains an item before save/load verification");
         b.Save(); yield return null;
         for (int i=0;i<3;i++) { b.Load(); yield return null; }
         Check(b.Inventory.Capacity == 20 && b.Health.MaxHealth == 27 && b.Melee.ResolvedDamage == damage + 1 && b.MaxMana == 101, "repeated load does not compound bonuses or discard other growth");
+        Check(HideOutModel.Count(b.State.storage, "hideout_scrap") == storedBeforeSave,
+            "save/load preserves storage item IDs, quantities and slot-backed capacity");
         Check(b.State.clinicReadyAt == deadline && b.State.potionsReadyAt > b.Now, "load preserves both cooldowns");
         Check(File.Exists(save + ".bak"), "atomic save retains previous backup");
         var snapshot = JsonUtility.FromJson<HideOutSave>(File.ReadAllText(save));
-        Check(snapshot.equipment[0] == settings.testWeaponId && snapshot.questInventory.Count == b.Inventory.QuestCapacity, "save includes equipment and quest inventory");
+        Check(snapshot.equipment[0] == settings.testWeaponId && snapshot.questInventory.Count == b.Inventory.QuestCapacity
+            && HideOutModel.DummyBonus(snapshot, settings.testWeaponId) == 1,
+            "save includes equipment, quest inventory and weapon-specific dummy bonus");
         int coins = b.State.coins, level = b.State.levels[1];
+        // Replenish the bag from the storage round-trip before testing a paid upgrade.
+        b.Transfer(false, 0); yield return null;
         b.Upgrade(Facility.Bed); b.Upgrade(Facility.Bed);
         Check(b.State.levels[1] == level+1 && b.State.coins == coins-20, "same-frame double command applies once"); yield return null;
         // Force an IO error on a unique temporary save, not on the player's files.
@@ -172,6 +193,103 @@ public static class HideOutPlayChecks
         Check(b.Health.CurrentHealth==hpBeforeTravel && b.Inventory.Capacity==bagBeforeTravel && b.State.equipment[0]==weaponBeforeTravel, "entry preserves HP inventory and weapon");
         Check(!body.simulated && !input.enabled, "HideOut freezes existing player controls and physics");
         Check(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None).Length==1, "HideOut owns exactly one active EventSystem");
+        var cameraController = Object.FindFirstObjectByType<HideOutCameraController>();
+        Check(cameraController != null && cameraController.GetComponent<Camera>().orthographic && cameraController.IsOverview
+            && cameraController.State == HideOutCameraState.Overview
+            && Quaternion.Angle(cameraController.transform.rotation, Quaternion.Euler(settings.topView.cameraEuler)) < .01f,
+            "isometric view starts at the configured orthographic overview");
+        bool hasScreenHud = false;
+        foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            hasScreenHud |= canvas.renderMode == RenderMode.ScreenSpaceOverlay;
+        var diorama = Object.FindFirstObjectByType<HideOutIsometricEnvironment>();
+        Check(diorama != null && diorama.GetComponentsInChildren<MeshRenderer>(true).Length > 30 && hasScreenHud,
+            "3D isometric diorama keeps facility panels in screen space");
+        Check(GameObject.Find("Previous Room") == null && GameObject.Find("Next Room") == null,
+            "legacy room navigation buttons are absent");
+        var pan = typeof(HideOutCameraController).GetMethod("ApplyPan",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Vector3 panStart = cameraController.transform.position;
+        Vector2 smallDrag = new Vector2(20f, 0f) * settings.topView.leftDragMultiplier;
+        pan.Invoke(cameraController, new object[] { smallDrag, 1f / 60f });
+        float panDistance = Vector3.Distance(panStart, cameraController.transform.position);
+        Check(panDistance > .001f && panDistance < .5f
+            && cameraController.State == HideOutCameraState.FreeExplore,
+            "gentle pan moves a small distance from the overview without zooming");
+        for (int i = 0; i < 120; i++) pan.Invoke(cameraController, new object[] { smallDrag, 1f / 60f });
+        Vector3 boundary = cameraController.transform.position;
+        pan.Invoke(cameraController, new object[] { smallDrag, 1f / 60f });
+        Check(Vector3.Distance(boundary, cameraController.transform.position) < .001f,
+            "repeated pan stops at the boundary without overscroll");
+        pan.Invoke(cameraController, new object[] { -smallDrag, 1f / 60f });
+        Check(Vector3.Distance(boundary, cameraController.transform.position) > .001f,
+            "reverse pan responds immediately at the boundary");
+        cameraController.SnapToOverview();
+        var warehouseAnchor = GameObject.Find("WarehouseCameraAnchor");
+        var storageFocus = settings.topView.Find(Facility.Storage);
+        bool focusCompleted = false;
+        Check(warehouseAnchor != null && storageFocus != null
+            && cameraController.TryFocus(warehouseAnchor.transform, storageFocus.orthographicSize, () => focusCompleted = true),
+            "storage focus accepts one camera move");
+        timeout = Time.realtimeSinceStartup + 3f;
+        while (cameraController.IsMoving && Time.realtimeSinceStartup < timeout) yield return null;
+        Check(focusCompleted && !cameraController.IsOverview && cameraController.State == HideOutCameraState.FacilityFocus
+            && Mathf.Abs(cameraController.GetComponent<Camera>().orthographicSize - storageFocus.orthographicSize) < .001f,
+            "storage focus completes at its configured zoom");
+        bool overviewCompleted = false;
+        Check(cameraController.TryReturnToOverview(() => overviewCompleted = true), "overview return accepts one camera move");
+        timeout = Time.realtimeSinceStartup + 3f;
+        while (cameraController.IsMoving && Time.realtimeSinceStartup < timeout) yield return null;
+        Check(overviewCompleted && cameraController.IsOverview && cameraController.State == HideOutCameraState.Overview
+            && Mathf.Abs(cameraController.GetComponent<Camera>().orthographicSize - settings.topView.overviewOrthographicSize) < .001f,
+            "camera returns to the configured overview zoom");
+        var view = Object.FindFirstObjectByType<HideOutScene>();
+        string beforeClicks = JsonUtility.ToJson(b.State);
+        foreach (Facility facility in settings.topView.shortcutOrder)
+        {
+            var label = settings.FindPresentation(facility).displayName;
+            foreach (string buttonName in new[] { label + " Facility Icon", "Shortcut " + facility })
+            {
+                var button = view.GetComponentsInChildren<Button>(true).First(x => x.name == buttonName);
+                Check(button.gameObject.activeInHierarchy && button.interactable,
+                    buttonName + " accepts pointer input (active=" + button.gameObject.activeInHierarchy + ", interactable=" + button.interactable + ", camera=" + cameraController.State + ", moving=" + cameraController.IsMoving + ")");
+                ExecuteEvents.Execute(button.gameObject, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left }, ExecuteEvents.pointerClickHandler);
+                timeout = Time.realtimeSinceStartup + 3f;
+                while (cameraController.IsMoving && Time.realtimeSinceStartup < timeout) yield return null;
+                yield return null;
+                Check(cameraController.State == HideOutCameraState.FacilityFocus && !cameraController.IsMoving, buttonName + " focuses camera");
+                string panelName = facility == Facility.Storage ? "Storage Panel" : facility == Facility.Dummy ? "Dummy Bottom Panel"
+                    : HideOutModel.IsExhibition(facility) ? "Exhibition Information Panel" : "Upgrade Overlay";
+                Check(view.GetComponentsInChildren<RectTransform>(true).First(t => t.name == panelName).gameObject.activeInHierarchy,
+                    buttonName + " opens its facility panel after movement");
+                Check(button.interactable, buttonName + " remains clickable when focused");
+                ExecuteEvents.Execute(button.gameObject, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left }, ExecuteEvents.pointerClickHandler);
+                timeout = Time.realtimeSinceStartup + 3f;
+                while (cameraController.IsMoving && Time.realtimeSinceStartup < timeout) yield return null;
+                yield return null;
+                Check(cameraController.IsOverview, buttonName + " second click returns to overview");
+            }
+        }
+        Check(JsonUtility.ToJson(b.State) == beforeClicks, "all facility click toggles preserve progress and resources");
+        Check(diorama.UpgradeFeedbackCount == 0, "entry and selection never replay upgrade feedback");
+        int[] visualLevels = (int[])b.State.levels.Clone();
+        foreach (int stageLevel in new[] { 0, 2, 4, 6, 9 })
+        {
+            foreach (Facility facility in settings.topView.shortcutOrder) if (!HideOutModel.IsExhibition(facility)) visualLevels[(int)facility] = stageLevel;
+            diorama.RefreshFacilityVisuals(visualLevels); diorama.ApplyArt(settings, visualLevels);
+            Check(diorama.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Visible Stage Frame " + HideOutModel.Tier(stageLevel) && t.gameObject.activeInHierarchy) == 6,
+                "all six facilities restore visible stage at level " + stageLevel);
+            yield return null;
+            ScreenCapture.CaptureScreenshot(Path.GetFullPath("Temp/HideOutValidation/stage-" + stageLevel + ".png"));
+            yield return null; yield return null;
+        }
+        diorama.RefreshFacilityVisuals(b.State.levels); diorama.ApplyArt(settings, b.State.levels);
+        yield return null;
+        ScreenCapture.CaptureScreenshot(Path.GetFullPath("Temp/HideOutValidation/hud-overview.png"));
+        int feedbackBefore = diorama.UpgradeFeedbackCount;
+        b.Upgrade(Facility.Clinic); yield return null;
+        Check(diorama.UpgradeFeedbackCount == feedbackBefore + 1, "real paid upgrade plays one environment feedback");
+        b.Load(); yield return null;
+        Check(diorama.UpgradeFeedbackCount == feedbackBefore + 1, "save reload restores art without replaying feedback");
         var exit=HideOutTravel.Exit(b,hideout); while(exit.MoveNext()) yield return exit.Current;
         Check(!hideout.isLoaded && sentinel.activeSelf && !inactive.activeSelf && sourceEvents.activeSelf, "exit restores exact origin active states");
         Check((b.transform.position-new Vector3(13,7,0)).sqrMagnitude<.0001f && body.simulated && input.enabled, "exit restores configured position controls and physics");

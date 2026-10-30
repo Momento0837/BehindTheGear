@@ -363,19 +363,103 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 631adc26a4664548bbce5dc635905579, type: 3}
   - {fileID: 21300000, guid: 42fc3752047943788f7576bd3ac7512b, type: 3}
   prototypeFacilities:
-  - facilityId: management_desk
+  - facilityId: storage
     facility: 3
-    displayName: 관리 책상
+    displayName: 창고
     icon: {fileID: 0}
     facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
     currentEffectOverride:
     nextEffectOverride:
     prototypeLocked: 0
-  - facilityId: medical_cabinet
+  - facilityId: treatment_booth
     facility: 0
-    displayName: 의료 수납장
+    displayName: 치료 부스
     icon: {fileID: 0}
     facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
     currentEffectOverride:
     nextEffectOverride:
     prototypeLocked: 0
+  - facilityId: training_dummy
+    facility: 2
+    displayName: 허수아비
+    prototypeLocked: 0
+  - facilityId: bed
+    facility: 1
+    displayName: 침대
+    prototypeLocked: 0
+  - facilityId: potion_shelf
+    facility: 4
+    displayName: 물약 보관대
+    prototypeLocked: 0
+  - facilityId: gym
+    facility: 5
+    displayName: 체력단련실
+    prototypeLocked: 0
+  - facilityId: dining
+    facility: 6
+    displayName: 식탁
+    prototypeLocked: 0
+    roomPosition: {x: -15, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
+    exhibitionDescription: "NPC들이 함께 식사하는 공간입니다.\n\n향후 기획 · 해금 조건\n혁명군 NPC 수 조건 충족\n\n향후 기획 · 강화 효과\nNPC 사기 증가 및 기지 내 스탯 효율 증가\n사기 수치 1당 기지 내 스탯 증가율 0.5%\n\n현재 적용되는 효과는 없습니다."
+  - facilityId: workshop
+    facility: 7
+    displayName: 무기제작실
+    prototypeLocked: 0
+    roomPosition: {x: 15, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
+    exhibitionDescription: "무기를 제작하는 작업 공간입니다.\n\n향후 기획 · 기능\n재료를 사용한 무기 제작\n\n향후 기획 · 강화 효과\n제작 재료 요구량 감소\n\n현재 제작·재료 소비·강화는 제공하지 않습니다."
+  topView:
+    overviewCameraPosition: {x: 12, y: 15, z: -16}
+    cameraEuler: {x: 37, y: -37, z: 0}
+    overviewOrthographicSize: 13.8
+    cameraMoveDuration: 0.7
+    dragThresholdPixels: 10
+    dragSensitivity: 1
+    leftDragMultiplier: 0.4
+    overviewPanAllowance: 1.5
+    movementSmoothTime: 0.14
+    maximumMoveSpeed: 22
+    useInertia: 1
+    inertiaDamping: 12
+    zoomStep: 0.9
+    zoomSmoothTime: 0.14
+    minimumOrthographicSize: 3.8
+    maximumOrthographicSize: 13.8
+    boundsPadding: 0.2
+    shortcutOrder: 0300000000000000020000000100000004000000050000000600000007000000
+    facilities:
+    - facility: 0
+      anchorName: TreatmentBoothCameraAnchor
+      cameraPosition: {x: 6.1, y: 15, z: -11.2}
+      orthographicSize: 4.8
+    - facility: 3
+      anchorName: WarehouseCameraAnchor
+      cameraPosition: {x: 13.2, y: 15, z: -15.1}
+      orthographicSize: 5.2
+    - facility: 2
+      anchorName: TrainingDummyCameraAnchor
+      cameraPosition: {x: 20.2, y: 15, z: -11.1}
+      orthographicSize: 4.8
+    - facility: 1
+      anchorName: BedCameraAnchor
+      cameraPosition: {x: 7, y: 15, z: -18}
+      orthographicSize: 4.8
+    - facility: 4
+      anchorName: PotionsCameraAnchor
+      cameraPosition: {x: 13, y: 15, z: -19}
+      orthographicSize: 4.8
+    - facility: 5
+      anchorName: GymCameraAnchor
+      cameraPosition: {x: 20, y: 15, z: -18}
+      orthographicSize: 4.8
+    - facility: 6
+      anchorName: DiningCameraAnchor
+      cameraPosition: {x: -1, y: 15, z: -15}
+      orthographicSize: 5.6
+    - facility: 7
+      anchorName: WorkshopCameraAnchor
+      cameraPosition: {x: 29, y: 15, z: -15}
+      orthographicSize: 5.6

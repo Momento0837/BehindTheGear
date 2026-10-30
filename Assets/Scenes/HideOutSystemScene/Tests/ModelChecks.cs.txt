@@ -6,7 +6,7 @@ static class ModelChecks
     sealed class Catalog : IHideOutItems
     {
         public int MaxStack(string id) => id == "weapon" ? 1 : id == "bad" ? 0 : 50;
-        public string Name(string id) => id;
+        public string Name(string id) => id.StartsWith("same_") ? "같은 이름" : id;
     }
     static int checks;
     static void Check(bool value, string title) { if (!value) throw new Exception(title); checks++; Console.WriteLine("PASS " + title); }
@@ -16,6 +16,24 @@ static class ModelChecks
         var rules = new HideOutRules { facilities = new[] { new FacilityDefinition { facility = Facility.Storage, upgrades = new[] { new UpgradeCost(), new UpgradeCost() } } } };
         var state = new HideOutSave(); HideOutModel.Normalize(state, rules);
         Check(state.inventory.Count == 15 && state.storage.Count == 10, "default / legacy initialization");
+        var legacyState = new HideOutSave { dummyWeaponBonuses = null }; HideOutModel.Normalize(legacyState, rules);
+        Check(legacyState.dummyWeaponBonuses != null && HideOutModel.DummyBonus(legacyState,"weapon_a")==0,
+            "legacy save without dummy records safely defaults to zero");
+        var dummyRules = new HideOutRules { facilities = new[] { new FacilityDefinition { facility = Facility.Dummy, upgrades = new[] { new UpgradeCost(), new UpgradeCost(), new UpgradeCost() } } } };
+        var dummyState = new HideOutSave { coins = 100, actionPoints = 10 }; HideOutModel.Normalize(dummyState, dummyRules);
+        HideOutModel.Add(dummyState.inventory,"hideout_scrap",10,items);
+        Check(!HideOutModel.UpgradeDummy(dummyState,dummyRules,"",out _) && dummyState.coins==100 && HideOutModel.Count(dummyState.inventory,"hideout_scrap")==10,
+            "missing weapon blocks dummy upgrade without spending");
+        Check(HideOutModel.UpgradeDummy(dummyState,dummyRules,"weapon_a",out _) && dummyState.levels[2]==1
+            && HideOutModel.DummyBonus(dummyState,"weapon_a")==1 && HideOutModel.DummyBonus(dummyState,"weapon_b")==0
+            && dummyState.coins==90 && dummyState.actionPoints==9 && HideOutModel.Count(dummyState.inventory,"hideout_scrap")==8,
+            "dummy upgrade spends once and belongs only to equipped weapon A");
+        Check(HideOutModel.UpgradeDummy(dummyState,dummyRules,"weapon_b",out _) && dummyState.levels[2]==2
+            && HideOutModel.DummyBonus(dummyState,"weapon_a")==1 && HideOutModel.DummyBonus(dummyState,"weapon_b")==1,
+            "weapon B receives its own bonus without moving weapon A bonus");
+        for(int i=0;i<10;i++) HideOutModel.Normalize(dummyState,dummyRules);
+        Check(HideOutModel.DummyBonus(dummyState,"weapon_a")==1 && HideOutModel.DummyBonus(dummyState,"weapon_b")==1,
+            "normalization and reload preparation do not compound weapon bonuses");
         Check(!HideOutModel.Upgrade(state,rules,Facility.Storage,out _) && state.levels[3] == 0 && state.coins == 0, "insufficient cost leaves all state intact");
         state.coins = 50; state.actionPoints = 5; HideOutModel.Add(state.inventory,"hideout_scrap",4,items);
         Check(HideOutModel.Upgrade(state,rules,Facility.Storage,out _) && state.coins == 40 && state.actionPoints == 4 && HideOutModel.Count(state.inventory,"hideout_scrap") == 2, "upgrade consumes full cost once");
@@ -28,6 +46,11 @@ static class ModelChecks
         Check(HideOutModel.Move(source,source,0,items) == 0, "self-transfer cannot duplicate");
         state.inventory = new(){new("a",4),new("b",5)}; state.storage = new(){new("a",1),new(),new()};
         Check(HideOutModel.DepositExisting(state,items) == 4 && state.inventory[1].count == 5 && HideOutModel.Count(state.storage,"b") == 0, "deposit uses initial ID set");
+        state.storage = new(){new("same_b",3),new(),new("same_a",7)};
+        HideOutModel.Sort(state.storage,items);
+        Check(state.storage[0].id=="same_a" && state.storage[0].count==7 && state.storage[1].id=="same_b"
+            && state.storage[1].count==3 && state.storage[2].Empty,
+            "storage sort uses display name then stable item ID without merging or losing quantities");
         var weapons = new List<ItemStack>{new(),new()};
         Check(HideOutModel.Add(weapons,"weapon",3,items)==2 && weapons[0].count==1 && weapons[1].count==1, "equipment occupies individual slots");
         state.hp=9;
@@ -47,6 +70,28 @@ static class ModelChecks
         Check(HideOutModel.MaxMana(state,rules)==103 && HideOutModel.MaxMana(state,rules)==103,"gym scales base MP without compounding");
         Check(HideOutModel.Tier(0)==0 && HideOutModel.Tier(2)==1 && HideOutModel.Tier(4)==2 && HideOutModel.Tier(6)==3 && HideOutModel.Tier(10)==3,"appearance 0/2/4/6 and above");
         Check(!HideOutModel.Upgrade(state,rules,Facility.Dining,out _) && !HideOutModel.Upgrade(state,rules,Facility.Workshop,out _),"excluded facilities cannot upgrade");
+        var exhibitionRules = new HideOutRules { facilities = new[] {
+            new FacilityDefinition { facility = Facility.Dining, upgrades = new[] { new UpgradeCost(), new UpgradeCost(), new UpgradeCost(), new UpgradeCost() } },
+            new FacilityDefinition { facility = Facility.Workshop, upgrades = new[] { new UpgradeCost(), new UpgradeCost(), new UpgradeCost(), new UpgradeCost() } }
+        }};
+        var displayState = new HideOutSave { coins = 500, actionPoints = 20, hp = 7, mana = 34, selenaRecruited = true };
+        HideOutModel.Normalize(displayState, exhibitionRules);
+        HideOutModel.Add(displayState.inventory, "hideout_scrap", 25, items);
+        displayState.levels[(int)Facility.Dining] = 2;
+        displayState.levels[(int)Facility.Workshop] = 3;
+        Check(HideOutModel.IsExhibition(Facility.Dining) && HideOutModel.IsExhibition(Facility.Workshop)
+            && !HideOutModel.IsExhibition(Facility.Potions), "exhibition status is independent of recruitment locks");
+        Check(HideOutModel.Next(displayState, exhibitionRules, Facility.Dining) != null
+            && HideOutModel.Next(displayState, exhibitionRules, Facility.Workshop) != null
+            && !HideOutModel.Upgrade(displayState, exhibitionRules, Facility.Dining, out _)
+            && !HideOutModel.Upgrade(displayState, exhibitionRules, Facility.Workshop, out _)
+            && displayState.coins == 500 && displayState.actionPoints == 20
+            && HideOutModel.Count(displayState.inventory, "hideout_scrap") == 25
+            && displayState.hp == 7 && displayState.mana == 34
+            && displayState.levels[6] == 2 && displayState.levels[7] == 3,
+            "exhibition upgrades reject configured recipes and preserve legacy levels resources HP MP");
+        Check(HideOutModel.Tier(1)==0 && HideOutModel.Tier(3)==1 && HideOutModel.Tier(5)==2
+            && HideOutModel.Tier(7)==3 && HideOutModel.Tier(100)==3, "tier ranges include odd levels and retain last art above six");
         var random = new Random(42); var a = new List<ItemStack>(); var b = new List<ItemStack>();
         HideOutModel.Resize(a,10); HideOutModel.Resize(b,7); HideOutModel.Add(a,"a",173,items); HideOutModel.Add(a,"weapon",4,items);
         for(int i=0;i<3000;i++) { var x=i%2==0?a:b; var y=i%2==0?b:a; HideOutModel.Move(x,y,random.Next(x.Count),items); }
