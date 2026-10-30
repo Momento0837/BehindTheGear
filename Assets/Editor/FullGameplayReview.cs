@@ -72,11 +72,14 @@ public static class FullGameplayReview
                 initialized = true;
                 started = since = now;
                 new GameObject("Play Review Keyboard").AddComponent<PlayReviewKeyboard>();
-                typeof(PlayerControlSchemeSettings).GetField("current", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, PlayerControlScheme.ArrowKeys);
-                typeof(PlayerControlSchemeSettings).GetField("loaded", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, true);
                 Log("Virtual keyboard plays normal input. One deliberate lethal damage call tests restart; equipment/choice buttons use their existing UI actions. No scenes saved.");
             }
             Check(now - started < 300 && now - since < 65, "Timeout at stage " + stage);
+            if (SceneManager.GetActiveScene().name == "ControlSchemeSelect")
+            {
+                UnityEngine.Object.FindFirstObjectByType<ControlSchemeSelectScene>()?.SelectArrowKeys();
+                return;
+            }
             var flow = UnityEngine.Object.FindFirstObjectByType<StorySceneFlow>();
             if (flow == null || Get(flow, "player") == null || Get(flow, "monsters") == null) return;
             var player = (PlayerMovement2D)Get(flow, "player");
