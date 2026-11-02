@@ -10,6 +10,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private static SceneFadeTransition instance;
     [SerializeField] private Image fadeImage;
     private bool running;
+    public static bool IsRunning => instance != null && instance.running;
 
     private void Awake()
     {

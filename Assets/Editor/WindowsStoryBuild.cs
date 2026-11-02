@@ -5,7 +5,7 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// <summary>Builds the requested two-scene Windows player without changing the shared scene list.</summary>
+/// <summary>Builds control selection followed by the two story scenes.</summary>
 public static class WindowsStoryBuild
 {
     [MenuItem("Tools/Build/Windows - Forest and Market")]
@@ -26,7 +26,7 @@ public static class WindowsStoryBuild
 
             string folder = Path.GetFullPath("Builds/Windows/BehindTheGear-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
             Directory.CreateDirectory(folder);
-            string[] scenes = { "Assets/Scenes/Main/Forest.unity", "Assets/Scenes/Main/Market.unity" };
+            string[] scenes = { "Assets/Scenes/Controls/ControlSchemeSelect.unity", "Assets/Scenes/Main/Forest.unity", "Assets/Scenes/Main/Market.unity" };
             File.WriteAllText(resultPath, "BUILDING\n" + folder);
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
@@ -39,7 +39,7 @@ public static class WindowsStoryBuild
             string summary = report.summary.result + "\n" + folder
                 + "\nUnity: " + Application.unityVersion
                 + "\nTarget: Windows x86_64"
-                + "\nScenes: Forest, Market (startup: Forest)"
+                + "\nScenes: ControlSchemeSelect, Forest, Market (startup: ControlSchemeSelect)"
                 + "\nErrors: " + report.summary.totalErrors
                 + "\nWarnings: " + report.summary.totalWarnings
                 + "\nBytes: " + report.summary.totalSize;
@@ -50,7 +50,7 @@ public static class WindowsStoryBuild
             File.WriteAllText(Path.Combine(folder, "README.txt"),
                 "BehindTheGear - Windows 10/11 (64-bit)\r\n"
                 + "Run BehindTheGear.exe. Keep all files and BehindTheGear_Data together.\r\n"
-                + "Startup: Forest. Included scenes: Forest, Market.\r\n"
+                + "Startup: choose WASD or Arrow Keys, then enter Forest. Included scenes: ControlSchemeSelect, Forest, Market.\r\n"
                 + "Press Esc to quit.\r\n");
             Debug.Log("WINDOWS_STORY_BUILD_SUCCEEDED: " + folder);
         }

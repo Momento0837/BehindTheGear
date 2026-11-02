@@ -267,6 +267,30 @@ public sealed class PlayerMovement2D : MonoBehaviour
         return box.Cast(Vector2.down, filter, groundHits, groundCheckDistance) > 0;
     }
 
+    /// <summary>Persistent players keep their Animator when a death reloads the scene.</summary>
+    internal void ResetAfterRevive()
+    {
+        horizontalInput = 0f;
+        crouchHeld = false;
+        jumpRequested = false;
+        if (playerHealth != null) lastKnownHealth = playerHealth.CurrentHealth;
+        RefreshAnimationWhileControlLocked();
+        UpdateCrouch(false);
+        if (body != null) body.linearVelocity = Vector2.zero;
+        if (animator == null || animator.runtimeAnimatorController == null) return;
+        if (hasDeadTriggerParameter) animator.ResetTrigger(DeadTriggerHash);
+        if (hasDamagedTriggerParameter) animator.ResetTrigger(DamagedTriggerHash);
+        if (hasJumpTriggerParameter) animator.ResetTrigger(JumpTriggerHash);
+        if (hasAttackIndexParameter) animator.SetInteger(AttackIndexParameterHash, 0);
+        int idle = Animator.StringToHash("Base Layer.Idle");
+        if (animator.HasState(0, idle))
+        {
+            // Evaluate immediately, before the death fade reveals the revived player.
+            animator.Play(idle, 0, 0f);
+            animator.Update(0f);
+        }
+    }
+
     internal void RefreshAnimationWhileControlLocked()
     {
         jumpRequested = false;

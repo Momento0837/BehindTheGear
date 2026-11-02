@@ -295,9 +295,8 @@ public sealed class ConversationDialogue : MonoBehaviour
             if (portraitImage != null)
             {
                 portraitImage.sprite = line.portrait;
-                // When no sprite is assigned, retain the Image's inspector color/placeholder
-                // so the portrait panel keeps the reference layout shown in the design.
-                portraitImage.enabled = true;
+                // A sprite-less Image renders a solid white rectangle over the scene.
+                portraitImage.enabled = line.portrait != null;
             }
             if (bodyText != null) bodyText.text = string.Empty;
             if (continueIndicator != null) continueIndicator.SetActive(false);

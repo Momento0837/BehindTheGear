@@ -41,8 +41,15 @@ public sealed class PlayerInteractionController : MonoBehaviour
 
     public void ConfigurePrompt(InteractionPromptUI prompt) => interactionPrompt = prompt;
 
+    private void OnDisable()
+    {
+        currentTarget = null;
+        if (interactionPrompt != null) interactionPrompt.SetVisible(false);
+    }
+
     public void TryInteract()
     {
+        if (!isActiveAndEnabled) return;
         Interactable2D target = currentTarget != null ? currentTarget : FindClosestInteractable();
         if (target == null) return;
         target.Interact(gameObject);

@@ -42,6 +42,11 @@ public static class StoryFlowSmokeCheck
         try
         {
             if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Story flow test timeout, stage=" + stage);
+            if (SceneManager.GetActiveScene().name == "ControlSchemeSelect")
+            {
+                UnityEngine.Object.FindFirstObjectByType<ControlSchemeSelectScene>()?.SelectArrowKeys();
+                return;
+            }
             var flow = UnityEngine.Object.FindFirstObjectByType<StorySceneFlow>();
             if (flow == null || Read(flow, "player") == null || Read(flow, "monsters") == null) return;
             var player = (PlayerMovement2D)Read(flow, "player");

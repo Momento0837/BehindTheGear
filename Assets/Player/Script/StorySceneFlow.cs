@@ -16,6 +16,8 @@ public sealed class StorySceneFlow : MonoBehaviour
     private bool marketMap;
     private PlayerInventory inventory;
     private MonsterFollowController[] monsters;
+    private LocationHUD locationHud;
+    [SerializeField] private TextAsset marketQuestDefinition;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Register()
@@ -43,6 +45,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return null;
         player = FindFirstObjectByType<PlayerMovement2D>();
         if (player == null) yield break;
+        locationHud = LocationHUD.Create();
+        SceneManager.MoveGameObjectToScene(locationHud.gameObject, gameObject.scene);
         player.GetComponent<PlayerHealth>()?.ReviveAfterSceneRestart();
         var inventoryUi = player.GetComponent<InventoryUI>();
         if (inventoryUi != null && inventoryUi.SceneCanvas != null)
@@ -69,6 +73,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         {
             cutscene.gameObject.SetActive(true);
             cutscene.BindPlayer(player.GetComponent<PlayerControlLock>());
+            cutscene.IncludeUi(locationHud.CanvasRoot);
             if (inventoryUi != null) cutscene.IncludeUi(inventoryUi.SceneCanvas != null ? inventoryUi.SceneCanvas.gameObject : null);
             var video = cutscene.GetComponent<VideoPlayer>();
             if (video != null) video.targetCamera = Camera.main;
@@ -92,6 +97,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     private IEnumerator Forest()
     {
         PlacePlayer(new Vector3(-4.44f, -.36f, 0));
+        ShowGuide("forest_combat");
         portal.transform.position = new Vector3(-21.77f, -2.4f, 0);
         portal.SetActive(false);
         // Preserve the supplied monster; add two instances to match the three map markers.
@@ -115,12 +121,14 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return Say("forest_clear");
         ready = true;
         portal.SetActive(true);
+        ShowGuide("forest_exit");
     }
 
     private IEnumerator Garbage()
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
+        ShowGuide("equipment_tutorial");
         portal.transform.position = new Vector3(-1f, -2.4f, 0);
         portal.SetActive(false);
         dialogue.transform.position = new Vector3(65f, -2.5f, 0);
@@ -151,6 +159,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return Say("equipment_complete");
         ready = true;
         portal.SetActive(true);
+        ShowGuide("garbage_exit");
     }
 
     private void UsePortal(GameObject interactor)
@@ -172,6 +181,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         portal.SetActive(false);
         marketMap = true;
         PlacePlayer(new Vector3(49f, -2.5f, 0));
+        ShowGuide("market_talk");
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         portal.transform.position = new Vector3(94f, -2.4f, 0);
         var npcCollider = dialogue.GetComponents<Collider2D>();
@@ -188,7 +198,11 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return Say("quest_offer");
         bool? accepted = null;
         // Retain the speaker and prompt from the authored JSON instead of adding prototype narration.
-        dialogue.ShowChoicesForCurrentLine("수락", "거절", choice => accepted = choice);
+        dialogue.ShowChoicesForCurrentLine("수락", "거절", choice =>
+        {
+            accepted = choice;
+            if (choice) QuestTracker.Accept(this, marketQuestDefinition != null ? marketQuestDefinition : Resources.Load<TextAsset>("Quests/market_quest"));
+        });
         while (!accepted.HasValue) yield return null;
         yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
         if (!accepted.Value)
@@ -214,6 +228,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         if (cutscene == null) yield break;
         cutscene.PlayFromInteraction();
         while (cutscene.IsPlaying) yield return null;
+        ShowLocation();
     }
 
     private IEnumerator Say(string resource)
@@ -240,5 +255,13 @@ public sealed class StorySceneFlow : MonoBehaviour
         foreach (var camera in InScene<PlayerCameraFollow2D>())
             camera.SetStoryBounds(mapBounds);
         Physics2D.SyncTransforms();
+        ShowLocation();
     }
+
+    private void ShowLocation() => locationHud?.SetLocation(
+        gameObject.scene.name == "Forest" ? "포레스트" : marketMap ? "마켓" : "가베지");
+
+    // Story/tutorial objectives are assigned automatically; NPC requests still require acceptance.
+    private void ShowGuide(string definition) =>
+        QuestTracker.Accept(this, Resources.Load<TextAsset>("Quests/" + definition));
 }

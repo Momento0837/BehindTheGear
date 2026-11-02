@@ -37,6 +37,13 @@ namespace BehindTheGear.HideOut
         public FacilityDefinition[] facilities = Array.Empty<FacilityDefinition>();
     }
     [Serializable] public sealed class ExtensionState { public string key, json; }
+    [Serializable] public sealed class WeaponDummyBonus
+    {
+        public string weaponId = "";
+        public int bonus;
+        public WeaponDummyBonus() { }
+        public WeaponDummyBonus(string weaponId, int bonus) { this.weaponId = weaponId; this.bonus = bonus; }
+    }
     [Serializable] public sealed class HideOutSave
     {
         public int version = 1;
@@ -53,6 +60,9 @@ namespace BehindTheGear.HideOut
         public string returnScene = "";
         public float returnX, returnY, returnZ;
         public List<ExtensionState> extensions = new();
+        // PlayerInventory currently identifies equipment by definition ItemId, not by a per-copy instance ID.
+        // Keeping this record separate from the facility level prevents the bonus moving to another weapon type.
+        public List<WeaponDummyBonus> dummyWeaponBonuses = new();
     }
     public interface IHideOutItems
     {
@@ -69,6 +79,7 @@ namespace BehindTheGear.HideOut
             if (s.levels.Length < 8) Array.Resize(ref s.levels, 8);
             for (int i = 0; i < s.levels.Length; i++) s.levels[i] = Math.Max(0, s.levels[i]);
             s.storage ??= new(); s.inventory ??= new(); s.questInventory ??= new(); s.extensions ??= new();
+            s.dummyWeaponBonuses ??= new();
             Resize(s.storage, rules.baseStorageSlots + s.levels[3] * rules.storageSlotsPerLevel);
             Resize(s.inventory, s.baseInventorySlots + s.levels[3] * rules.inventorySlotsPerLevel);
             if (s.equipment == null) s.equipment = new string[6];
@@ -83,10 +94,18 @@ namespace BehindTheGear.HideOut
             while (slots.Count < capacity) slots.Add(new ItemStack());
         }
         public static int Tier(int level) => Math.Min(3, Math.Max(0, level) / 2);
+        public static int DummyBonus(HideOutSave s, string weaponId)
+        {
+            if (s == null || string.IsNullOrEmpty(weaponId) || s.dummyWeaponBonuses == null) return 0;
+            foreach (var record in s.dummyWeaponBonuses)
+                if (record != null && record.weaponId == weaponId) return Math.Max(0, record.bonus);
+            return 0;
+        }
         public static int Healing(HideOutSave s, HideOutRules r) => Math.Max(1, (int)Math.Ceiling(r.baseHealing * (1d + s.levels[0] * (double)r.clinicPercentPerLevel)));
         public static int MaxMana(HideOutSave s, HideOutRules r) => s.baseMana + (int)Math.Floor(s.baseMana * s.levels[5] * (double)r.gymPercentPerLevel + .00001d);
         public static double PotionCooldown(HideOutSave s, HideOutRules r) => Math.Max(Math.Max(1, r.minimumPotionCooldown), r.potionCooldown - s.levels[4] * r.potionReduction);
-        public static bool Locked(HideOutSave s, Facility facility) => facility >= Facility.Dining || facility == Facility.Potions && !s.selenaRecruited;
+        public static bool IsExhibition(Facility facility) => facility == Facility.Dining || facility == Facility.Workshop;
+        public static bool Locked(HideOutSave s, Facility facility) => IsExhibition(facility) || facility == Facility.Potions && !s.selenaRecruited;
         public static int Count(List<ItemStack> slots, string id)
         {
             int result = 0; foreach (var slot in slots) if (!slot.Empty && slot.id == id) result += slot.count; return result;
@@ -133,8 +152,13 @@ namespace BehindTheGear.HideOut
         }
         public static void Sort(List<ItemStack> slots, IHideOutItems items)
         {
-            slots.Sort((a, b) => a.Empty ? b.Empty ? 0 : 1 : b.Empty ? -1 :
-                string.Compare(items.Name(a.id), items.Name(b.id), StringComparison.CurrentCulture));
+            slots.Sort((a, b) =>
+            {
+                if (a.Empty) return b.Empty ? 0 : 1;
+                if (b.Empty) return -1;
+                int byName = string.Compare(items.Name(a.id), items.Name(b.id), StringComparison.CurrentCulture);
+                return byName != 0 ? byName : string.Compare(a.id, b.id, StringComparison.Ordinal);
+            });
         }
         public static UpgradeCost Next(HideOutSave s, HideOutRules rules, Facility f)
         {
@@ -171,6 +195,21 @@ namespace BehindTheGear.HideOut
             Normalize(s, rules);
             message = "강화 완료"; return true;
         }
+        public static bool UpgradeDummy(HideOutSave s, HideOutRules rules, string weaponId, out string message)
+        {
+            if (string.IsNullOrEmpty(weaponId)) { message = "장착된 무기가 없습니다."; return false; }
+            if (!Upgrade(s, rules, Facility.Dummy, out message)) return false;
+
+            var record = s.dummyWeaponBonuses.Find(x => x != null && x.weaponId == weaponId);
+            if (record == null)
+            {
+                record = new WeaponDummyBonus(weaponId, 0);
+                s.dummyWeaponBonuses.Add(record);
+            }
+            record.bonus = checked(record.bonus + 1);
+            message = $"허수아비 강화 완료 · 무기 데미지 +{record.bonus}";
+            return true;
+        }
         public static bool Heal(HideOutSave s, HideOutRules rules, int maxHP, double now, out string message)
         {
             if (s.hp <= 0 || s.hp >= maxHP) { message = "회복할 수 없는 상태이거나 HP가 가득 찼습니다."; return false; }
@@ -182,6 +221,7 @@ namespace BehindTheGear.HideOut
         public static bool ReceivePotions(HideOutSave s, HideOutRules rules, IHideOutItems items, double now, out string message)
         {
             if (!s.selenaRecruited) { message = "셀레나 영입이 필요합니다."; return false; }
+            if (items.MaxStack(rules.potionId) <= 0) { message = "물약 아이템 정의 설정이 누락되었습니다."; return false; }
             if (now < s.potionsReadyAt) { message = "배송 쿨타임 중입니다."; return false; }
             if (rules.potionCount <= 0 || Space(s.inventory, rules.potionId, items) < rules.potionCount)
             { message = "물약을 모두 받을 공간이 없습니다. 수령 기회는 유지됩니다."; return false; }

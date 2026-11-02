@@ -753,6 +753,7 @@ GameObject:
   - component: {fileID: 2199094716395647438}
   - component: {fileID: 711300000000000009}
   - component: {fileID: 731400001}
+  - component: {fileID: 731400002}
   m_Layer: 5
   m_Name: InGame_Canvas
   m_TagString: Untagged
@@ -889,7 +890,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2641714841900254894
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1542,7 +1543,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD018\uC2A4\uD2B8\uD018\uC2A4\uD2B8\uD018\uC2A4\uD2B8\uD018\uC2A4\uD2B8\uD018\uC2A4\uD2B8\uD018\uC2A4\uD2B8\uD018\uC2A4"
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4f2cffb3aa6977a4bbcb5d3e8beaa3bb, type: 2}
   m_sharedMaterial: {fileID: 6431734659908913325, guid: 4f2cffb3aa6977a4bbcb5d3e8beaa3bb, type: 2}
@@ -1867,3 +1868,17 @@ MonoBehaviour:
   - {fileID: 6247283338670845625}
   itemFlashShader: {fileID: 4800000, guid: 7213cf6852ce4fae9f8fb8c8c3152401, type: 3}
   itemFlashMaterial: {fileID: 2100000, guid: 7313cf6852ce4fae9f8fb8c8c3152401, type: 2}
+--- !u!114 &731400002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3218327825912345898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5d4777145c44069a637320221afdbb1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InGameQuestHUD
+  questRoot: {fileID: 3283487141027487606}
+  questText: {fileID: 1977650812883092198}

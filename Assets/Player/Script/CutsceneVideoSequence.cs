@@ -19,6 +19,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private bool playing;
     private bool ownsLock;
     private float heldSeconds;
+    private static readonly string[] SkipMessages = { "스킵중.", "스킵중..", "스킵중..." };
     private bool[] uiWasActive;
     private GameObject skipRoot;
     private TMP_Text skipText;
@@ -113,7 +114,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         float progress = Mathf.Clamp01(heldSeconds / skipHoldSeconds);
         skipFill.fillAmount = progress;
         skipText.text = progress > 0f
-            ? $"컷신 스킵 중... {Mathf.CeilToInt(progress * 100)}%"
+            ? SkipMessages[Mathf.FloorToInt(heldSeconds / .3f) % SkipMessages.Length]
             : $"Space {skipHoldSeconds:0.#}초 길게 누르기 · 컷신 스킵";
     }
 
