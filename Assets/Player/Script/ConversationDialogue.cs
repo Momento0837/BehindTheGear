@@ -12,6 +12,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Serializable] private class DialogueLine
     {
         public string speaker = string.Empty;
+        public bool npcLaugh;
         [TextArea] public string text = string.Empty;
         // Kept for a future portrait-address lookup. The portrait UI is safely hidden when null.
         public Sprite portrait = null;
@@ -46,6 +47,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     public event Action<bool> ChoiceSelected;
     public bool IsPlaying { get; private set; }
     public string CurrentSpeaker { get; private set; } = string.Empty;
+    public bool CurrentLineNpcLaugh { get; private set; }
     public TMP_Text BodyText => bodyText;
     public Image TalkingImage { get; private set; }
     public float CharacterInterval => characterInterval;
@@ -72,6 +74,15 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         var file = source != null ? JsonUtility.FromJson<DialogueFile>(source.text) : null;
         return file?.lines != null && file.lines.Length > 0 ? file.lines[0].text : string.Empty;
+    }
+
+    public static string[] GetGreetingLines(TextAsset source, int count)
+    {
+        var file = source != null ? JsonUtility.FromJson<DialogueFile>(source.text) : null;
+        if (file?.lines == null) return Array.Empty<string>();
+        var result = new string[Mathf.Min(count, file.lines.Length)];
+        for (int i = 0; i < result.Length; i++) result[i] = file.lines[i].text ?? string.Empty;
+        return result;
     }
 
     private void SetSpeaker(string speaker)
@@ -336,6 +347,7 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private IEnumerator ShowChoicesRoutine(string speaker, string prompt, string firstChoice, string secondChoice)
     {
+        CurrentLineNpcLaugh = false;
         string fullText = prompt ?? string.Empty;
         yield return RevealText(fullText);
         advanceRequested = false;
@@ -441,6 +453,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         for (int i = startingLine; i < lines.Length; i++)
         {
             DialogueLine line = lines[i];
+            CurrentLineNpcLaugh = line.npcLaugh && line.speaker?.Trim() == "???";
             SetSpeaker(line.speaker);
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
@@ -523,6 +536,7 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private void FinishDialogue()
     {
+        CurrentLineNpcLaugh = false;
         if (choiceRoot != null)
         {
             Destroy(choiceRoot.gameObject);

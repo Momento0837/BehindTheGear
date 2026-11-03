@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 /// <summary>One passing greeting, anchored to the Market NPC rather than the player.</summary>
 [DefaultExecutionOrder(1100)]
@@ -19,33 +20,31 @@ public sealed class MarketNpcBubble : MonoBehaviour
     private CanvasGroup group;
     private TMP_Text text;
     private string opening;
-    private float previousOffset;
+    private string[] greetingLines;
+    private int lineIndex;
+    private bool fastCompleting;
+    private float fastStarted;
+    private float fastStartWidth;
+    private float fullWidth;
+    private float fullHeight;
     private float elapsed;
     private float headOffset;
     private bool dismissed;
     private int revealedCount;
     private float[] characterRevealTimes;
+    private PlayerControlLock controls;
+    private PlayerCameraFollow2D focusCamera;
+    private bool holdsControls;
+    public event System.Action Finished;
+    public bool IsPresenting => holdsControls;
     public bool HasPresented { get; private set; }
 
     public void Configure(ConversationDialogue dialogue, Transform playerTransform, TextAsset offer)
     {
         conversation = dialogue;
         player = playerTransform;
-        opening = ConversationDialogue.GetOpeningText(offer);
-        characterRevealTimes = new float[opening.Length];
-        int timedCharacters = 0;
-        for (int i = 0; i < opening.Length;)
-        {
-            int end = i;
-            while (end < opening.Length && opening[end] == ' ') end++;
-            if (end - i >= 5)
-            {
-                while (i < end) characterRevealTimes[i++] = timedCharacters * CharacterDelay;
-                continue;
-            }
-            characterRevealTimes[i++] = timedCharacters++ * CharacterDelay;
-        }
-        previousOffset = player.position.x - transform.position.x;
+        greetingLines = ConversationDialogue.GetGreetingLines(offer, 3);
+        opening = greetingLines.Length > 0 ? greetingLines[0] : string.Empty;
         image = dialogue.TalkingImage;
         if (gameObject.scene.name != "Market" || image == null || string.IsNullOrEmpty(opening))
         {
@@ -85,7 +84,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
         text.fontStyle = FontStyles.Normal;
         text.color = new Color(.12f, .09f, .07f, 1f);
         text.alignment = TextAlignmentOptions.TopLeft;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.textWrappingMode = TextWrappingModes.Normal;
         text.overflowMode = TextOverflowModes.Overflow;
         text.raycastTarget = false;
         text.text = string.Empty;
@@ -104,20 +103,71 @@ public sealed class MarketNpcBubble : MonoBehaviour
     private void Update()
     {
         if (dismissed || player == null || image == null) return;
-        float offset = player.position.x - transform.position.x;
-        // Crossing the NPC, rather than simply entering F range, preserves a direct conversation.
-        bool passed = previousOffset * offset <= 0f && Mathf.Abs(offset - previousOffset) > .001f;
-        previousOffset = offset;
-        if (!HasPresented && passed && Mathf.Abs(offset) < 4f &&
+        if (!HasPresented && player.position.x >= 70f &&
             Mathf.Abs(player.position.y - transform.position.y) < 2.5f && !conversation.IsPlaying)
         {
             HasPresented = true;
-            elapsed = 0f;
-            revealedCount = 0;
+            controls = player.GetComponent<PlayerControlLock>();
+            controls?.Acquire();
+            holdsControls = true;
+            focusCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
+            focusCamera?.BeginDialogueFocus(conversation, player);
+            BeginLine(0);
             group.alpha = 0f;
             bubble.localScale = Vector3.one * .8f;
             bubble.localRotation = Quaternion.Euler(0f, 0f, -5f);
             image.gameObject.SetActive(true);
+            return;
+        }
+        if (IsPresenting && (Mouse.current?.leftButton.wasPressedThisFrame == true ||
+            Keyboard.current?.spaceKey.wasPressedThisFrame == true)) Advance();
+    }
+
+    private void BeginLine(int index)
+    {
+        lineIndex = index;
+        opening = FormatBubbleText(greetingLines[index]);
+        elapsed = 0f;
+        revealedCount = 0;
+        fastCompleting = false;
+        text.text = string.Empty;
+        characterRevealTimes = new float[opening.Length];
+        int timed = 0;
+        for (int i = 0; i < opening.Length;)
+        {
+            int end = i;
+            while (end < opening.Length && opening[end] == ' ') end++;
+            if (end - i >= 5)
+            {
+                while (i < end) characterRevealTimes[i++] = timed * CharacterDelay;
+                continue;
+            }
+            characterRevealTimes[i++] = timed++ * CharacterDelay;
+        }
+        Vector2 full = Measure(opening);
+        fullWidth = Mathf.Max(full.x, 50f) + Padding * 2f + 2f;
+        fullHeight = Mathf.Max(28f, full.y) + Padding * 2f + 8f * SliceScale;
+        ResizeToText();
+    }
+
+    private void Advance()
+    {
+        if (!IsPresenting || fastCompleting) return;
+        if (revealedCount < opening.Length)
+        {
+            fastCompleting = true;
+            fastStarted = elapsed;
+            fastStartWidth = bubble.sizeDelta.x;
+            int remaining = opening.Length - revealedCount;
+            for (int i = revealedCount; i < opening.Length; i++)
+                characterRevealTimes[i] = elapsed + .18f * (i - revealedCount + 1) / remaining;
+            return;
+        }
+        if (lineIndex + 1 < greetingLines.Length) BeginLine(lineIndex + 1);
+        else
+        {
+            Dismiss();
+            Finished?.Invoke();
         }
     }
 
@@ -136,11 +186,23 @@ public sealed class MarketNpcBubble : MonoBehaviour
 
         int count = revealedCount;
         while (count < opening.Length && characterRevealTimes[count] <= elapsed) count++;
+        if (fastCompleting)
+        {
+            float time = elapsed - fastStarted;
+            float width = time < .22f
+                ? Mathf.Lerp(fastStartWidth, fullWidth * 1.05f, Mathf.SmoothStep(0f, 1f, time / .22f))
+                : Mathf.Lerp(fullWidth * 1.05f, fullWidth, Mathf.SmoothStep(0f, 1f, (time - .22f) / .16f));
+            SetBubbleSize(width, fullHeight);
+            // Reveal only glyphs that fit inside the expanding body.
+            while (count > revealedCount && Measure(opening.Substring(0, count)).x > width - Padding * 2f) count--;
+            for (int i = revealedCount; i < count; i++) characterRevealTimes[i] = elapsed;
+            if (time >= .38f) fastCompleting = false;
+        }
         if (revealedCount != count)
         {
             revealedCount = count;
             text.text = opening.Substring(0, count);
-            ResizeToText();
+            if (!fastCompleting) ResizeToText();
         }
         AnimateGlyphs();
         var camera = Camera.main;
@@ -161,13 +223,47 @@ public sealed class MarketNpcBubble : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.transform as RectTransform,
             screen, null, out Vector2 local);
         bubble.anchoredPosition = local + Vector2.down * (18f * (1f - entrance));
+        // Keep the full rotated/scaled body inside the canvas as the camera zooms.
+        var canvasRect = (RectTransform)canvas.transform;
+        var corners = new Vector3[4];
+        bubble.GetWorldCorners(corners);
+        Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        foreach (var corner in corners)
+        {
+            Vector2 point = canvasRect.InverseTransformPoint(corner);
+            min = Vector2.Min(min, point);
+            max = Vector2.Max(max, point);
+        }
+        Rect bounds = canvasRect.rect;
+        Vector2 correction = Vector2.zero;
+        if (max.x > bounds.xMax - 16f) correction.x = bounds.xMax - 16f - max.x;
+        if (min.x + correction.x < bounds.xMin + 16f) correction.x = bounds.xMin + 16f - min.x;
+        if (max.y > bounds.yMax - 16f) correction.y = bounds.yMax - 16f - max.y;
+        if (min.y + correction.y < bounds.yMin + 16f) correction.y = bounds.yMin + 16f - min.y;
+        bubble.anchoredPosition += correction;
+    }
+
+    public static string FormatBubbleText(string value) =>
+        System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, @"(?<=[.。!?])[ \t]+(?=\S)", "\n");
+
+    private Vector2 Measure(string value)
+    {
+        float canvasWidth = ((RectTransform)canvas.transform).rect.width;
+        float bodyWidth = Mathf.Max(50f, Mathf.Min(520f, canvasWidth * .7f) - Padding * 2f);
+        return text.GetPreferredValues(value, bodyWidth, Mathf.Infinity);
     }
 
     private void ResizeToText()
     {
-        Vector2 preferred = text.GetPreferredValues(text.text, Mathf.Infinity, Mathf.Infinity);
-        float width = Mathf.Max(preferred.x, 50f) + Padding * 2f;
+        Vector2 preferred = Measure(text.text);
+        float width = Mathf.Max(preferred.x, 50f) + Padding * 2f + 2f;
         float height = Mathf.Max(28f, preferred.y) + Padding * 2f + 8f * SliceScale;
+        SetBubbleSize(width, height);
+    }
+
+    private void SetBubbleSize(float width, float height)
+    {
         bubble.sizeDelta = new Vector2(width, height);
         // The tip lies inside the fixed left/bottom slices, so its pixel inset stays constant as we grow.
         bubble.pivot = new Vector2(6f * SliceScale / width, 3f * SliceScale / height);
@@ -203,6 +299,12 @@ public sealed class MarketNpcBubble : MonoBehaviour
 
     public void Dismiss()
     {
+        if (holdsControls)
+        {
+            holdsControls = false;
+            controls?.Release();
+            focusCamera?.EndDialogueFocus(conversation);
+        }
         dismissed = true;
         if (image != null) image.gameObject.SetActive(false);
     }

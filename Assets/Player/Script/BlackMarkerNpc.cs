@@ -9,7 +9,6 @@ public sealed class BlackMarkerNpc : MonoBehaviour
     private ConversationDialogue conversation;
     private DialogueTextEffects textEffects;
     private bool visible;
-    private bool laughPlayed;
     private static readonly int Idle = Animator.StringToHash("Base Layer.Idle");
     private static readonly int Laugh = Animator.StringToHash("Base Layer.Laugh");
 
@@ -34,12 +33,15 @@ public sealed class BlackMarkerNpc : MonoBehaviour
             npcSprite.sortingOrder = playerSprite.sortingOrder - 1;
         }
         if (conversation == null) conversation = GetComponent<ConversationDialogue>();
-        conversation.ChoiceSelected += HandleChoice;
+        conversation.LineRevealStarted += HandleLineStarted;
     }
 
     private void OnDisable()
     {
-        if (conversation != null) conversation.ChoiceSelected -= HandleChoice;
+        if (conversation != null)
+        {
+            conversation.LineRevealStarted -= HandleLineStarted;
+        }
     }
 
     public void SetMapVisible(bool value)
@@ -51,11 +53,10 @@ public sealed class BlackMarkerNpc : MonoBehaviour
         if (textEffects != null) textEffects.enabled = value;
     }
 
-    private void HandleChoice(bool accepted)
+    private void HandleLineStarted()
     {
-        if (!accepted || !visible || laughPlayed || animator == null || animator.runtimeAnimatorController == null) return;
-        // The controller returns to looping Idle at the end of this non-looping Laugh state.
-        laughPlayed = true;
+        if (!conversation.CurrentLineNpcLaugh || !visible || animator == null || animator.runtimeAnimatorController == null) return;
+        // One reveal-start event per line; skip/completion input cannot restart the laugh.
         animator.Play(Laugh, 0, 0f);
     }
 }

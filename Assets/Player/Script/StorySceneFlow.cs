@@ -183,7 +183,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
-        portal.GetComponent<ScenePortal2D>().SetArea(-26.5f, -20.5f);
+        portal.GetComponent<ScenePortal2D>().SetArea(-8f, -2f);
         portal.SetActive(false);
         dialogue.transform.position = new Vector3(65f, -2.5f, 0);
         inventory = player.GetComponent<PlayerInventory>();
@@ -236,7 +236,13 @@ public sealed class StorySceneFlow : MonoBehaviour
 
     private void UsePortal(GameObject interactor)
     {
-        if (!ready || busy || interactor != player.gameObject) return;
+        if (busy || interactor != player.gameObject || dialogue.IsPlaying || (marketBubble != null && marketBubble.IsPresenting)) return;
+        if (marketMap && !ready)
+        {
+            StartCoroutine(RemindMarketConversation());
+            return;
+        }
+        if (!ready) return;
         busy = true;
         if (gameObject.scene.name == "Forest")
         {
@@ -268,21 +274,31 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         marketMap = true;
         PlacePlayer(new Vector3(49f, -2.5f, 0));
-        ShowGuide("market_talk");
+        QuestTracker.Complete(this);
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
         marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
+        marketBubble.Finished += () => { if (!marketNpcSpoken) ShowGuide("market_talk"); };
         portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f);
+        portal.SetActive(true);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
         var interaction = dialogue.gameObject.AddComponent<StoryInteraction2D>();
-        interaction.Activated = _ => { if (!busy && !ready) StartCoroutine(TalkToMarketNpc()); };
+        interaction.Activated = _ => { if (!busy && !ready && !marketBubble.IsPresenting) StartCoroutine(TalkToMarketNpc()); };
+    }
+
+    private IEnumerator RemindMarketConversation()
+    {
+        busy = true;
+        try { yield return Say("market_talk_reminder"); }
+        finally { busy = false; }
     }
 
     private IEnumerator TalkToMarketNpc()
     {
         busy = true;
-        int startLine = !marketNpcSpoken && marketBubble != null && marketBubble.HasPresented ? 1 : 0;
+        int startLine = 3;
+        if (!marketNpcSpoken) ShowGuide("market_talk");
         marketNpcSpoken = true;
         if (marketBubble != null) marketBubble.Dismiss();
         bool? accepted = null;
