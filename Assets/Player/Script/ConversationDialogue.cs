@@ -42,18 +42,93 @@ public sealed class ConversationDialogue : MonoBehaviour
     public event Action LineRevealCompleted;
     public event Action<bool> ChoiceSelected;
     public bool IsPlaying { get; private set; }
+    public string CurrentSpeaker { get; private set; } = string.Empty;
     public TMP_Text BodyText => bodyText;
+    public Image TalkingImage { get; private set; }
+    public float CharacterInterval => characterInterval;
 
     private DialogueLine[] lines;
     private Coroutine routine;
     private RectTransform choiceRoot;
     private Action<bool> choiceCallback;
+    private string finalFirstChoice;
+    private string finalSecondChoice;
     private Button continueButton;
     private TMP_Text continueButtonLabel;
     private bool advanceRequested;
+    private PlayerCameraFollow2D dialogueCamera;
+    private TMP_FontAsset mysterySpeakerFont;
+    private TMP_FontAsset ethanSpeakerFont;
+    private TMP_FontAsset originalBodyFont;
+    private TMP_FontAsset originalSpeakerFont;
+    private Material originalBodyMaterial;
+    private Material originalSpeakerMaterial;
+    private int startingLine;
+
+    public static string GetOpeningText(TextAsset source)
+    {
+        var file = source != null ? JsonUtility.FromJson<DialogueFile>(source.text) : null;
+        return file?.lines != null && file.lines.Length > 0 ? file.lines[0].text : string.Empty;
+    }
+
+    private void SetSpeaker(string speaker)
+    {
+        CurrentSpeaker = speaker ?? string.Empty;
+        string name = CurrentSpeaker.Trim();
+        TMP_FontAsset font = null;
+        if (name == "???")
+        {
+            if (mysterySpeakerFont == null) mysterySpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/SuhgungDialogue");
+            font = mysterySpeakerFont;
+        }
+        else if (string.Equals(name, "Ethan", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ethanSpeakerFont == null) ethanSpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/TangbaDialogue");
+            font = ethanSpeakerFont;
+        }
+        ApplyFont(bodyText, font != null ? font : originalBodyFont, font != null ? font.material : originalBodyMaterial);
+        ApplyFont(speakerText, font != null ? font : originalSpeakerFont, font != null ? font.material : originalSpeakerMaterial);
+    }
+
+    private static void ApplyFont(TMP_Text text, TMP_FontAsset font, Material material)
+    {
+        if (text == null || font == null) return;
+        text.font = font;
+        // A material from the previous speaker can point at an entirely different atlas.
+        text.fontSharedMaterial = material != null ? material : font.material;
+        text.fontStyle &= ~FontStyles.Bold;
+        text.fontWeight = FontWeight.Regular;
+    }
+
+    private static bool IsNpcSpeaker(string speaker) =>
+        !string.IsNullOrWhiteSpace(speaker) &&
+        !string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) &&
+        speaker.Trim() != "안내";
+
+    private void BeginCameraFocus(bool hasNpcSpeaker)
+    {
+        if (!hasNpcSpeaker) return;
+        Camera mainCamera = Camera.main;
+        dialogueCamera = mainCamera != null ? mainCamera.GetComponent<PlayerCameraFollow2D>() : null;
+        if (dialogueCamera != null)
+            dialogueCamera.BeginDialogueFocus(this, playerControlLock != null ? playerControlLock.transform : null);
+    }
+
+    private void EndCameraFocus()
+    {
+        if (dialogueCamera != null) dialogueCamera.EndDialogueFocus(this);
+        dialogueCamera = null;
+    }
 
     private void Awake()
     {
+        if (dialogueCanvasRoot != null)
+        {
+            TalkingImage = Array.Find(dialogueCanvasRoot.GetComponentsInChildren<Image>(true), image => image.name == "Talking");
+            if (TalkingImage != null) TalkingImage.gameObject.SetActive(false);
+        }
+        if (bodyText != null) { originalBodyFont = bodyText.font; originalBodyMaterial = bodyText.fontSharedMaterial; }
+        if (speakerText != null) { originalSpeakerFont = speakerText.font; originalSpeakerMaterial = speakerText.fontSharedMaterial; }
         if (playerControlLock == null)
             playerControlLock = FindFirstObjectByType<PlayerControlLock>();
         CreateContinueButton();
@@ -124,7 +199,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         textRect.offsetMax = new Vector2(-8f, -4f);
 
         continueButtonLabel = textObject.GetComponent<TextMeshProUGUI>();
-        continueButtonLabel.font = bodyText.font;
+        UIFontTheme.Apply(continueButtonLabel, UIFontTheme.Bold);
         continueButtonLabel.fontSize = 24f;
         continueButtonLabel.color = Color.white;
         continueButtonLabel.alignment = TextAlignmentOptions.Center;
@@ -146,6 +221,22 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     public void Play(TextAsset dialogueOverride)
     {
+        PlayDialogue(dialogueOverride, null, null, null);
+    }
+
+    /// <summary>Shows choices on the final line without closing or revealing that line again.</summary>
+    public void PlayWithChoices(TextAsset dialogueOverride, string firstChoice, string secondChoice, Action<bool> onChoice, int startLine = 0)
+    {
+        if (onChoice == null || dialogueCanvasRoot == null || bodyText == null)
+        {
+            Debug.LogError("[ConversationDialogue] Final-line choices need a callback, canvas root, and body text.", this);
+            return;
+        }
+        PlayDialogue(dialogueOverride, firstChoice, secondChoice, onChoice, startLine);
+    }
+
+    private void PlayDialogue(TextAsset dialogueOverride, string firstChoice, string secondChoice, Action<bool> onChoice, int startLine = 0)
+    {
         if (IsPlaying) return;
         advanceRequested = false;
         LoadJson(dialogueOverride != null ? dialogueOverride : dialogueJson);
@@ -156,13 +247,18 @@ public sealed class ConversationDialogue : MonoBehaviour
             return;
         }
         playerControlLock?.Acquire();
+        startingLine = Mathf.Clamp(startLine, 0, lines.Length - 1);
+        choiceCallback = onChoice;
+        finalFirstChoice = firstChoice;
+        finalSecondChoice = secondChoice;
+        BeginCameraFocus(Array.Exists(lines, line => IsNpcSpeaker(line.speaker)));
         routine = StartCoroutine(PlayRoutine());
     }
 
     /// <summary>Shows a dialogue prompt with two mouse-selectable choices.</summary>
     public void ShowChoicesForCurrentLine(string firstChoice, string secondChoice, Action<bool> onChoice)
     {
-        ShowChoices(speakerText != null ? speakerText.text : string.Empty,
+        ShowChoices(CurrentSpeaker,
             bodyText != null ? bodyText.text : string.Empty, firstChoice, secondChoice, onChoice);
     }
 
@@ -179,6 +275,8 @@ public sealed class ConversationDialogue : MonoBehaviour
         choiceCallback = onChoice;
         advanceRequested = false;
         playerControlLock?.Acquire();
+        SetSpeaker(speaker);
+        BeginCameraFocus(IsNpcSpeaker(speaker));
         if (speakerText != null) speakerText.text = speaker ?? string.Empty;
         bodyText.text = string.Empty;
         if (continueIndicator != null) continueIndicator.SetActive(false);
@@ -240,7 +338,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         textRect.offsetMax = new Vector2(-8f, -4f);
 
         TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
-        text.font = bodyText.font;
+        UIFontTheme.Apply(text, UIFontTheme.Bold);
         text.fontSize = 28f;
         text.color = Color.white;
         text.alignment = TextAlignmentOptions.Center;
@@ -250,10 +348,13 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private void SelectChoice(bool accepted)
     {
+        if (!IsPlaying || choiceRoot == null || choiceCallback == null) return;
         Action<bool> callback = choiceCallback;
         choiceCallback = null;
+        finalFirstChoice = finalSecondChoice = null;
         if (choiceRoot != null)
         {
+            choiceRoot.gameObject.SetActive(false);
             Destroy(choiceRoot.gameObject);
             choiceRoot = null;
         }
@@ -262,6 +363,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         IsPlaying = false;
         advanceRequested = false;
         playerControlLock?.Release();
+        EndCameraFocus();
         ChoiceSelected?.Invoke(accepted);
         callback?.Invoke(accepted);
     }
@@ -287,9 +389,10 @@ public sealed class ConversationDialogue : MonoBehaviour
         IsPlaying = true;
         SetVisible(true);
 
-        for (int i = 0; i < lines.Length; i++)
+        for (int i = startingLine; i < lines.Length; i++)
         {
             DialogueLine line = lines[i];
+            SetSpeaker(line.speaker);
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
             if (portraitImage != null)
@@ -303,6 +406,13 @@ public sealed class ConversationDialogue : MonoBehaviour
 
             string fullText = line.text ?? string.Empty;
             yield return RevealText(fullText);
+            if (i == lines.Length - 1 && choiceCallback != null)
+            {
+                advanceRequested = false;
+                routine = null;
+                CreateChoiceButtons(finalFirstChoice, finalSecondChoice);
+                yield break;
+            }
             if (continueIndicator != null) continueIndicator.SetActive(true);
             if (continueButtonLabel != null)
                 continueButtonLabel.text = i == lines.Length - 1 ? "닫기" : "다음";
@@ -366,12 +476,14 @@ public sealed class ConversationDialogue : MonoBehaviour
             choiceRoot = null;
         }
         choiceCallback = null;
+        finalFirstChoice = finalSecondChoice = null;
         advanceRequested = false;
         if (continueButton != null) continueButton.gameObject.SetActive(false);
         SetVisible(false);
         IsPlaying = false;
         routine = null;
         playerControlLock?.Release();
+        EndCameraFocus();
         Finished?.Invoke();
     }
 

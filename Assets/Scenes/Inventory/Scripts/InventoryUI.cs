@@ -1803,6 +1803,7 @@ public sealed class InventoryUI : MonoBehaviour
         obj.transform.SetParent(parent, false);
         TMP_Text label = obj.GetComponent<TMP_Text>();
         if (font != null) label.font = font;
+        UIFontTheme.Apply(label, fontSize >= 28 ? UIFontTheme.ExtraBold : UIFontTheme.Normal);
         label.text = value;
         label.fontSize = fontSize;
         label.color = Ink;
@@ -1822,6 +1823,7 @@ public sealed class InventoryUI : MonoBehaviour
         navigation.mode = Navigation.Mode.None;
         button.navigation = navigation;
         TMP_Text label = Label("Label", image.transform, text, size, Vector2.zero, 18);
+        UIFontTheme.Apply(label, UIFontTheme.Bold);
         Stretch(label.rectTransform, Vector2.zero, Vector2.zero);
         label.alignment = TextAlignmentOptions.Center;
         label.color = foreground;

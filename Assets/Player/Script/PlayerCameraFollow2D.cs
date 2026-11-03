@@ -22,6 +22,10 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     [SerializeField, Min(.01f)] private float lookAheadSmoothTime = .25f;
     [SerializeField, Min(0f)] private float lookAheadSpeedThreshold = .1f;
 
+    [Header("NPC dialogue framing")]
+    [SerializeField, Range(.3f, 1f)] private float dialogueZoomRatio = .75f;
+    [SerializeField, Min(.01f)] private float dialogueSmoothTime = .8f;
+
     private Rigidbody2D targetBody;
     private Camera attachedCamera;
     private Vector3 followVelocity;
@@ -30,6 +34,111 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float cameraZ;
     private float nextTargetSearchTime;
     private readonly List<Bounds> mapArtwork = new();
+    private ConversationDialogue dialogueOwner;
+    private Transform dialoguePlayer;
+    private bool hasDialogueLens;
+    private float normalOrthographicSize;
+    private float normalFieldOfView;
+    private float lensVelocity;
+    private Transform deathTarget;
+
+    public void BeginDeathFocus(Transform subject)
+    {
+        BeginDialogueFocusForDeath();
+        deathTarget = subject;
+    }
+
+    private void BeginDialogueFocusForDeath()
+    {
+        if (attachedCamera == null) return;
+        if (!hasDialogueLens)
+        {
+            normalOrthographicSize = attachedCamera.orthographicSize;
+            normalFieldOfView = attachedCamera.fieldOfView;
+            hasDialogueLens = true;
+        }
+        lensVelocity = 0f;
+    }
+
+    public void BeginDialogueFocus(ConversationDialogue owner, Transform player)
+    {
+        if (owner == null || attachedCamera == null || !isActiveAndEnabled) return;
+        if (!hasDialogueLens)
+        {
+            normalOrthographicSize = attachedCamera.orthographicSize;
+            normalFieldOfView = attachedCamera.fieldOfView;
+            hasDialogueLens = true;
+            lensVelocity = 0f;
+        }
+        dialogueOwner = owner;
+        dialoguePlayer = player;
+    }
+
+    public void EndDialogueFocus(ConversationDialogue owner)
+    {
+        if (dialogueOwner != owner) return;
+        dialogueOwner = null;
+        dialoguePlayer = null;
+    }
+
+    private void RestoreDialogueLens()
+    {
+        deathTarget = null;
+        if (hasDialogueLens && attachedCamera != null)
+        {
+            attachedCamera.orthographicSize = normalOrthographicSize;
+            attachedCamera.fieldOfView = normalFieldOfView;
+        }
+        hasDialogueLens = false;
+        dialogueOwner = null;
+        dialoguePlayer = null;
+        lensVelocity = 0f;
+    }
+
+    private static Bounds SubjectBounds(Transform subject)
+    {
+        var sprite = subject.GetComponent<SpriteRenderer>();
+        return sprite != null && sprite.enabled && sprite.sprite != null
+            ? sprite.bounds : new Bounds(subject.position, Vector3.one);
+    }
+
+    private void UpdateDialogueFraming(ref Vector3 desiredPosition)
+    {
+        if (!hasDialogueLens || attachedCamera == null) return;
+        float desiredLens = attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView;
+        if (deathTarget != null)
+        {
+            desiredPosition = SubjectBounds(deathTarget).center;
+            float zoom = Mathf.SmoothDamp(attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView,
+                desiredLens * .8f, ref lensVelocity, 1f, Mathf.Infinity, Time.unscaledDeltaTime);
+            if (attachedCamera.orthographic) attachedCamera.orthographicSize = zoom;
+            else attachedCamera.fieldOfView = zoom;
+            return;
+        }
+        Transform player = dialoguePlayer != null ? dialoguePlayer : target;
+        if (dialogueOwner != null && player != null)
+        {
+            Bounds subjects = SubjectBounds(player);
+            subjects.Encapsulate(SubjectBounds(dialogueOwner.transform));
+            float distance = Mathf.Max(.01f, Mathf.Abs(subjects.center.z - cameraZ));
+            float normalHalfHeight = attachedCamera.orthographic ? normalOrthographicSize
+                : distance * Mathf.Tan(normalFieldOfView * .5f * Mathf.Deg2Rad);
+            // Leave room for both bodies while preserving the gameplay camera height.
+            float halfHeight = Mathf.Max(normalHalfHeight * dialogueZoomRatio,
+                (subjects.extents.x + 1f) / Mathf.Max(.1f, attachedCamera.aspect),
+                (subjects.extents.y + 1f) / .85f);
+            desiredLens = attachedCamera.orthographic ? halfHeight
+                : Mathf.Clamp(2f * Mathf.Atan(halfHeight / distance) * Mathf.Rad2Deg, 1f, 179f);
+            desiredPosition.x = subjects.center.x;
+        }
+        float currentLens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
+        float lens = Mathf.SmoothDamp(currentLens, desiredLens, ref lensVelocity,
+            dialogueSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+        if (attachedCamera.orthographic) attachedCamera.orthographicSize = lens;
+        else attachedCamera.fieldOfView = lens;
+        if (dialogueOwner == null && Mathf.Abs(lens - desiredLens) < .001f)
+            RestoreDialogueLens();
+    }
 
     public void SetStoryBounds(Vector2 bounds)
     {
@@ -101,14 +210,16 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
                 : fallingCameraY;
             desiredPosition.y = desiredCameraY;
         }
+        bool dialogueTransition = hasDialogueLens;
+        UpdateDialogueFraming(ref desiredPosition);
         desiredPosition.z = cameraZ;
         Vector3 smoothedPosition = Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref followVelocity,
-            smoothTime,
+            dialogueTransition ? dialogueSmoothTime : smoothTime,
             maxFollowSpeed,
-            Time.deltaTime);
+            dialogueTransition ? Time.unscaledDeltaTime : Time.deltaTime);
 
         float clampedX = ClampHorizontalPosition(smoothedPosition.x);
         if (!Mathf.Approximately(clampedX, smoothedPosition.x)) followVelocity.x = 0f;
@@ -118,6 +229,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        RestoreDialogueLens();
         if (TryFindTarget()) SnapToTarget();
     }
 
@@ -207,6 +319,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
     private void OnDisable()
     {
+        RestoreDialogueLens();
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         RenderPipelineManager.beginCameraRendering -= ClampAtRender;
         if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();

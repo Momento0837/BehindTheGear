@@ -19,7 +19,7 @@ public sealed class PlayerDeathRestart : MonoBehaviour
         if (playerHealth != null) playerHealth.Died -= RestartScene;
     }
 
-    private void RestartScene() => DeathFadeTransition.Restart(fadeDuration);
+    private void RestartScene() => DeathFadeTransition.Restart(fadeDuration, playerHealth);
 }
 
 internal sealed class DeathFadeTransition : MonoBehaviour
@@ -28,10 +28,17 @@ internal sealed class DeathFadeTransition : MonoBehaviour
     private Image fadeImage;
     private bool running;
 
-    public static void Restart(float fadeDuration)
+    public static void RevealCheckpoint()
+    {
+        if (instance == null) return;
+        instance.SetAlpha(0f);
+        instance.running = false;
+    }
+
+    public static void Restart(float fadeDuration, PlayerHealth player)
     {
         if (instance == null) Create();
-        if (!instance.running) instance.StartCoroutine(instance.RestartRoutine(fadeDuration));
+        if (!instance.running) instance.StartCoroutine(instance.RestartRoutine(fadeDuration, player));
     }
 
     private static void Create()
@@ -42,7 +49,7 @@ internal sealed class DeathFadeTransition : MonoBehaviour
 
         Canvas canvas = root.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 1000;
+        canvas.sortingOrder = short.MaxValue;
         CanvasScaler scaler = root.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280f, 720f);
@@ -59,13 +66,25 @@ internal sealed class DeathFadeTransition : MonoBehaviour
         instance.fadeImage.raycastTarget = false;
     }
 
-    private IEnumerator RestartRoutine(float fadeDuration)
+    private IEnumerator RestartRoutine(float fadeDuration, PlayerHealth player)
     {
         running = true;
+        Camera.main?.GetComponent<PlayerCameraFollow2D>()?.BeginDeathFocus(player.transform);
+        var animator = player.GetComponent<Animator>();
+        int dead = Animator.StringToHash("Base Layer.Dead");
+        if (animator != null && animator.HasState(0, dead))
+        {
+            animator.Play(dead, 0, 0f);
+            yield return null;
+            while (animator != null && animator.GetCurrentAnimatorStateInfo(0).fullPathHash == dead
+                && animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f) yield return null;
+        }
+        yield return new WaitForSecondsRealtime(.5f);
         yield return Fade(0f, 1f, fadeDuration);
-        yield return SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().buildIndex);
-        yield return Fade(1f, 0f, fadeDuration);
-        running = false;
+        StorySceneFlow.RestartAtCombat = true;
+        yield return SceneManager.LoadSceneAsync("Forest");
+        // The opening quest presentation takes over the black screen before revealing combat.
+        while (running) yield return null;
     }
 
     private IEnumerator Fade(float from, float to, float duration)

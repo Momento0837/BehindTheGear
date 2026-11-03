@@ -52,6 +52,29 @@ public sealed class SceneFadeTransition : MonoBehaviour
         instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete));
     }
 
+    public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
+    {
+        if (instance == null) CreateRuntimeInstance();
+        while (instance.running) yield return null;
+        var transition = instance;
+        transition.running = true;
+        try
+        {
+            yield return transition.Fade(0f, 1f, duration);
+            whileBlack?.Invoke();
+            yield return null;
+            yield return transition.Fade(1f, 0f, duration);
+        }
+        finally
+        {
+            if (transition != null)
+            {
+                transition.SetAlpha(0f);
+                transition.running = false;
+            }
+        }
+    }
+
     private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete)
     {
         running = true;

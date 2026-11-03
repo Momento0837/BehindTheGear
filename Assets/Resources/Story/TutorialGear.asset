@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: TutorialGear
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItemDefinition
   itemId: tutorial_gear
-  displayName: 구리 톱니장비
-  description: 임시 장비 슬롯 검증용 구리 장비입니다.
+  displayName: 망토
+  description: 쓰레기 더미에서 찾은 걸칠 만한 망토입니다.
   icon: {fileID: 0}
   tint: {r: 0.88, g: 0.60, b: 0.22, a: 1}
   fallbackIcon: 2

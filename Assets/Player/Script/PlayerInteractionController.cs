@@ -34,7 +34,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
         currentTarget = FindClosestInteractable();
         if (interactionPrompt != null)
         {
-            interactionPrompt.SetVisible(currentTarget != null);
+            interactionPrompt.SetVisible(currentTarget != null && currentTarget.GetComponent<ScenePortal2D>() == null);
             if (currentTarget != null) interactionPrompt.SetTarget(currentTarget);
         }
     }
@@ -50,7 +50,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
     public void TryInteract()
     {
         if (!isActiveAndEnabled) return;
-        Interactable2D target = currentTarget != null ? currentTarget : FindClosestInteractable();
+        Interactable2D target = FindClosestInteractable();
         if (target == null) return;
         target.Interact(gameObject);
         if (logSuccessfulInteractions)
@@ -74,8 +74,8 @@ public sealed class PlayerInteractionController : MonoBehaviour
             Collider2D hit = interactionHits[i];
             if (hit == null || !hit.isTrigger) continue;
             Interactable2D interactable = hit.GetComponentInParent<Interactable2D>();
-            if (interactable == null || interactable.gameObject == gameObject) continue;
-            if (!IsInFacingDirection(bounds.center, hit.bounds.center)) continue;
+            if (interactable == null || !interactable.isActiveAndEnabled || interactable.gameObject == gameObject) continue;
+            if (!interactable.AllowFromEitherSide && !IsInFacingDirection(bounds.center, hit.bounds.center)) continue;
             if (!HasLineOfSight(bounds.center, hit, interactable)) continue;
             float distance = ((Vector2)interactable.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (distance < closestDistance)

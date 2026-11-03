@@ -10,8 +10,8 @@ public sealed class DialogueTextEffects : MonoBehaviour
     [Header("Character shake")]
     [SerializeField, Min(0f)] private float shakeAmplitude = 1.5f;
     [SerializeField, Min(0.1f)] private float shakeFrequency = 28f;
-    [SerializeField, Min(0f)] private float settleWaveDuration = 0.7f;
-    [SerializeField, Min(0.01f)] private float settleDuration = 0.4f;
+    private const int ShakeFadeStart = 4;
+    private const int ShakeFadeEnd = 8;
 
     [Header("Falling dust")]
     [SerializeField, Range(1, 5)] private int dustPerCharacter = 3;
@@ -48,8 +48,8 @@ public sealed class DialogueTextEffects : MonoBehaviour
     private Vector3[][] originalVertices;
     private string cachedText;
     private float lineCompletedAt = -1f;
-    private int settlingCharacterCount;
     private bool isEffectActive;
+    private bool shakeCurrentLine;
 
     private void OnValidate()
     {
@@ -99,7 +99,7 @@ public sealed class DialogueTextEffects : MonoBehaviour
     {
         if (bodyText != null)
         {
-            if (isEffectActive)
+            if (isEffectActive && shakeCurrentLine)
                 UpdateCharacterShake();
         }
         UpdateDust(Time.unscaledDeltaTime);
@@ -108,8 +108,13 @@ public sealed class DialogueTextEffects : MonoBehaviour
     private void HandleLineRevealStarted()
     {
         isEffectActive = true;
+        shakeCurrentLine = !string.Equals(conversation.CurrentSpeaker.Trim(), "Ethan", System.StringComparison.OrdinalIgnoreCase);
+        // Rebuild the mesh so an NPC's last shake cannot carry into Ethan's line.
+        if (bodyText == null) bodyText = conversation.BodyText;
+        if (bodyText != null) bodyText.ForceMeshUpdate();
+        cachedText = null;
+        originalVertices = null;
         lineCompletedAt = -1f;
-        settlingCharacterCount = 0;
         ClearDust();
     }
 
@@ -125,7 +130,6 @@ public sealed class DialogueTextEffects : MonoBehaviour
 
         bodyText.ForceMeshUpdate();
         cachedText = null;
-        settlingCharacterCount = bodyText.textInfo.characterCount;
         lineCompletedAt = Time.unscaledTime;
     }
 
@@ -169,15 +173,14 @@ public sealed class DialogueTextEffects : MonoBehaviour
             if (baseVertices == null || vertexIndex + 3 >= baseVertices.Length || vertexIndex + 3 >= meshVertices.Length) continue;
 
             float amplitude = shakeAmplitude;
+            float newerCharacters = characterCount - 1 - i;
             if (lineCompletedAt >= 0f)
             {
-                float characterProgress = settlingCharacterCount <= 1
-                    ? 0f
-                    : (float)i / (settlingCharacterCount - 1);
-                float settleStart = lineCompletedAt + settleWaveDuration * characterProgress;
-                float settleProgress = Mathf.Clamp01((time - settleStart) / settleDuration);
-                amplitude *= 1f - settleProgress;
+                // Let the last few glyphs settle at the same pace even after typing ends.
+                newerCharacters += (time - lineCompletedAt) / Mathf.Max(.005f, conversation.CharacterInterval);
             }
+            float settleProgress = Mathf.Clamp01((newerCharacters - ShakeFadeStart) / (ShakeFadeEnd - ShakeFadeStart));
+            amplitude *= 1f - Mathf.SmoothStep(0f, 1f, settleProgress);
 
             if (amplitude <= 0f) continue;
             float phase = i * 2.399963f;

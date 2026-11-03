@@ -16,6 +16,7 @@ public sealed class PlayerHealth : MonoBehaviour
     public bool IsDead => CurrentHealth <= 0;
     public event Action<int, int> HealthChanged;
     public event Action Died;
+    public event Action Damaged;
 
     private PlayerControlLock playerControlLock;
     private float invincibilityEndTime;
@@ -45,6 +46,7 @@ public sealed class PlayerHealth : MonoBehaviour
         invincibilityEndTime = Time.time + invincibilityDuration;
         HealthChanged?.Invoke(CurrentHealth, MaxHealth);
 
+        Damaged?.Invoke();
         if (!IsDead) return;
         playerControlLock.Acquire();
         Died?.Invoke();

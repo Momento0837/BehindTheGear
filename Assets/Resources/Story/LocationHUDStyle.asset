@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90c31ca6546941e4ae010abb4f4a2d77, type: 3}
   m_Name: LocationHUDStyle
   m_EditorClassIdentifier:
-  font: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  font: {fileID: 11400000, guid: 6984b9744b9609b4181b4255b3f7c5fb, type: 2}

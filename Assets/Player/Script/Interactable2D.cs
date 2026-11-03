@@ -4,10 +4,12 @@ using UnityEngine.Events;
 /// <summary>Add this to an object that the player can activate with F.</summary>
 public sealed class Interactable2D : MonoBehaviour
 {
+    public bool AllowFromEitherSide { get; set; }
     [SerializeField] private UnityEvent onInteract;
 
     public void Interact(GameObject interactor)
     {
+        if (!isActiveAndEnabled) return;
         StoryInteraction2D story = GetComponent<StoryInteraction2D>();
         if (story != null) { story.Interact(interactor); return; }
 

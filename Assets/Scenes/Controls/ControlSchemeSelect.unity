@@ -159,10 +159,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.12, g: 0.31, b: 0.48, a: 1}
-    m_HighlightedColor: {r: 0.1464, g: 0.37820002, b: 0.5856, a: 1}
-    m_PressedColor: {r: 0.0936, g: 0.2418, b: 0.3744, a: 1}
-    m_SelectedColor: {r: 0.1464, g: 0.37820002, b: 0.5856, a: 1}
+    m_NormalColor: {r: 0.24, g: 0.205, b: 0.16, a: 1}
+    m_HighlightedColor: {r: 0.32, g: 0.275, b: 0.21, a: 1}
+    m_PressedColor: {r: 0.16, g: 0.135, b: 0.105, a: 1}
+    m_SelectedColor: {r: 0.32, g: 0.275, b: 0.21, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -207,7 +207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.12, g: 0.31, b: 0.48, a: 1}
+  m_Color: {r: 0.24, g: 0.205, b: 0.16, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -312,15 +312,15 @@ MonoBehaviour:
   m_text: "\uC778\uAC8C\uC784\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uC870\uC791 \uBC29\uC2DD\uC744
     \uD558\uB098 \uC120\uD0DD\uD558\uC138\uC694"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
-  m_sharedMaterial: {fileID: 6232574978784048486, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
+  m_sharedMaterial: {fileID: 1574705307857115048, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4293119160
-  m_fontColor: {r: 0.72, g: 0.8, b: 0.89, a: 1}
+  m_fontColor: {r: 0.76, g: 0.715, b: 0.635, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -450,15 +450,15 @@ MonoBehaviour:
   m_text: "\uC120\uD0DD\uD55C \uC870\uC791 \uBC29\uC2DD\uB9CC \uC778\uAC8C\uC784\uC5D0
     \uC801\uC6A9\uB429\uB2C8\uB2E4"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
-  m_sharedMaterial: {fileID: 6232574978784048486, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
+  m_sharedMaterial: {fileID: 1574705307857115048, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
     rgba: 4290947215
-  m_fontColor: {r: 0.56, g: 0.66, b: 0.76, a: 1}
+  m_fontColor: {r: 0.60, g: 0.555, b: 0.48, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -653,7 +653,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.035, g: 0.055, b: 0.09, a: 1}
+  m_Color: {r: 0.055, g: 0.047, b: 0.038, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -845,10 +845,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.19, g: 0.3, b: 0.42, a: 1}
-    m_HighlightedColor: {r: 0.2318, g: 0.36600003, b: 0.5124, a: 1}
-    m_PressedColor: {r: 0.14819999, g: 0.234, b: 0.32759997, a: 1}
-    m_SelectedColor: {r: 0.2318, g: 0.36600003, b: 0.5124, a: 1}
+    m_NormalColor: {r: 0.205, g: 0.18, b: 0.145, a: 1}
+    m_HighlightedColor: {r: 0.285, g: 0.25, b: 0.20, a: 1}
+    m_PressedColor: {r: 0.145, g: 0.125, b: 0.10, a: 1}
+    m_SelectedColor: {r: 0.285, g: 0.25, b: 0.20, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -893,7 +893,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.19, g: 0.3, b: 0.42, a: 1}
+  m_Color: {r: 0.205, g: 0.18, b: 0.145, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1156,8 +1156,8 @@ MonoBehaviour:
     Space\n\uACF5\uACA9   \uB9C8\uC6B0\uC2A4 \uC88C\uD074\uB9AD\n\uBCF4\uC870   \uB9C8\uC6B0\uC2A4
     \uC6B0\uD074\uB9AD\n\uC2A4\uD0AC   Q / E"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
-  m_sharedMaterial: {fileID: 6232574978784048486, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6984b9744b9609b4181b4255b3f7c5fb, type: 2}
+  m_sharedMaterial: {fileID: 6189706844385608356, guid: 6984b9744b9609b4181b4255b3f7c5fb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1187,7 +1187,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -1295,8 +1295,8 @@ MonoBehaviour:
     \u2191 \uB610\uB294 Space\n\uACF5\uACA9   Z\n\uBCF4\uC870   X\n\uC2A4\uD0AC  
     C / V"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
-  m_sharedMaterial: {fileID: 6232574978784048486, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 6984b9744b9609b4181b4255b3f7c5fb, type: 2}
+  m_sharedMaterial: {fileID: 6189706844385608356, guid: 6984b9744b9609b4181b4255b3f7c5fb, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1326,7 +1326,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -1454,7 +1454,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.055, g: 0.047, b: 0.038, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1569,8 +1569,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC870\uC791 \uBC29\uC2DD \uC120\uD0DD"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
-  m_sharedMaterial: {fileID: 6232574978784048486, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 53708caec28e69a4d9815ee965ba8f5e, type: 2}
+  m_sharedMaterial: {fileID: 6561245278472870805, guid: 53708caec28e69a4d9815ee965ba8f5e, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1600,7 +1600,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535

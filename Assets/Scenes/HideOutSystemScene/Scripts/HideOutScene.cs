@@ -1805,6 +1805,7 @@ namespace BehindTheGear.HideOut
             var text = gameObject.GetComponent<TextMeshProUGUI>();
             text.font = settings.font;
             text.fontSharedMaterial = settings.font.material;
+            UIFontTheme.Apply(text, size >= 30 ? UIFontTheme.ExtraBold : UIFontTheme.Normal);
             text.text = value;
             text.fontSize = size;
             text.color = color;
@@ -1826,6 +1827,7 @@ namespace BehindTheGear.HideOut
             {
                 var label = Text(image.transform, name, 8, 0, width - 16, height, labelSize, Color.white);
                 label.alignment = TextAlignmentOptions.Center;
+                UIFontTheme.Apply(label, UIFontTheme.Bold);
             }
             return button;
         }

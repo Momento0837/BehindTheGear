@@ -31,6 +31,28 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private PlayerMeleeAttack meleeAttack;
     private PlayerHealth playerHealth;
     private int lastKnownHealth;
+    [SerializeField, Range(0f, 1f)] private float meleeImpactNormalizedTime = .48f;
+    private float hitStopUntil;
+    private float animatorSpeedBeforeHitStop;
+    private bool hitStopped;
+
+    public void ApplyHitStop(float duration)
+    {
+        if (!hitStopped && animator != null)
+        {
+            animatorSpeedBeforeHitStop = animator.speed;
+            animator.speed = 0f;
+        }
+        hitStopped = true;
+        hitStopUntil = Mathf.Max(hitStopUntil, Time.unscaledTime + duration);
+    }
+
+    private void OnDisable()
+    {
+        if (hitStopped && animator != null) animator.speed = animatorSpeedBeforeHitStop;
+        hitStopped = false;
+        meleeAttack?.CancelComboSwing();
+    }
     private bool hasIsMovingParameter;
     private bool hasDamagedTriggerParameter;
     private bool hasDeadTriggerParameter;
@@ -64,6 +86,8 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        // Match the rendered player position to the camera's per-frame follow updates.
+        body.interpolation = RigidbodyInterpolation2D.Interpolate;
         box = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
         if (animator != null)
@@ -105,6 +129,11 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (hitStopped && Time.unscaledTime < hitStopUntil)
+        {
+            body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
+            return;
+        }
         if (playerHealth != null && playerHealth.IsDead)
         {
             jumpRequested = false;
@@ -126,6 +155,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
                 else
                 {
                     attackAnimationPlaying = false;
+                    meleeAttack?.CancelComboSwing();
                     attackStateObserved = false;
                     bufferedNextAttack = false;
                     comboAttackIndex = 0;
@@ -148,12 +178,19 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (hitStopped && Time.unscaledTime >= hitStopUntil)
+        {
+            if (animator != null) animator.speed = animatorSpeedBeforeHitStop;
+            hitStopped = false;
+        }
         if (!attackAnimationPlaying || animator == null) return;
 
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
         if (IsCurrentAttackState(state))
         {
             attackStateObserved = true;
+            if (state.normalizedTime >= meleeImpactNormalizedTime)
+                meleeAttack?.ResolveComboHit(comboAttackIndex);
             if (state.normalizedTime >= 1f) FinishAttackAnimation();
             return;
         }
@@ -178,6 +215,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void FinishAttackAnimation()
     {
+        meleeAttack?.CancelComboSwing();
         attackAnimationPlaying = false;
         attackStateObserved = false;
         attackAnimationEndedAt = Time.time;
@@ -200,6 +238,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         bool tookDamage = currentHealth < lastKnownHealth;
         lastKnownHealth = currentHealth;
         if (!tookDamage || animator == null) return;
+        meleeAttack?.CancelComboSwing();
 
         attackAnimationPlaying = false;
         attackStateObserved = false;
@@ -247,7 +286,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         animator.SetInteger(AttackIndexParameterHash, comboAttackIndex);
         animator.ResetTrigger(AttackTriggerHash);
         animator.SetTrigger(AttackTriggerHash);
-        meleeAttack?.PlayComboEffect(comboAttackIndex);
+        meleeAttack?.BeginComboSwing();
     }
 
     private void UpdateCrouch(bool shouldCrouch)
@@ -293,6 +332,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     internal void RefreshAnimationWhileControlLocked()
     {
+        meleeAttack?.CancelComboSwing();
         jumpRequested = false;
         bufferedNextAttack = false;
         attackAnimationPlaying = false;

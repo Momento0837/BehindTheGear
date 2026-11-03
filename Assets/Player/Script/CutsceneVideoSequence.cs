@@ -15,9 +15,11 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     [SerializeField, Min(.1f)] private float skipHoldSeconds = 3f;
 
     public bool IsPlaying => playing;
+    public System.Func<System.Action, IEnumerator> EndingTransition { get; set; }
     public void BindPlayer(PlayerControlLock value) => playerControlLock = value;
     private bool playing;
     private bool ownsLock;
+    private bool ending;
     private float heldSeconds;
     private static readonly string[] SkipMessages = { "스킵중.", "스킵중..", "스킵중..." };
     private bool[] uiWasActive;
@@ -96,6 +98,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         videoPlayer.Play();
         while (playing)
         {
+            if (ending) { yield return null; continue; }
             if (UpdateSkip()) { Finish(true); yield break; }
             yield return null;
         }
@@ -123,11 +126,41 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private void Finish(bool continueDialogue)
     {
         if (!playing) return;
-        playing = false;
+        if (continueDialogue && EndingTransition != null)
+        {
+            if (!ending) StartCoroutine(FinishWithTransition());
+            return;
+        }
+        CompleteFinish(continueDialogue);
+    }
+
+    private IEnumerator FinishWithTransition()
+    {
+        ending = true;
+        if (videoPlayer != null) videoPlayer.Pause();
+        if (skipRoot != null) skipRoot.SetActive(false);
+        yield return EndingTransition(() =>
+        {
+            HideVideoPresentation();
+            RestoreUiAfterVideo();
+        });
+        EndingTransition = null;
+        CompleteFinish(true);
+    }
+
+    private void HideVideoPresentation()
+    {
         if (videoPlayer != null) { videoPlayer.Stop(); videoPlayer.enabled = false; }
         if (videoRoot != null) videoRoot.SetActive(false);
         ReleaseVideoTexture();
         if (skipRoot != null) skipRoot.SetActive(false);
+    }
+
+    private void CompleteFinish(bool continueDialogue)
+    {
+        playing = false;
+        ending = false;
+        HideVideoPresentation();
         RestoreUiAfterVideo();
         heldSeconds = 0f;
         if (continueDialogue && dialogueAfterVideo != null) dialogueAfterVideo.Play();

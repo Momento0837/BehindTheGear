@@ -299,6 +299,7 @@ public static class InventoryCanvasAdapter
             text.font = font;
             text.fontSharedMaterial = font.material;
         }
+        UIFontTheme.Apply(text, UIFontTheme.Normal);
         text.fontSize = 16f;
         text.alignment = TextAlignmentOptions.BottomRight;
         text.raycastTarget = false;

@@ -104,7 +104,10 @@ public sealed class QuestGiver2D : MonoBehaviour
         }
 
         activeDialoguePurpose = purpose;
-        conversationDialogue.Play(dialogue);
+        if (purpose == DialoguePurpose.Offer)
+            conversationDialogue.PlayWithChoices(dialogue, "수락", "거절", HandleQuestChoice);
+        else
+            conversationDialogue.Play(dialogue);
     }
 
     private void HandleDialogueFinished()
@@ -112,11 +115,7 @@ public sealed class QuestGiver2D : MonoBehaviour
         DialoguePurpose finishedPurpose = activeDialoguePurpose;
         activeDialoguePurpose = DialoguePurpose.None;
 
-        if (finishedPurpose == DialoguePurpose.Offer && CurrentStage == QuestStage.NotStarted)
-        {
-            ShowQuestChoices();
-        }
-        else if (finishedPurpose == DialoguePurpose.Acceptance && CurrentStage == QuestStage.NotStarted)
+        if (finishedPurpose == DialoguePurpose.Acceptance && CurrentStage == QuestStage.NotStarted)
         {
             if (!SpawnQuestItem()) return;
             CurrentStage = QuestStage.WaitingForItem;

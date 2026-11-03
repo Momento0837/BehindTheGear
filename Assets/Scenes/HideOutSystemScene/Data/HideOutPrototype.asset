@@ -347,7 +347,7 @@ MonoBehaviour:
         materials:
         - itemId: hideout_scrap
           amount: 20
-  font: {fileID: 11400000, guid: 4b555c58595951347a79266fb7454017, type: 2}
+  font: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   items:
   - {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}
   - {fileID: 11400000, guid: 827c77effb72482181f134b6e55728dd, type: 2}

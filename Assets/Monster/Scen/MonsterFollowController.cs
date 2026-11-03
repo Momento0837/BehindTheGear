@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -18,13 +20,50 @@ public sealed class MonsterFollowController : MonoBehaviour
     [Header("Drops")]
     [SerializeField] private GameObject[] dropPrefabs;
 
+    [Header("Patrol")]
+    [SerializeField, Min(0f)] private float patrolRadius = 2f;
+    [SerializeField, Min(.01f)] private float patrolMoveDuration = 4.5f;
+    [SerializeField] private Vector2 patrolWaitRange = new Vector2(1f, 4f);
+
     private MonsterRangeTrigger2D attackSensor;
+    private MonsterRangeTrigger2D recognitionSensor;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
+    private string animationState;
+    private float actionUntil;
+    private float patrolHomeX;
+    private float patrolStartX;
+    private float patrolElapsed;
+    private float patrolWaitDuration;
+    private int patrolDirection = 1;
+    private bool patrolWaiting;
+    private bool wasChasing;
     private Rigidbody2D body;
     private PlayerHealth playerHealth;
-    private bool hasRecognizedPlayer;
+    private readonly RaycastHit2D[] sightHits = new RaycastHit2D[16];
     private float nextAttackTime;
+    private bool attackPending;
+    [Header("Hit Feedback")]
+    [SerializeField, Min(0f)] private float hitStopDuration = .05f;
+    [SerializeField, Min(0f)] private float knockbackSpeed = 3f;
+    [SerializeField, Min(0f)] private float knockbackDuration = .12f;
+    [SerializeField] private Color hitFlashColor = new Color(1f, .35f, .35f, 1f);
+    private float hitStopUntil;
+    private float knockbackUntil;
+    private float knockbackDirection;
+    private Color normalColor;
+    private float normalAnimatorSpeed;
+    private Coroutine hitFeedback;
 
     public int CurrentHealth { get; private set; }
+    private bool tutorialProtected;
+    private InventoryItemDefinition[] loot = System.Array.Empty<InventoryItemDefinition>();
+    public void ConfigureLoot(InventoryItemDefinition[] items) => loot = items ?? System.Array.Empty<InventoryItemDefinition>();
+    public void SetTutorialProtection(bool value)
+    {
+        tutorialProtected = value;
+        if (CurrentHealth > 0) CurrentHealth = value ? 999 : 1;
+    }
 
     public void BindPlayer(Transform target)
     {
@@ -37,14 +76,33 @@ public sealed class MonsterFollowController : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         body.freezeRotation = true;
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        normalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        normalAnimatorSpeed = animator != null ? animator.speed : 1f;
+        patrolHomeX = patrolStartX = body.position.x;
+        patrolDirection = Random.value < .5f ? -1 : 1;
+        BeginPatrolWait();
         CurrentHealth = maxHealth;
-        CreateSensor(recognitionRange, false);
+        recognitionSensor = CreateSensor(recognitionRange, false);
         attackSensor = CreateSensor(attackRange, true);
         playerHealth = player != null ? player.GetComponent<PlayerHealth>() : null;
         IgnorePlayerBodyCollision();
+        PlayAnimation("Idle");
     }
 
     private void OnEnable() => IgnorePlayerBodyCollision();
+
+    private void OnDisable()
+    {
+        attackPending = false;
+        if (hitFeedback != null) StopCoroutine(hitFeedback);
+        hitFeedback = null;
+        if (animator != null) animator.speed = normalAnimatorSpeed;
+        if (spriteRenderer != null && CurrentHealth > 0) spriteRenderer.color = normalColor;
+        Stop();
+        if (CurrentHealth > 0) PlayAnimation("Idle");
+    }
 
     private void IgnorePlayerBodyCollision()
     {
@@ -60,21 +118,43 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!hasRecognizedPlayer || player == null || CurrentHealth <= 0)
+        if (CurrentHealth > 0 && Time.unscaledTime < hitStopUntil)
+        {
+            Stop();
+            return;
+        }
+        if (CurrentHealth > 0 && Time.time < knockbackUntil)
+        {
+            body.linearVelocity = new Vector2(knockbackDirection * knockbackSpeed, body.linearVelocity.y);
+            return;
+        }
+        if (CurrentHealth <= 0 || Time.time < actionUntil)
         {
             Stop();
             return;
         }
 
-        if (IsSightBlocked())
+        bool playerInRange = player != null && Mathf.Abs(player.position.x - body.position.x) <= 8f;
+        bool canChase = playerInRange && player != null && playerHealth != null && !playerHealth.IsDead
+            && !IsSightBlocked();
+        if (!canChase)
         {
-            Stop();
+            if (wasChasing)
+            {
+                patrolStartX = body.position.x;
+                BeginPatrolWait();
+            }
+            wasChasing = false;
+            Patrol();
             return;
         }
+        wasChasing = true;
 
         if (attackSensor != null && attackSensor.HasPlayer)
         {
             Stop();
+            Face(player.position.x - body.position.x);
+            PlayAnimation("Idle");
             Attack();
             return;
         }
@@ -84,11 +164,10 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     public void RecognizePlayer(PlayerHealth health)
     {
-        if (health == null || health.IsDead) return;
+        if (CurrentHealth <= 0 || health == null || health.IsDead) return;
         player = health.transform;
         playerHealth = health;
         IgnorePlayerBodyCollision();
-        hasRecognizedPlayer = true;
     }
 
     private MonsterRangeTrigger2D CreateSensor(BoxCollider2D source, bool attack)
@@ -119,7 +198,17 @@ public sealed class MonsterFollowController : MonoBehaviour
         Vector2 target = player.position;
         Vector2 direction = target - origin;
         if (direction.sqrMagnitude <= Mathf.Epsilon) return false;
-        return Physics2D.Raycast(origin, direction.normalized, direction.magnitude, sightBlockingLayers).collider != null;
+        ContactFilter2D filter = new();
+        filter.SetLayerMask(sightBlockingLayers);
+        filter.useTriggers = false;
+        int count = Physics2D.Raycast(origin, direction.normalized, filter, sightHits, direction.magnitude);
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = sightHits[i].collider;
+            if (hit.attachedRigidbody == body || hit.GetComponentInParent<PlayerHealth>() != null) continue;
+            return true;
+        }
+        return false;
     }
 
     private void Attack()
@@ -128,42 +217,176 @@ public sealed class MonsterFollowController : MonoBehaviour
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
         if (playerHealth == null || playerHealth.IsDead) return;
 
+        PlayAnimation("Attack", true);
+        attackPending = true;
+        actionUntil = Time.time + ClipLength("Attack");
+        nextAttackTime = Time.time + attackDelay;
+    }
+
+    // Called by Attack.anim on the first impact sprite, not when the wind-up begins.
+    public void ApplyAttackHit()
+    {
+        if (!isActiveAndEnabled || !attackPending || CurrentHealth <= 0 || animationState != "Attack") return;
+        attackPending = false;
+        if (attackSensor == null || !attackSensor.HasPlayer || playerHealth == null
+            || playerHealth.IsDead || IsSightBlocked()) return;
         int damage = Mathf.Max(1, attackPower - playerHealth.Defense);
         playerHealth.TakeDamage(attackPower);
         Debug.Log($"[Monster] {name} attacked {player.name}: {damage} damage", this);
-        nextAttackTime = Time.time + attackDelay;
     }
 
     public void TakeDamage(int damage)
     {
         if (damage <= 0 || CurrentHealth <= 0) return;
 
-        CurrentHealth = Mathf.Max(0, CurrentHealth - damage);
+        CurrentHealth = tutorialProtected ? 999 : Mathf.Max(0, CurrentHealth - damage);
         Debug.Log($"[Monster] {name} HP: {CurrentHealth} / {maxHealth}", this);
         if (CurrentHealth == 0) Die();
+        else
+        {
+            Stop();
+            PlayAnimation("Damaged", true);
+            actionUntil = Time.time + ClipLength("Damaged");
+        }
+    }
+
+    public void TakeMeleeDamage(int damage, float direction)
+    {
+        if (damage <= 0 || CurrentHealth <= 0) return;
+        hitStopUntil = Time.unscaledTime + hitStopDuration;
+        knockbackUntil = Time.time + hitStopDuration + knockbackDuration;
+        knockbackDirection = Mathf.Sign(direction);
+        patrolStartX = body.position.x;
+        BeginPatrolWait();
+        TakeDamage(damage);
+        if (hitFeedback != null) StopCoroutine(hitFeedback);
+        hitFeedback = StartCoroutine(HitFeedback());
+    }
+
+    private IEnumerator HitFeedback()
+    {
+        if (spriteRenderer != null)
+        {
+            Color color = hitFlashColor;
+            color.a = normalColor.a;
+            spriteRenderer.color = color;
+        }
+        if (animator != null) animator.speed = 0f;
+        yield return new WaitForSecondsRealtime(hitStopDuration);
+        if (animator != null) animator.speed = normalAnimatorSpeed;
+        yield return new WaitForSeconds(.08f);
+        if (spriteRenderer != null) spriteRenderer.color = normalColor;
+        hitFeedback = null;
     }
 
     private void Die()
     {
         Stop();
         CreateDrops();
-        gameObject.SetActive(false);
+        foreach (var collider in GetComponentsInChildren<Collider2D>()) collider.enabled = false;
+        body.simulated = false;
+        StartCoroutine(DeathSequence());
+    }
+
+    private IEnumerator DeathSequence()
+    {
+        PlayAnimation("Dead", true);
+        if (Time.unscaledTime < hitStopUntil)
+            yield return new WaitForSecondsRealtime(hitStopDuration);
+        yield return new WaitForSeconds(ClipLength("Dead"));
+        yield return new WaitForSeconds(1f);
+        var renderers = GetComponentsInChildren<SpriteRenderer>();
+        var colors = new Color[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++) colors[i] = renderers[i].color;
+        float elapsed = 0f;
+        while (elapsed < 1f)
+        {
+            elapsed += Time.deltaTime;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Color color = colors[i];
+                color.a *= 1f - Mathf.Clamp01(elapsed);
+                renderers[i].color = color;
+            }
+            yield return null;
+        }
+        Destroy(gameObject);
+    }
+
+    private float ClipLength(string state)
+    {
+        if (animator != null && animator.runtimeAnimatorController != null)
+            foreach (var clip in animator.runtimeAnimatorController.animationClips)
+                if (clip.name == state) return clip.length;
+        return 0f;
+    }
+
+    private void PlayAnimation(string state, bool restart = false)
+    {
+        if (state != "Attack") attackPending = false;
+        if (animator == null || animator.runtimeAnimatorController == null) return;
+        if (!restart && animationState == state) return;
+        animator.Play("Base Layer." + state, 0, 0f);
+        animationState = state;
+    }
+
+    private void Face(float direction)
+    {
+        if (spriteRenderer != null && Mathf.Abs(direction) > .001f)
+            spriteRenderer.flipX = direction > 0f;
+    }
+
+    private void BeginPatrolWait()
+    {
+        patrolWaiting = true;
+        patrolElapsed = 0f;
+        float minWait = Mathf.Max(0f, Mathf.Min(patrolWaitRange.x, patrolWaitRange.y));
+        float maxWait = Mathf.Max(minWait, Mathf.Max(patrolWaitRange.x, patrolWaitRange.y));
+        patrolWaitDuration = Random.Range(minWait, maxWait);
+    }
+
+    private void Patrol()
+    {
+        patrolElapsed += Time.fixedDeltaTime;
+        if (patrolWaiting)
+        {
+            Stop();
+            PlayAnimation("Idle");
+            if (patrolElapsed >= patrolWaitDuration)
+            {
+                patrolWaiting = false;
+                patrolElapsed = 0f;
+                patrolStartX = body.position.x;
+            }
+            return;
+        }
+        float target = Mathf.Lerp(patrolStartX, patrolHomeX + patrolDirection * patrolRadius,
+            Mathf.Clamp01(patrolElapsed / patrolMoveDuration));
+        float velocity = (target - body.position.x) / Time.fixedDeltaTime;
+        body.linearVelocity = new Vector2(velocity, body.linearVelocity.y);
+        Face(velocity);
+        PlayAnimation(Mathf.Abs(velocity) > .001f ? "Walk" : "Idle");
+        if (patrolElapsed >= patrolMoveDuration)
+        {
+            BeginPatrolWait();
+            patrolDirection *= -1;
+        }
     }
 
     private void CreateDrops()
     {
-        bool createdDrop = false;
-        if (dropPrefabs != null)
+        int roll = Random.Range(0, 100);
+        if (roll >= 40) return;
+        bool equipment = roll == 0;
+        var pool = loot.Where(item => item != null && (equipment ? item.IsEquipment : item.IsConsumable)).ToArray();
+        if (pool.Length == 0) return;
+        int count = equipment ? 1 : Random.Range(1, 3);
+        for (int i = 0; i < count; i++)
         {
-            foreach (GameObject dropPrefab in dropPrefabs)
-            {
-                if (dropPrefab == null) continue;
-                Instantiate(dropPrefab, transform.position + Vector3.up * .5f, Quaternion.identity);
-                createdDrop = true;
-            }
+            var drop = new GameObject("Monster Loot");
+            drop.transform.position = transform.position + new Vector3((i - (count - 1) * .5f) * .4f, .5f, 0f);
+            drop.AddComponent<WorldItemPickup>().Configure(pool[Random.Range(0, pool.Length)], 1);
         }
-
-        if (!createdDrop) CreateTemporaryDrop();
     }
 
     private void CreateTemporaryDrop()
@@ -179,6 +402,8 @@ public sealed class MonsterFollowController : MonoBehaviour
     {
         float direction = Mathf.Sign(player.position.x - body.position.x);
         body.linearVelocity = new Vector2(direction * moveSpeed, body.linearVelocity.y);
+        Face(direction);
+        PlayAnimation("Walk");
     }
 
     private void Stop()

@@ -22,6 +22,8 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     private ContactFilter2D monsterFilter;
     private float facingDirection = 1f;
     private float nextAttackTime;
+    private bool comboHitPending;
+    private PlayerMovement2D movement;
     private static readonly int[] AttackEffectStateHashes =
     {
         Animator.StringToHash("Base Layer.Attack01"),
@@ -52,11 +54,13 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     private void Awake()
     {
         playerCollider = GetComponent<BoxCollider2D>();
+        movement = GetComponent<PlayerMovement2D>();
         monsterFilter.SetLayerMask(monsterLayers);
         monsterFilter.useTriggers = false;
         PlayerInputReader input = GetComponent<PlayerInputReader>();
         input.MoveChanged += UpdateFacing;
-        input.BasicAttackPressed += Attack;
+        // Animated players resolve damage from their actual combo state, not the button press.
+        if (movement == null || GetComponent<Animator>() == null) input.BasicAttackPressed += Attack;
     }
 
     public void Attack()
@@ -64,14 +68,39 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         if (Time.time < nextAttackTime) return;
         nextAttackTime = Time.time + attackCooldown;
 
+        ResolveHit(facingDirection);
+    }
+
+    public void BeginComboSwing()
+    {
+        comboHitPending = true;
+    }
+
+    public void CancelComboSwing() => comboHitPending = false;
+
+    public void ResolveComboHit(int attackIndex)
+    {
+        if (!comboHitPending) return;
+        comboHitPending = false;
+        PlayComboEffect(attackIndex);
+        ResolveHit(facingDirection);
+    }
+
+    private void ResolveHit(float direction)
+    {
         Vector2 size = new(attackRange, playerCollider.bounds.size.y);
-        Vector2 center = GetAttackCenter();
+        Vector2 center = playerCollider.bounds.center + Vector3.right * direction
+            * (playerCollider.bounds.extents.x + attackRange * .5f);
         int hitCount = Physics2D.OverlapBox(center, size, 0f, monsterFilter, hitBuffer);
         hitMonsters.Clear();
         for (int i = 0; i < hitCount; i++)
         {
             MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
-            if (monster != null && hitMonsters.Add(monster)) monster.TakeDamage(ResolvedDamage);
+            if (monster != null && monster.CurrentHealth > 0 && hitMonsters.Add(monster))
+            {
+                monster.TakeMeleeDamage(ResolvedDamage, direction);
+                movement?.ApplyHitStop(.05f);
+            }
             else if (monster == null)
             {
                 foreach (MonoBehaviour component in hitBuffer[i].GetComponents<MonoBehaviour>())

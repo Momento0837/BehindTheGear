@@ -16,6 +16,7 @@ public sealed class WorldItemPickup : MonoBehaviour
     private GameObject runtimeHighlight;
     private float nextFullNoticeTime;
     private bool collecting;
+    public InventoryItemDefinition Definition => item;
 
     private bool IsQuestPickup => item != null && item.IsQuestItem;
 
@@ -100,6 +101,7 @@ public sealed class WorldItemPickup : MonoBehaviour
         if (inventory == null || collecting) return;
         collecting = true;
         int accepted = inventory.Add(item, amount);
+        if (accepted > 0) LocationHUD.ShowAcquired(item, accepted);
         amount -= accepted;
         if (amount <= 0)
         {
