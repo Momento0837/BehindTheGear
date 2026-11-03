@@ -7,6 +7,24 @@ public sealed class ScenePortal2D : MonoBehaviour
     [SerializeField] private string destinationSceneName = "Main";
     [SerializeField] private string destinationSpawnPointId = "FromDemoRightPortal";
 
+    private void Awake() => GetComponent<Interactable2D>().AllowFromEitherSide = true;
+
+    public void SetArea(float left, float right, float bottom = -4.5f, float top = 1.5f)
+    {
+        transform.position = new Vector3((left + right) * .5f, (bottom + top) * .5f, transform.position.z);
+        var box = GetComponent<BoxCollider2D>();
+        var sprite = GetComponent<SpriteRenderer>();
+        if (box == null || sprite == null || sprite.sprite == null) return;
+        Vector2 size = sprite.sprite.bounds.size;
+        Vector3 parentScale = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
+        transform.localScale = new Vector3((right - left) / size.x / Mathf.Abs(parentScale.x),
+            (top - bottom) / size.y / Mathf.Abs(parentScale.y), 1f);
+        box.offset = sprite.sprite.bounds.center;
+        box.size = size;
+        box.isTrigger = true;
+        GetComponent<Interactable2D>().AllowFromEitherSide = true;
+    }
+
     public void Travel(GameObject interactor)
     {
         if (interactor == null) return;

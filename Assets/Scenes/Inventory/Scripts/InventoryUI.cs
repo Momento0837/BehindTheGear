@@ -107,6 +107,61 @@ public sealed class InventoryUI : MonoBehaviour
     public GameObject EquipmentStatsPanel => equipmentWindow;
     public TMP_FontAsset UiFont => font;
 
+    private Transform hintedSlot;
+    private Vector3 hintedScale;
+    private InventoryItemDefinition hintedItem;
+    private float hintElapsed;
+    private float hintReturnElapsed;
+    private Vector3 hintReturnScale;
+    private bool hintReturning;
+
+    public void BeginEquipmentHint(InventoryItemDefinition item)
+    {
+        ResetEquipmentHint();
+        if (item == null || equipmentUnequipButtons == null) return;
+        for (int i = 0; i < equipmentUnequipButtons.Length; i++)
+        {
+            if (GetEquipmentSlotForIndex(i) != item.Slot || equipmentUnequipButtons[i] == null) continue;
+            hintedSlot = equipmentUnequipButtons[i].transform;
+            hintedScale = hintedSlot.localScale;
+            hintedItem = item;
+            hintElapsed = 0f;
+            break;
+        }
+    }
+
+    public void EndEquipmentHint()
+    {
+        if (hintedSlot == null || hintReturning) return;
+        hintReturning = true;
+        hintReturnElapsed = 0f;
+        hintReturnScale = hintedSlot.localScale;
+    }
+
+    private void ResetEquipmentHint()
+    {
+        if (hintedSlot != null) hintedSlot.localScale = hintedScale;
+        hintedSlot = null;
+        hintedItem = null;
+        hintReturning = false;
+    }
+
+    private void UpdateEquipmentHint()
+    {
+        if (hintedSlot == null) return;
+        if (!hintReturning && inventory.GetEquipped(hintedItem.Slot) != null) EndEquipmentHint();
+        if (hintReturning)
+        {
+            hintReturnElapsed += Time.unscaledDeltaTime;
+            hintedSlot.localScale = Vector3.Lerp(hintReturnScale, hintedScale,
+                Mathf.SmoothStep(0f, 1f, hintReturnElapsed / .4f));
+            if (hintReturnElapsed >= .4f) ResetEquipmentHint();
+            return;
+        }
+        hintElapsed += Time.unscaledDeltaTime;
+        hintedSlot.localScale = hintedScale * (1f + .025f * (1f - Mathf.Cos(hintElapsed * Mathf.PI)));
+    }
+
     public void BindDesignedCanvas(
         Canvas designedCanvas,
         GameObject designedWindow,
@@ -288,6 +343,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
+        ResetEquipmentHint();
         SetInventoryModal(false);
         hoveredDisplaySlot = -1;
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnInventorySceneLoaded;
@@ -346,6 +402,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void Update()
     {
         if (!ready) return;
+        UpdateEquipmentHint();
         SetInventoryModal(window != null && window.activeInHierarchy);
         if (Keyboard.current?.iKey.wasPressedThisFrame == true) ToggleInventory();
         if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && IsAnyWindowOpen())

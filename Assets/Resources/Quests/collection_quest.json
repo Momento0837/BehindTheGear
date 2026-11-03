@@ -1,4 +1,5 @@
 {
   "questName": "물건을 찾아서",
-  "objective": "퀘스트 물건을 찾아 가져오기"
+  "objective": "퀘스트 물건을 찾아 가져오기",
+  "showObjective": false
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Globalization;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -11,6 +10,7 @@ public sealed class QuestDefinition
 {
     public string questName;
     public string objective;
+    public bool showObjective;
 }
 
 /// <summary>Session quest state shared by the story flow and standalone quest givers.</summary>
@@ -18,6 +18,7 @@ public static class QuestTracker
 {
     public static string CurrentQuestName { get; private set; } = string.Empty;
     public static string CurrentObjective { get; private set; } = string.Empty;
+    public static bool ShowObjective { get; private set; }
     public static bool IsCompletionChange { get; private set; }
     public static event Action Changed;
     private static object owner;
@@ -28,6 +29,7 @@ public static class QuestTracker
         owner = null;
         CurrentQuestName = string.Empty;
         CurrentObjective = string.Empty;
+        ShowObjective = false;
         IsCompletionChange = false;
         Changed?.Invoke();
     }
@@ -51,13 +53,19 @@ public static class QuestTracker
             Debug.LogError("[Quest] Missing quest definition JSON.");
             return;
         }
-        var definition = JsonUtility.FromJson<QuestDefinition>(questData.text);
+        QuestDefinition definition;
+        try { definition = JsonUtility.FromJson<QuestDefinition>(questData.text); }
+        catch (ArgumentException error)
+        {
+            Debug.LogError("[Quest] Invalid JSON in " + questData.name + ": " + error.Message);
+            return;
+        }
         if (definition == null || string.IsNullOrWhiteSpace(definition.questName))
         {
             Debug.LogError("[Quest] Quest definition needs a questName: " + questData.name);
             return;
         }
-        SetQuest(source, definition.questName, definition.objective, completed);
+        SetQuest(source, definition.questName, definition.objective, completed, definition.showObjective);
     }
 
     public static void Accept(object source, string questName, string objective)
@@ -65,11 +73,12 @@ public static class QuestTracker
         SetQuest(source, questName, objective, false);
     }
 
-    private static void SetQuest(object source, string questName, string objective, bool completed)
+    private static void SetQuest(object source, string questName, string objective, bool completed, bool showObjective = false)
     {
         owner = source;
         CurrentQuestName = questName ?? string.Empty;
         CurrentObjective = objective ?? string.Empty;
+        ShowObjective = showObjective;
         IsCompletionChange = completed;
         Changed?.Invoke();
     }
@@ -80,6 +89,7 @@ public static class QuestTracker
         owner = null;
         CurrentQuestName = string.Empty;
         CurrentObjective = string.Empty;
+        ShowObjective = false;
         IsCompletionChange = true;
         Changed?.Invoke();
     }
@@ -124,6 +134,63 @@ public sealed class InGameQuestHUD : MonoBehaviour
     private float dimElapsed;
     private float dimAppearanceFadeDelay;
     private bool openingPresentation;
+    private bool hasAuthoredLayout;
+    private Vector2 authoredTextSize;
+    private Vector2 authoredTextPosition;
+    private float authoredFontSize;
+    private Vector2 lastCanvasSize;
+    private float GlyphDelay => Mathf.Min(characterDelay, 1.2f / Mathf.Max(1, glyphOrder.Count - 1));
+
+    private static string CurrentContent()
+    {
+        string title = FormatObjective(QuestTracker.CurrentQuestName);
+        string objective = FormatObjective(QuestTracker.CurrentObjective);
+        return QuestTracker.ShowObjective && objective.Length > 0 ? title + "\n" + objective : title;
+    }
+
+    private void FitText()
+    {
+        if (questText == null) return;
+        RectTransform rect = questText.rectTransform;
+        if (!hasAuthoredLayout)
+        {
+            authoredTextSize = rect.sizeDelta;
+            authoredTextPosition = rect.anchoredPosition;
+            authoredFontSize = questText.fontSize;
+            hasAuthoredLayout = true;
+        }
+        Canvas canvas = questText.GetComponentInParent<Canvas>();
+        Vector2 canvasSize = canvas != null ? ((RectTransform)canvas.rootCanvas.transform).rect.size : new Vector2(1920, 1080);
+        if (canvasSize.x <= 1f || canvasSize.y <= 1f) canvasSize = new Vector2(1920, 1080);
+        lastCanvasSize = canvasSize;
+        questText.enableAutoSizing = false;
+        questText.fontSize = authoredFontSize;
+        questText.textWrappingMode = TextWrappingModes.Normal;
+        questText.alignment = TextAlignmentOptions.TopRight;
+        if (questText.text.Length == 0)
+        {
+            rect.sizeDelta = authoredTextSize;
+            rect.anchoredPosition = authoredTextPosition;
+            return;
+        }
+        float widthLimit = Mathf.Min(Mathf.Max(1f, authoredTextSize.x), Mathf.Max(1f, canvasSize.x * .4f));
+        float preferredWidth = questText.GetPreferredValues(questText.text, Mathf.Infinity, Mathf.Infinity).x + 2f;
+        float width = Mathf.Clamp(preferredWidth, 1f, widthLimit);
+        float height = Mathf.Max(authoredTextSize.y, questText.GetPreferredValues(questText.text, width, Mathf.Infinity).y + 2f);
+        float heightLimit = Mathf.Max(authoredTextSize.y, canvasSize.y * .4f);
+        if (height > heightLimit)
+        {
+            height = heightLimit;
+            questText.enableAutoSizing = true;
+            questText.fontSizeMax = authoredFontSize;
+            questText.fontSizeMin = authoredFontSize * .5f;
+        }
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+        // Grow down and left, retaining the authored top/right edge and quest icon.
+        rect.anchoredPosition = authoredTextPosition + new Vector2(0f,
+            -(height - authoredTextSize.y) * (1f - rect.pivot.y));
+    }
 
     public bool CanPresentOpening => questText != null && questRoot != null;
 
@@ -165,7 +232,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
             image.color = Color.black;
             revealGameplay();
             // OnEnable can run when the cutscene restores the HUD; initialize after it.
-            requestedContent = FormatObjective(QuestTracker.CurrentQuestName);
+            requestedContent = CurrentContent();
             foreground = questRoot.GetComponent<Canvas>();
             addedCanvas = foreground == null;
             if (addedCanvas)
@@ -182,10 +249,14 @@ public sealed class InGameQuestHUD : MonoBehaviour
             SetContent(requestedContent);
             Canvas.ForceUpdateCanvases();
             questText.ForceMeshUpdate();
-            rect.localScale = homeScale * 2f;
-            // Center the rendered glyph bounds, independent of the authored alignment and pivot.
             Canvas rootCanvas = foreground.rootCanvas;
             RectTransform canvasRect = rootCanvas.GetComponent<RectTransform>();
+            Vector2 textSize = questText.textBounds.size;
+            float openingScale = Mathf.Min(2f,
+                canvasRect.rect.width * .8f / Mathf.Max(1f, textSize.x),
+                canvasRect.rect.height * .65f / Mathf.Max(1f, textSize.y));
+            rect.localScale = homeScale * openingScale;
+            // Center the rendered glyph bounds, independent of the authored alignment and pivot.
             Vector3 screenCenter = canvasRect.TransformPoint(canvasRect.rect.center);
             Vector3 glyphCenter = questText.transform.TransformPoint(questText.textBounds.center);
             rect.position += screenCenter - glyphCenter;
@@ -202,7 +273,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
                 time += Time.unscaledDeltaTime;
                 float progress = Mathf.SmoothStep(0, 1, Mathf.Clamp01(time / 1.5f));
                 rect.localPosition = Vector3.Lerp(centerPosition, homePosition, progress);
-                rect.localScale = Vector3.Lerp(homeScale * 2f, homeScale, progress);
+                rect.localScale = Vector3.Lerp(homeScale * openingScale, homeScale, progress);
                 image.color = new Color(0, 0, 0, 1f - progress);
                 yield return null;
             }
@@ -233,7 +304,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
     {
         QuestTracker.Changed += Refresh;
         if (questText != null) questText.OnPreRenderText += HandleTextRebuilt;
-        requestedContent = FormatObjective(QuestTracker.CurrentQuestName);
+        requestedContent = CurrentContent();
         ShowWithoutAnimation();
     }
 
@@ -261,7 +332,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
 
     public void Refresh()
     {
-        requestedContent = FormatObjective(QuestTracker.CurrentQuestName);
+        requestedContent = CurrentContent();
         // Prefab inspection and edit-mode validation should still show the exact stored text.
         if (!Application.isPlaying || !isActiveAndEnabled || questText == null || !QuestTracker.IsCompletionChange)
         {
@@ -285,8 +356,8 @@ public sealed class InGameQuestHUD : MonoBehaviour
         if (questText != null)
         {
             questText.richText = false;
-            questText.textWrappingMode = TextWrappingModes.NoWrap;
             questText.text = content;
+            FitText();
         }
         if (questRoot != null) questRoot.SetActive(content.Length > 0);
     }
@@ -396,7 +467,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
         float fadeOut = 0f;
         if (transition == Transition.Appearing || requestedContent.Length == 0)
         {
-            float duration = Mathf.Max(0, glyphOrder.Count - 1) * characterDelay +
+            float duration = Mathf.Max(0, glyphOrder.Count - 1) * GlyphDelay +
                 (transition == Transition.Appearing ? appearDuration : disappearDuration);
             float delay = transition == Transition.Appearing ? dimAppearanceFadeDelay : backgroundDimFadeInDuration;
             float progress = Mathf.Clamp01((elapsed - delay) / Mathf.Max(.01f, duration - delay));
@@ -486,7 +557,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
             int vertex = character.vertexIndex;
             Vector3 center = (vertices[vertex] + vertices[vertex + 2]) * .5f;
             Vector2 glyphSize = vertices[vertex + 2] - vertices[vertex];
-            float localTime = elapsed - rank * characterDelay;
+            float localTime = elapsed - rank * GlyphDelay;
             float fadeStart = appearDuration * .55f;
             float intensity = Mathf.SmoothStep(0f, 1f, localTime / .12f) *
                 (1f - Mathf.SmoothStep(0f, 1f, (localTime - fadeStart) / Mathf.Max(.01f, glowDuration - fadeStart)));
@@ -512,6 +583,8 @@ public sealed class InGameQuestHUD : MonoBehaviour
         // Use final visual positions, not the text box pivot or the string's reveal length.
         glyphOrder.Sort((left, right) =>
         {
+            int line = info.characterInfo[left].lineNumber.CompareTo(info.characterInfo[right].lineNumber);
+            if (line != 0) return line;
             int order = info.characterInfo[left].bottomLeft.x.CompareTo(info.characterInfo[right].bottomLeft.x);
             return order != 0 ? order : left.CompareTo(right);
         });
@@ -526,6 +599,15 @@ public sealed class InGameQuestHUD : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!openingPresentation && questText != null)
+        {
+            Canvas canvas = questText.GetComponentInParent<Canvas>();
+            if (canvas != null && ((RectTransform)canvas.rootCanvas.transform).rect.size != lastCanvasSize)
+            {
+                FitText();
+                questText.ForceMeshUpdate();
+            }
+        }
         if (!openingPresentation) Tick(Time.unscaledDeltaTime);
     }
 
@@ -535,7 +617,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
         elapsed += Mathf.Max(0f, deltaTime);
         dimElapsed += Mathf.Max(0f, deltaTime);
         float tail = transition == Transition.Disappearing ? disappearDuration : Mathf.Max(appearDuration, glowDuration);
-        float total = Mathf.Max(0, glyphOrder.Count - 1) * characterDelay + tail;
+        float total = Mathf.Max(0, glyphOrder.Count - 1) * GlyphDelay + tail;
         if (elapsed >= total)
         {
             if (transition == Transition.Disappearing) BeginAppearance();
@@ -567,7 +649,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
             int material = character.materialReferenceIndex;
             int vertex = character.vertexIndex;
             if (material >= source.Length || vertex + 3 >= source[material].vertices.Length) continue;
-            float localTime = elapsed - glyphRanks[i] * characterDelay;
+            float localTime = elapsed - glyphRanks[i] * GlyphDelay;
             float progress = Mathf.Clamp01(localTime / (transition == Transition.Disappearing ? disappearDuration : appearDuration));
             float eased = Mathf.SmoothStep(0f, 1f, progress);
             float scale;
@@ -597,8 +679,6 @@ public sealed class InGameQuestHUD : MonoBehaviour
     public static string FormatObjective(string content)
     {
         if (string.IsNullOrWhiteSpace(content)) return string.Empty;
-        content = content.Replace('\r', ' ').Replace('\n', ' ').Trim();
-        int[] characters = StringInfo.ParseCombiningCharacters(content);
-        return characters.Length > 16 ? content.Substring(0, characters[16]) + "..." : content;
+        return content.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
     }
 }

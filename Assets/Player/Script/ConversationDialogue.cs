@@ -25,6 +25,9 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Header("Existing UI references")]
     [SerializeField] private CanvasGroup dialogueGroup;
     [SerializeField] private Image portraitImage;
+    private Sprite ethanPortrait;
+    private Image animatedPortrait;
+    private SpriteRenderer portraitSource;
     [Tooltip("Separate UI text for the speaker name.")]
     [SerializeField] private TMP_Text speakerText;
     [SerializeField] private TMP_Text bodyText;
@@ -88,6 +91,52 @@ public sealed class ConversationDialogue : MonoBehaviour
         }
         ApplyFont(bodyText, font != null ? font : originalBodyFont, font != null ? font.material : originalBodyMaterial);
         ApplyFont(speakerText, font != null ? font : originalSpeakerFont, font != null ? font.material : originalSpeakerMaterial);
+        SetPortrait(name, null);
+    }
+
+    private void SetPortrait(string speaker, Sprite overrideSprite)
+    {
+        if (portraitImage == null) return;
+        if (ethanPortrait == null)
+        {
+            var portraits = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
+            if (portraits != null) ethanPortrait = portraits.ethan;
+        }
+        if (animatedPortrait == null)
+        {
+            if (portraitImage.GetComponent<RectMask2D>() == null) portraitImage.gameObject.AddComponent<RectMask2D>();
+            var child = new GameObject("Animated NPC Portrait", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            child.transform.SetParent(portraitImage.transform, false);
+            animatedPortrait = child.GetComponent<Image>();
+            animatedPortrait.raycastTarget = false;
+            var rect = animatedPortrait.rectTransform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, 1f);
+            rect.anchoredPosition = Vector2.zero;
+            portraitSource = GetComponent<SpriteRenderer>();
+        }
+        bool mystery = speaker.Trim() == "???" && overrideSprite == null;
+        animatedPortrait.gameObject.SetActive(mystery);
+        portraitImage.sprite = overrideSprite != null ? overrideSprite
+            : string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) ? ethanPortrait : null;
+        portraitImage.preserveAspect = true;
+        portraitImage.enabled = portraitImage.sprite != null;
+        UpdatePortraitFrame();
+    }
+
+    private void LateUpdate() => UpdatePortraitFrame();
+
+    private void UpdatePortraitFrame()
+    {
+        if (animatedPortrait == null || !animatedPortrait.gameObject.activeInHierarchy || portraitSource == null) return;
+        Sprite sprite = portraitSource.sprite;
+        animatedPortrait.sprite = sprite;
+        animatedPortrait.enabled = sprite != null;
+        if (sprite == null) return;
+        // The existing placeholder clips a top-aligned, enlarged upper-body view.
+        float frameHeight = portraitImage.rectTransform.rect.height;
+        float height = frameHeight * 1.32f;
+        animatedPortrait.rectTransform.anchoredPosition = new Vector2(0f, frameHeight * .08f);
+        animatedPortrait.rectTransform.sizeDelta = new Vector2(height * sprite.rect.width / sprite.rect.height, height);
     }
 
     private static void ApplyFont(TMP_Text text, TMP_FontAsset font, Material material)
@@ -395,12 +444,7 @@ public sealed class ConversationDialogue : MonoBehaviour
             SetSpeaker(line.speaker);
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
-            if (portraitImage != null)
-            {
-                portraitImage.sprite = line.portrait;
-                // A sprite-less Image renders a solid white rectangle over the scene.
-                portraitImage.enabled = line.portrait != null;
-            }
+            SetPortrait(line.speaker ?? string.Empty, line.portrait);
             if (bodyText != null) bodyText.text = string.Empty;
             if (continueIndicator != null) continueIndicator.SetActive(false);
 
@@ -442,6 +486,15 @@ public sealed class ConversationDialogue : MonoBehaviour
             characterTimer += Time.unscaledDeltaTime;
             while (characterTimer >= characterInterval && character < fullText.Length)
             {
+                int spaceEnd = character;
+                while (spaceEnd < fullText.Length && fullText[spaceEnd] == ' ') spaceEnd++;
+                if (spaceEnd - character >= 5)
+                {
+                    // Preserve authored spacing, but spend no typing time or sound on it.
+                    if (bodyText != null) bodyText.text += fullText.Substring(character, spaceEnd - character);
+                    character = spaceEnd;
+                    continue;
+                }
                 char revealedCharacter = fullText[character];
                 if (bodyText != null) bodyText.text += revealedCharacter;
                 CharacterRevealed?.Invoke(revealedCharacter);

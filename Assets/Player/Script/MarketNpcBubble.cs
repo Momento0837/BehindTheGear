@@ -24,6 +24,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
     private float headOffset;
     private bool dismissed;
     private int revealedCount;
+    private float[] characterRevealTimes;
     public bool HasPresented { get; private set; }
 
     public void Configure(ConversationDialogue dialogue, Transform playerTransform, TextAsset offer)
@@ -31,6 +32,19 @@ public sealed class MarketNpcBubble : MonoBehaviour
         conversation = dialogue;
         player = playerTransform;
         opening = ConversationDialogue.GetOpeningText(offer);
+        characterRevealTimes = new float[opening.Length];
+        int timedCharacters = 0;
+        for (int i = 0; i < opening.Length;)
+        {
+            int end = i;
+            while (end < opening.Length && opening[end] == ' ') end++;
+            if (end - i >= 5)
+            {
+                while (i < end) characterRevealTimes[i++] = timedCharacters * CharacterDelay;
+                continue;
+            }
+            characterRevealTimes[i++] = timedCharacters++ * CharacterDelay;
+        }
         previousOffset = player.position.x - transform.position.x;
         image = dialogue.TalkingImage;
         if (gameObject.scene.name != "Market" || image == null || string.IsNullOrEmpty(opening))
@@ -120,7 +134,8 @@ public sealed class MarketNpcBubble : MonoBehaviour
             : Mathf.Lerp(5f, 0f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((elapsed - .2f) / .28f)));
         bubble.localRotation = Quaternion.Euler(0f, 0f, rotation);
 
-        int count = Mathf.Min(opening.Length, Mathf.FloorToInt(elapsed / CharacterDelay) + 1);
+        int count = revealedCount;
+        while (count < opening.Length && characterRevealTimes[count] <= elapsed) count++;
         if (revealedCount != count)
         {
             revealedCount = count;
@@ -171,7 +186,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
         {
             var character = info.characterInfo[i];
             if (!character.isVisible) continue;
-            float progress = Mathf.Clamp01((elapsed - i * CharacterDelay) / GlyphDuration);
+            float progress = Mathf.Clamp01((elapsed - characterRevealTimes[character.index]) / GlyphDuration);
             float rise = -14f * (1f - Mathf.SmoothStep(0f, 1f, progress));
             var mesh = info.meshInfo[character.materialReferenceIndex];
             for (int corner = 0; corner < 4; corner++)

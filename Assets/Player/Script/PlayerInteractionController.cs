@@ -34,8 +34,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
         currentTarget = FindClosestInteractable();
         if (interactionPrompt != null)
         {
-            interactionPrompt.SetVisible(currentTarget != null && currentTarget.GetComponent<ScenePortal2D>() == null);
-            if (currentTarget != null) interactionPrompt.SetTarget(currentTarget);
+            interactionPrompt.SetVisible(false);
         }
     }
 

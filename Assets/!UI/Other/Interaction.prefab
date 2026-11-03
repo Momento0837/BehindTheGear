@@ -102,6 +102,7 @@ GameObject:
   m_Component:
   - component: {fileID: 463015297276661620}
   - component: {fileID: 4986887307095556794}
+  - component: {fileID: 4986887307095556795}
   m_Layer: 0
   m_Name: Spot Light 2D
   m_TagString: Untagged
@@ -176,3 +177,16 @@ MonoBehaviour:
   - {x: 0.5, y: -0.5, z: 0}
   - {x: 0.5, y: 0.5, z: 0}
   - {x: -0.5, y: 0.5, z: 0}
+
+--- !u!114 &4986887307095556795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5901809903245602582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdbcdef18cc648859e7f5e3142c992a6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InteractionLightPulse

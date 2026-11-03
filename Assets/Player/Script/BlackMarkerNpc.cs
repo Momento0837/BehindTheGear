@@ -25,6 +25,14 @@ public sealed class BlackMarkerNpc : MonoBehaviour
 
     private void OnEnable()
     {
+        var player = FindFirstObjectByType<PlayerSpriteFacing>();
+        var playerSprite = player != null ? player.GetComponent<SpriteRenderer>() : null;
+        var npcSprite = GetComponent<SpriteRenderer>();
+        if (playerSprite != null && npcSprite != null)
+        {
+            npcSprite.sortingLayerID = playerSprite.sortingLayerID;
+            npcSprite.sortingOrder = playerSprite.sortingOrder - 1;
+        }
         if (conversation == null) conversation = GetComponent<ConversationDialogue>();
         conversation.ChoiceSelected += HandleChoice;
     }

@@ -35,7 +35,6 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         if (tutorialHealth != null) tutorialHealth.Damaged -= UnlockTutorialMonsters;
     }
-    [SerializeField] private TextAsset marketQuestDefinition;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Register()
@@ -132,7 +131,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         PlacePlayer(new Vector3(-4.44f, -.36f, 0));
         ShowGuide("forest_combat");
-        portal.transform.position = new Vector3(-21.77f, -2.4f, 0);
+        portal.GetComponent<ScenePortal2D>().SetArea(-26.5f, -20.5f);
         portal.SetActive(false);
         // Preserve the supplied monster; add two instances to match the three map markers.
         if (monsters.Length == 1)
@@ -184,7 +183,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
-        portal.transform.position = new Vector3(-1f, -2.4f, 0);
+        portal.GetComponent<ScenePortal2D>().SetArea(-26.5f, -20.5f);
         portal.SetActive(false);
         dialogue.transform.position = new Vector3(65f, -2.5f, 0);
         inventory = player.GetComponent<PlayerInventory>();
@@ -218,9 +217,10 @@ public sealed class StorySceneFlow : MonoBehaviour
             collected = true;
             interactable.enabled = false;
             trigger.enabled = false;
-            StartCoroutine(FlashSearchLight(searchPoint));
+            searchPoint.gameObject.SetActive(false);
             LocationHUD.ShowAcquired(tutorialGear, 1);
             AdvanceGuide("equipment_tutorial");
+            player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
         };
         // Reveal the objective only after the incoming black screen has cleared.
         while (SceneFadeTransition.IsRunning) yield return null;
@@ -228,32 +228,10 @@ public sealed class StorySceneFlow : MonoBehaviour
         while (!collected) yield return null;
         while (inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
             yield return null;
+        player.GetComponent<InventoryUI>()?.EndEquipmentHint();
         ready = true;
         portal.SetActive(true);
         AdvanceGuide("garbage_exit");
-    }
-
-    private IEnumerator FlashSearchLight(Transform searchPoint)
-    {
-        var light = searchPoint.GetComponentInChildren<UnityEngine.Rendering.Universal.Light2D>(true);
-        if (light == null) yield break;
-        float original = light.intensity;
-        try
-        {
-            for (float elapsed = 0f; elapsed < .15f; elapsed += Time.deltaTime)
-            {
-                light.intensity = Mathf.SmoothStep(original, 5f, elapsed / .15f);
-                yield return null;
-            }
-            light.intensity = 5f;
-            yield return null;
-            for (float elapsed = 0f; elapsed < .5f; elapsed += Time.deltaTime)
-            {
-                light.intensity = Mathf.SmoothStep(5f, original, elapsed / .5f);
-                yield return null;
-            }
-        }
-        finally { if (light != null) light.intensity = original; }
     }
 
     private void UsePortal(GameObject interactor)
@@ -290,12 +268,11 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         marketMap = true;
         PlacePlayer(new Vector3(49f, -2.5f, 0));
-        var guide = JsonUtility.FromJson<QuestDefinition>(Resources.Load<TextAsset>("Quests/market_talk").text);
-        QuestTracker.Accept(this, "???", guide.objective);
+        ShowGuide("market_talk");
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
         marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
-        portal.transform.position = new Vector3(94f, -2.4f, 0);
+        portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
         var interaction = dialogue.gameObject.AddComponent<StoryInteraction2D>();
@@ -319,13 +296,13 @@ public sealed class StorySceneFlow : MonoBehaviour
         dialogue.PlayWithChoices(offer, "수락", "거절", choice =>
         {
             accepted = choice;
-            if (choice) QuestTracker.Advance(this, marketQuestDefinition != null ? marketQuestDefinition : Resources.Load<TextAsset>("Quests/market_quest"));
+            if (choice) AdvanceGuide("market_quest");
         }, startLine);
         while (!accepted.HasValue) yield return null;
         yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
         if (!accepted.Value)
         {
-            QuestTracker.Accept(this, "목숨이 소중하지도 않아?", "NPC와 다시 대화하세요.");
+            ShowGuide("market_retry");
             busy = false;
             yield break;
         }

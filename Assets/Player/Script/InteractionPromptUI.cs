@@ -6,6 +6,10 @@ public sealed class InteractionPromptUI : MonoBehaviour
     [SerializeField] private TMP_Text promptText;
     [SerializeField, Min(0f)] private float heightOffset = 0.35f;
 
+    // Scene-local prompts can outlive their duplicate player during scene travel.
+    // Hide independently of PlayerInteractionController, including on first load.
+    private void OnEnable() => SetVisible(false);
+
     public void Configure(TMP_Text text)
     {
         promptText = text;

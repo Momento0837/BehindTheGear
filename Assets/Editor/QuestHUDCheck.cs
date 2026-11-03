@@ -30,7 +30,7 @@ public static class QuestHUDCheck
             Require(!quest.activeSelf && string.IsNullOrEmpty(text.text), "Hidden and empty in prefab");
             Call(hud, "OnEnable");
             Require(!quest.activeSelf, "Hidden before accepting / when rejecting");
-            foreach (string guide in new[] { "forest_combat", "forest_exit", "equipment_tutorial", "garbage_exit", "market_talk" })
+            foreach (string guide in new[] { "forest_combat", "forest_exit", "garbage_search", "equipment_tutorial", "garbage_exit", "market_talk", "market_retry" })
             {
                 var guideData = Resources.Load<TextAsset>("Quests/" + guide);
                 Require(guideData != null, "Story guide data exists: " + guide);
@@ -49,20 +49,31 @@ public static class QuestHUDCheck
             QuestTracker.Accept(owner, sixteen, "목표 내용");
             Require(text.text == sixteen, "Exactly 16 characters unchanged");
             QuestTracker.Accept(owner, sixteen + "더 긴 내용", "목표 내용");
-            Require(text.text == sixteen + "...", "17+ characters use first 16 plus three periods");
+            Require(text.text == sixteen + "더 긴 내용", "Long titles remain complete");
             Require(QuestTracker.CurrentQuestName == sixteen + "더 긴 내용", "Full stored name is not truncated");
             string emoji = string.Concat(System.Linq.Enumerable.Repeat("😀", 16));
-            Require(InGameQuestHUD.FormatObjective(emoji + "끝") == emoji + "...", "Unicode characters remain intact");
+            Require(InGameQuestHUD.FormatObjective(emoji + "끝") == emoji + "끝", "Unicode characters remain intact");
+            var position = text.rectTransform.anchoredPosition;
+            float originalTop = position.y + text.rectTransform.rect.height * (1f - text.rectTransform.pivot.y);
+            string longTitle = string.Concat(System.Linq.Enumerable.Repeat("긴 퀘스트 제목을 줄바꿈하여 모두 표시합니다. ", 5));
+            QuestTracker.Accept(owner, longTitle, "목표 내용");
+            text.ForceMeshUpdate(true);
+            Require(text.text == longTitle.Trim() && text.textInfo.lineCount > 1, "Long Korean title wraps without truncation");
+            Require(Mathf.Abs(text.rectTransform.anchoredPosition.x - position.x) < .01f, "Right edge retained");
+            Require(Mathf.Abs(text.rectTransform.anchoredPosition.y + text.rectTransform.rect.height * (1f - text.rectTransform.pivot.y) - originalTop) < .01f, "Top edge retained while height grows");
+            QuestTracker.Accept(owner, new TextAsset("{\"questName\":\"제목\",\"objective\":\"첫째 줄\\n둘째 줄\",\"showObjective\":true}"));
+            Require(text.text == "제목\n첫째 줄\n둘째 줄", "JSON can opt into multiline description");
+            Require(InGameQuestHUD.FormatObjective("첫째\r\n둘째") == "첫째\n둘째", "Explicit line breaks preserved");
             QuestTracker.Complete(new object());
             Require(quest.activeSelf, "Other quests cannot clear current objective");
             Call(hud, "OnDisable");
             Call(hud, "OnEnable");
-            Require(text.text == sixteen + "...", "UI reopening restores current quest");
+            Require(text.text == "제목\n첫째 줄\n둘째 줄", "UI reopening restores current quest and description");
             QuestTracker.Complete(owner);
             Require(!quest.activeSelf && text.text == string.Empty, "Completion hides and clears");
             Require(QuestTracker.CurrentQuestName == string.Empty && QuestTracker.CurrentObjective == string.Empty, "Completion clears both name and objective");
             Require(text.font == font && text.fontSharedMaterial == material && text.rectTransform.sizeDelta == size, "Font, material and layout preserved");
-            File.WriteAllText(result, "PASS Unity " + Application.unityVersion + "\nAutomatic forest combat/exit, equipment tutorial, Garbage exit, Market conversation guides; stored JSON name and separate objective, NPC acceptance, full name retained, 16/17 character boundary, Unicode, reopening, completion, font/material/layout. No scene or prefab saved.\n");
+            File.WriteAllText(result, "PASS Unity " + Application.unityVersion + "\nAll story JSON definitions, full titles, Korean wrapping, fixed top/right edges, optional multiline descriptions, Unicode, reopening, completion, original fonts/material and empty layout restoration. No scene or prefab saved.\n");
             Debug.Log("QUEST_HUD_CHECK_PASS");
         }
         catch (Exception exception)

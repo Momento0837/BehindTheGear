@@ -41,6 +41,43 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float normalFieldOfView;
     private float lensVelocity;
     private Transform deathTarget;
+    private readonly List<Vector2> focusFloorPlanes = new();
+
+    private void CaptureFocusFloor()
+    {
+        focusFloorPlanes.Clear();
+        RecordFocusFloor(0f);
+        foreach (Bounds art in mapArtwork) RecordFocusFloor(art.center.z);
+    }
+
+    private void RecordFocusFloor(float z)
+    {
+        var plane = new Plane(Vector3.forward, new Vector3(0f, 0f, z));
+        float bottom = float.PositiveInfinity;
+        for (int i = 0; i < 2; i++)
+        {
+            Ray ray = attachedCamera.ViewportPointToRay(new Vector3(i, 0f, 0f));
+            if (plane.Raycast(ray, out float distance)) bottom = Mathf.Min(bottom, ray.GetPoint(distance).y);
+        }
+        if (!float.IsInfinity(bottom)) focusFloorPlanes.Add(new Vector2(z, bottom));
+    }
+
+    private float ClampFocusHeight(float y)
+    {
+        if (!hasDialogueLens || attachedCamera == null) return y;
+        float renderedY = attachedCamera.cameraToWorldMatrix.MultiplyPoint(Vector3.zero).y;
+        foreach (Vector2 floor in focusFloorPlanes)
+        {
+            var plane = new Plane(Vector3.forward, new Vector3(0f, 0f, floor.x));
+            for (int i = 0; i < 2; i++)
+            {
+                Ray ray = attachedCamera.ViewportPointToRay(new Vector3(i, 0f, 0f));
+                if (plane.Raycast(ray, out float distance))
+                    y = Mathf.Max(y, floor.y - (ray.GetPoint(distance).y - renderedY));
+            }
+        }
+        return y;
+    }
 
     public void BeginDeathFocus(Transform subject)
     {
@@ -55,6 +92,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         {
             normalOrthographicSize = attachedCamera.orthographicSize;
             normalFieldOfView = attachedCamera.fieldOfView;
+            CaptureFocusFloor();
             hasDialogueLens = true;
         }
         lensVelocity = 0f;
@@ -67,6 +105,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         {
             normalOrthographicSize = attachedCamera.orthographicSize;
             normalFieldOfView = attachedCamera.fieldOfView;
+            CaptureFocusFloor();
             hasDialogueLens = true;
             lensVelocity = 0f;
         }
@@ -108,9 +147,10 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         float desiredLens = attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView;
         if (deathTarget != null)
         {
-            desiredPosition = SubjectBounds(deathTarget).center;
+            desiredPosition.x = SubjectBounds(deathTarget).center.x;
+            desiredPosition.y = fallingCameraY;
             float zoom = Mathf.SmoothDamp(attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView,
-                desiredLens * .8f, ref lensVelocity, 1f, Mathf.Infinity, Time.unscaledDeltaTime);
+                desiredLens * .9f, ref lensVelocity, 1f, Mathf.Infinity, Time.unscaledDeltaTime);
             if (attachedCamera.orthographic) attachedCamera.orthographicSize = zoom;
             else attachedCamera.fieldOfView = zoom;
             return;
@@ -130,6 +170,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             desiredLens = attachedCamera.orthographic ? halfHeight
                 : Mathf.Clamp(2f * Mathf.Atan(halfHeight / distance) * Mathf.Rad2Deg, 1f, 179f);
             desiredPosition.x = subjects.center.x;
+            desiredPosition.y -= .35f;
         }
         float currentLens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
         float lens = Mathf.SmoothDamp(currentLens, desiredLens, ref lensVelocity,
@@ -224,6 +265,9 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         float clampedX = ClampHorizontalPosition(smoothedPosition.x);
         if (!Mathf.Approximately(clampedX, smoothedPosition.x)) followVelocity.x = 0f;
         smoothedPosition.x = clampedX;
+        float clampedY = ClampFocusHeight(smoothedPosition.y);
+        if (!Mathf.Approximately(clampedY, smoothedPosition.y)) followVelocity.y = 0f;
+        smoothedPosition.y = clampedY;
         transform.position = smoothedPosition;
     }
 
@@ -310,10 +354,13 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         if (camera != attachedCamera || !clampToHorizontalBounds) return;
         float renderedX = camera.cameraToWorldMatrix.MultiplyPoint(Vector3.zero).x;
         float deltaX = ClampHorizontalPosition(renderedX) - renderedX;
-        if (Mathf.Abs(deltaX) < .00001f) return;
+        float renderedY = camera.cameraToWorldMatrix.MultiplyPoint(Vector3.zero).y;
+        float deltaY = ClampFocusHeight(renderedY) - renderedY;
+        if (Mathf.Abs(deltaX) < .00001f && Mathf.Abs(deltaY) < .00001f) return;
         Matrix4x4 view = camera.worldToCameraMatrix;
-        transform.position += Vector3.right * deltaX;
-        camera.worldToCameraMatrix = view * Matrix4x4.Translate(Vector3.left * deltaX);
+        Vector3 correction = new Vector3(deltaX, deltaY, 0f);
+        transform.position += correction;
+        camera.worldToCameraMatrix = view * Matrix4x4.Translate(-correction);
         followVelocity.x = 0f;
     }
 

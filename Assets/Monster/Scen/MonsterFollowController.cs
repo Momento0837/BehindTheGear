@@ -9,7 +9,7 @@ public sealed class MonsterFollowController : MonoBehaviour
     [SerializeField, Min(1)] private int maxHealth = 10;
     [SerializeField, Min(0f)] private float moveSpeed = 3f;
     [SerializeField, Min(1)] private int attackPower = 10;
-    [SerializeField, Min(.01f)] private float attackDelay = .5f;
+    [SerializeField, Min(.01f)] private float attackRecovery = .7f;
 
     [Header("Ranges")]
     [SerializeField] private BoxCollider2D recognitionRange;
@@ -47,7 +47,10 @@ public sealed class MonsterFollowController : MonoBehaviour
     [SerializeField, Min(0f)] private float hitStopDuration = .05f;
     [SerializeField, Min(0f)] private float knockbackSpeed = 3f;
     [SerializeField, Min(0f)] private float knockbackDuration = .12f;
-    [SerializeField] private Color hitFlashColor = new Color(1f, .35f, .35f, 1f);
+    private Material originalMaterial;
+    private Material flashMaterial;
+    private SpriteRenderer flashOverlay;
+    private bool IsAttacking => animationState == "Attack" && Time.time < actionUntil;
     private float hitStopUntil;
     private float knockbackUntil;
     private float knockbackDirection;
@@ -79,6 +82,20 @@ public sealed class MonsterFollowController : MonoBehaviour
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         normalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        if (spriteRenderer != null)
+        {
+            originalMaterial = spriteRenderer.sharedMaterial;
+            Shader shader = Resources.Load<Shader>("Effects/MonsterHitFlash");
+            if (shader != null)
+            {
+                flashMaterial = new Material(shader);
+                var overlay = new GameObject("White Hit Flash");
+                overlay.transform.SetParent(transform, false);
+                flashOverlay = overlay.AddComponent<SpriteRenderer>();
+                flashOverlay.sharedMaterial = flashMaterial;
+                flashOverlay.enabled = false;
+            }
+        }
         normalAnimatorSpeed = animator != null ? animator.speed : 1f;
         patrolHomeX = patrolStartX = body.position.x;
         patrolDirection = Random.value < .5f ? -1 : 1;
@@ -100,6 +117,8 @@ public sealed class MonsterFollowController : MonoBehaviour
         hitFeedback = null;
         if (animator != null) animator.speed = normalAnimatorSpeed;
         if (spriteRenderer != null && CurrentHealth > 0) spriteRenderer.color = normalColor;
+        if (spriteRenderer != null) spriteRenderer.sharedMaterial = originalMaterial;
+        if (flashOverlay != null) flashOverlay.enabled = false;
         Stop();
         if (CurrentHealth > 0) PlayAnimation("Idle");
     }
@@ -220,7 +239,7 @@ public sealed class MonsterFollowController : MonoBehaviour
         PlayAnimation("Attack", true);
         attackPending = true;
         actionUntil = Time.time + ClipLength("Attack");
-        nextAttackTime = Time.time + attackDelay;
+        nextAttackTime = actionUntil + attackRecovery;
     }
 
     // Called by Attack.anim on the first impact sprite, not when the wind-up begins.
@@ -242,7 +261,7 @@ public sealed class MonsterFollowController : MonoBehaviour
         CurrentHealth = tutorialProtected ? 999 : Mathf.Max(0, CurrentHealth - damage);
         Debug.Log($"[Monster] {name} HP: {CurrentHealth} / {maxHealth}", this);
         if (CurrentHealth == 0) Die();
-        else
+        else if (!IsAttacking)
         {
             Stop();
             PlayAnimation("Damaged", true);
@@ -253,8 +272,9 @@ public sealed class MonsterFollowController : MonoBehaviour
     public void TakeMeleeDamage(int damage, float direction)
     {
         if (damage <= 0 || CurrentHealth <= 0) return;
-        hitStopUntil = Time.unscaledTime + hitStopDuration;
-        knockbackUntil = Time.time + hitStopDuration + knockbackDuration;
+        bool attacking = IsAttacking;
+        hitStopUntil = attacking ? 0f : Time.unscaledTime + hitStopDuration;
+        knockbackUntil = attacking ? 0f : Time.time + hitStopDuration + knockbackDuration;
         knockbackDirection = Mathf.Sign(direction);
         patrolStartX = body.position.x;
         BeginPatrolWait();
@@ -265,18 +285,44 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private IEnumerator HitFeedback()
     {
-        if (spriteRenderer != null)
+        if (flashOverlay != null && flashMaterial != null)
         {
-            Color color = hitFlashColor;
-            color.a = normalColor.a;
-            spriteRenderer.color = color;
+            SyncFlashOverlay();
+            flashOverlay.enabled = true;
+            flashMaterial.SetFloat("_FlashAmount", 1f);
         }
-        if (animator != null) animator.speed = 0f;
-        yield return new WaitForSecondsRealtime(hitStopDuration);
+        if (!IsAttacking)
+        {
+            if (animator != null) animator.speed = 0f;
+            yield return new WaitForSecondsRealtime(hitStopDuration);
+        }
         if (animator != null) animator.speed = normalAnimatorSpeed;
-        yield return new WaitForSeconds(.08f);
-        if (spriteRenderer != null) spriteRenderer.color = normalColor;
+        for (float elapsed = 0f; elapsed < .25f; elapsed += Time.deltaTime)
+        {
+            if (flashMaterial != null) flashMaterial.SetFloat("_FlashAmount", 1f - elapsed / .25f);
+            yield return null;
+        }
+        if (spriteRenderer != null) spriteRenderer.sharedMaterial = originalMaterial;
+        if (flashOverlay != null) flashOverlay.enabled = false;
         hitFeedback = null;
+    }
+
+    private void LateUpdate() => SyncFlashOverlay();
+
+    private void SyncFlashOverlay()
+    {
+        if (flashOverlay == null || spriteRenderer == null) return;
+        flashOverlay.sprite = spriteRenderer.sprite;
+        flashOverlay.flipX = spriteRenderer.flipX;
+        flashOverlay.flipY = spriteRenderer.flipY;
+        flashOverlay.sortingLayerID = spriteRenderer.sortingLayerID;
+        flashOverlay.sortingOrder = spriteRenderer.sortingOrder + 1;
+        flashOverlay.color = new Color(1f, 1f, 1f, spriteRenderer.color.a);
+    }
+
+    private void OnDestroy()
+    {
+        if (flashMaterial != null) Destroy(flashMaterial);
     }
 
     private void Die()
