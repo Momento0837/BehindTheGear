@@ -1,0 +1,1 @@
+PASS explicit preview generation/refresh has one environment; all eight sample panels open; hiding details keeps geometry; no player inventory or HP components.

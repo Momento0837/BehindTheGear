@@ -23,7 +23,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
 
         instance = this;
         body = GetComponent<Rigidbody2D>();
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(transform.root.gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 

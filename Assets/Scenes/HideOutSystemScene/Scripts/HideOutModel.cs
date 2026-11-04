@@ -44,9 +44,24 @@ namespace BehindTheGear.HideOut
         public WeaponDummyBonus() { }
         public WeaponDummyBonus(string weaponId, int bonus) { this.weaponId = weaponId; this.bonus = bonus; }
     }
+    [Serializable] public sealed class QuestProgress
+    {
+        public string questId;
+        public int stage; // 1 accepted, 2 ready to report, 3 completed
+        public int[] amounts;
+        public bool rewardClaimed;
+    }
+    [Serializable] public sealed class FacilityProgress
+    {
+        public string facilityId;
+        public bool unlocked;
+        public int level;
+    }
     [Serializable] public sealed class HideOutSave
     {
-        public int version = 1;
+        public int version = 2;
+        public List<FacilityProgress> facilities = new();
+        public List<QuestProgress> quests = new();
         public int[] levels = new int[8];
         public List<ItemStack> storage = new();
         public List<ItemStack> inventory = new();
@@ -57,8 +72,6 @@ namespace BehindTheGear.HideOut
         public int baseInventorySlots = 15;
         public bool selenaRecruited;
         public double clinicReadyAt, potionsReadyAt, activeClock;
-        public string returnScene = "";
-        public float returnX, returnY, returnZ;
         public List<ExtensionState> extensions = new();
         // PlayerInventory currently identifies equipment by definition ItemId, not by a per-copy instance ID.
         // Keeping this record separate from the facility level prevents the bonus moving to another weapon type.
@@ -70,7 +83,7 @@ namespace BehindTheGear.HideOut
         string Name(string id);
     }
 
-    // Pure transaction logic: callers mutate a candidate snapshot and publish it only after saving.
+    // Pure transaction logic: callers validate a candidate before publishing it in memory.
     public static class HideOutModel
     {
         public static void Normalize(HideOutSave s, HideOutRules rules)

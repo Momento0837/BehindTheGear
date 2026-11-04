@@ -1,0 +1,13 @@
+PASS fresh play session starts without old in-memory quests
+PASS disk restore across editor play-session restart preserves facilities, stats and equipment
+PASS reward claim survives full play-session restart
+PASS fresh Continue has no field drop cache
+PASS original player-v1 format restores equipment and facilities
+PASS next bed save migrates legacy data to versioned slot
+PASS legacy migration preserves original file until explicit deletion
+PASS authored Forest collection NPC is available in expedition
+PASS NPC choice and acceptance dialogue accept collection quest
+PASS actual quest pickup records accepted inventory amount
+PASS collection NPC report rewards once
+PASS existing Market NPC choice and dialogue accept kill quest
+Unity 6000.3.23f1: 12 checks, PASSED

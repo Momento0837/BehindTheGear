@@ -8,6 +8,9 @@ using UnityEngine.UI;
 [Serializable]
 public sealed class QuestDefinition
 {
+    public string questId;
+    public QuestObjective[] objectives;
+    public int rewardCoins, rewardActionPoints;
     public string questName;
     public string objective;
     public bool showObjective;
@@ -24,7 +27,7 @@ public static class QuestTracker
     private static object owner;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void Reset()
+    public static void Reset()
     {
         owner = null;
         CurrentQuestName = string.Empty;
@@ -78,7 +81,7 @@ public static class QuestTracker
         owner = source;
         CurrentQuestName = questName ?? string.Empty;
         CurrentObjective = objective ?? string.Empty;
-        ShowObjective = showObjective;
+        ShowObjective = showObjective || ReferenceEquals(source, typeof(QuestJournal));
         IsCompletionChange = completed;
         Changed?.Invoke();
     }

@@ -80,12 +80,13 @@ public sealed class SceneFadeTransition : MonoBehaviour
         running = true;
         yield return Fade(0f, 1f, fadeDuration);
 
+        var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
         AsyncOperation load = null;
         try
         {
             load = SceneManager.LoadSceneAsync(sceneName);
         }
-        catch (ArgumentException exception)
+        catch (Exception exception)
         {
             Debug.LogException(exception, this);
         }
@@ -100,6 +101,9 @@ public sealed class SceneFadeTransition : MonoBehaviour
         }
 
         while (!load.isDone) yield return null;
+        // Let scene startup finish before replacing authored room drops.
+        yield return null; yield return null;
+        if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
         onComplete?.Invoke(true);

@@ -10,7 +10,7 @@ Open the existing `HideOutSystemScene.unity` in this folder and press Play. The 
 - Storage: paired bag/storage UI, paged slots, equipment swap, partial transfers, name sort, deposit only types present in storage at button press; +2 player slots and +5 storage slots per level.
 - Potion shelf: locked until Selena recruitment, all-or-nothing delivery, durable cooldown; full inventory consumes neither reward nor opportunity.
 - Gym: maximum MP bonus only. Dining and workshop are disabled placeholders.
-- Upgrade: validate total cost first, aggregate duplicate recipe entries, mutate a candidate snapshot, atomically save then apply. Same-frame reentrant/double commands are rejected. Separate intentional clicks can purchase successive levels if fully affordable.
+- Upgrade: validate total cost first, aggregate duplicate recipe entries, mutate a candidate snapshot, validate and apply in memory. Only the bed manual-save command writes to disk. Same-frame reentrant/double commands are rejected. Separate intentional clicks can purchase successive levels if fully affordable.
 - Appearance: tiers at 0/2/4/6, last tier retained above 6. `HideOutAppearance.onUpgrade` is an animation hook and is not invoked on load.
 - Top view: a procedural 3D isometric bunker replaces the two-room carousel. Vertex-colored cuboids form open-front rooms, tiled floors, walls and props without changing the URP 2D renderer. Facility icons project 3D anchors into the screen-space HUD; selection focuses the orthographic camera and opens the existing panel.
 
@@ -62,7 +62,7 @@ All eight facilities use the same world/bar click toggle: first click focuses an
 
 The bottom horizontal ScrollRect uses `Top View > Shortcut Order`: storage, treatment booth, dummy, bed, potion shelf, gym. World and bar buttons call the same selection entry point. Potion locks and levels refresh from bridge state. FacilityFocus blocks navigation; dummy tests also block bar switching. Panel layouts reserve the bottom 106 reference pixels for this bar.
 
-Bed uses the existing complete HideOut snapshot/participant save envelope and source-keyed +10 max HP per upgrade, preserving current HP. This is not a whole-game save service: unregistered quest/world systems still need IHideOutSaveParticipant. Potions reuse health_potion x2, 900-second UTC deadline, -30/level, 60-second minimum, with atomic full-inventory checks. Missing item definitions block claiming. IHideOutRecruitmentSource is polled for Selena state; sandbox development controls include a recruitment test. Gym uses baseline adapter MP 100, +1% per upgrade, floors the combined bonus once. Existing recipes remain 2N scrap, 10N coins, 1 AP at next level N, max level 10 through upgrade arrays.
+Bed uses the existing complete HideOut snapshot/participant save envelope and source-keyed +10 max HP per upgrade, preserving current HP. QuestJournal now contributes stable quest IDs, objective counts and reward claims to the manual snapshot; other future systems can use IHideOutSaveParticipant. Potions reuse health_potion x2, 900-second UTC deadline, -30/level, 60-second minimum, with atomic full-inventory checks. Missing item definitions block claiming. IHideOutRecruitmentSource is polled for Selena state; sandbox development controls include a recruitment test. Gym uses baseline adapter MP 100, +1% per upgrade, floors the combined bonus once. Existing recipes remain 2N scrap, 10N coins, 1 AP at next level N, max level 10 through upgrade arrays.
 
 Presentation records retain facility IDs independently of save enum IDs. To replace art assign `Visual Prefab` or `Tier Visual Prefabs` (0/2/4/6) in `Prototype Facilities`; the generated room meshes are hidden while independent icon anchors, camera anchors, dummy receiver and UI events remain intact. Prefabs use the environment's world coordinate origin. `Icon` supplies both world and shortcut artwork; camera positions remain under Top View. The new expansion rooms also expose named Visual Roots in their generated hierarchy. Refresh editor preview after changing art/settings.
 
@@ -82,24 +82,24 @@ Reuses PlayerInventory/Slot, stable ItemId, MaxStack, equipment definitions, Pla
 
 No MP, wallet, recruitment or game-save service was found. Those are prototype fields on `HideOutPlayerBridge.State`, not duplicated global managers. The existing available stat points are NOT treated as action points. `IHideOutRecruitmentSource` on the player supplies Selena's state; `SetSelenaRecruited()` is the external recruitment callback. `IHideOutSaveParticipant` lets future quest/world save providers contribute keyed state with validation to the same save envelope. Existing equipment has no durability, per-instance affixes or per-copy instance ID; each equipment unit occupies one slot, following the current inventory rules. The dummy prototype therefore distinguishes weapons by stable definition `ItemId`. Two copies with the same `ItemId` share the same bonus until the inventory gains instance IDs.
 
-The save includes inventory configuration, normal/quest slots, equipment, quick slots, personal stats, HP/base health configuration, adapter MP/currency/recruitment, facility levels/storage/deadlines, return scene/position and participant records. It is not yet a general save system for unrelated quest/world components; those have no existing persistence interface. Unknown participant records are retained, not discarded. Live origin-scene quest/NPC state survives visits because the scene stays loaded.
+The save includes inventory configuration, normal/quest slots, equipment, quick slots, personal stats, HP/base health configuration, adapter MP/currency/recruitment, facility IDs/levels/unlocks/storage/deadlines, QuestJournal records and participant records. Return scene/position and field drops remain session memory only. Unknown participant records are retained, not discarded. Live origin-scene quest/NPC state survives visits because the scene stays loaded.
 
 ## Save isolation and failure handling
 
-`Application.persistentDataPath/HideOutPrototype/sandbox-v1.json` is for direct-scene tests; `player-v1.json` is for entrance visits. Both use temporary-file flush + atomic replacement and `.bak` backup. Existing save files elsewhere are untouched. Unreadable/unsupported save files block writes instead of being reset. Item IDs missing from the configured catalog reject transactions rather than losing items. Add all real game item definitions to `Items` before integration.
+`Application.persistentDataPath/HideOutPrototype/slot-1-v2.json` is the production manual slot; direct-scene tests use `sandbox-v2.json`. Legacy `player-v1.json` is read compatibly and retained until explicit slot deletion. Manual saves use a versioned SHA-256 envelope, temporary-file flush, atomic replacement and `.bak` backup. Unreadable/unsupported files are reported without resetting them. Confirmed new games preserve the old slot until their first successful bed save. Item IDs missing from the configured catalog reject transactions rather than losing items. Add all real game item definitions to `Items` before integration.
 
 Direct tests start with no currency and Selena locked. Editor/development-only controls grant test resources, equip a practice weapon and reduce HP, recruit Selena, or clear cooldowns. They work only in the sandbox and never change the production rules asset.
 
 ## Connect a teammate scene
 
-1. Place `Prefabs/HideOutEntrance.prefab` at the approved entry location; no GDD/LPD location has been chosen here.
+1. The production Forest and Market scenes now contain `Prefabs/HideOutEntrance.prefab` instances. For another teammate scene, place the same prefab at its approved entry location.
 2. Set Return Point to a safe standing point at the entrance (the prefab transform is the default). Its trigger and Interactable2D UnityEvent are already wired to `Enter`.
 3. The existing player must have PersistentPlayer2D, PlayerInventory and PlayerHealth. PlayerMeleeAttack is needed for weapon tests. Do not add a second inventory/player manager.
-4. The player's existing interaction controller uses F. The entrance attaches the HideOut adapter to that player, snapshots return scene/path/coordinates and saves before travel.
+4. The player's existing interaction controller uses F. The entrance attaches the HideOut adapter to that player, retains return scene/coordinates in memory without saving before travel.
 5. HideOut loads additively, suspends active origin roots and player controls/physics, then restores those exact roots and return coordinates on Exit. This preserves live quests and NPCs instead of rebuilding the origin scene through the existing single-scene fade loader. The player remains owned by PersistentPlayer2D.
-6. Editor play can load the scene by its asset path without Build Settings changes. A standalone build requires the team to add this scene to its Scene List; this shared setting was deliberately not changed. Failure is reported without leaving the original scene.
+6. Editor play can load the scene by its asset path without Build Settings changes. The existing HideOut scene is now included in EditorBuildSettings for standalone Continue and entrance visits. Failure is reported without leaving the original scene.
 
-Direct HideOut execution has no origin scene. Exit displays an explanation instead of inventing a return destination. Loading a save restores player/facility state, not arbitrary scene travel. A live entrance visit keeps the current player/inventory and loads facility progression; the explicit Load button restores the full saved snapshot.
+Direct HideOut execution has no origin scene. Exit displays an explanation instead of inventing a return destination. Loading a save restores player/facility state, not arbitrary scene travel. A live entrance visit keeps all current in-memory progression. Production Continue validates the complete disk slot and starts in the existing HideOut UI. The initialized adapter never auto-loads on entrance.
 
 ## Shared-code changes
 
@@ -113,6 +113,8 @@ No other play scene, existing prefab, package, input settings, render pipeline o
 
 Run `Tests/RunModelChecks.ps1` from PowerShell with the installed .NET 10 SDK. It runs the pure model checks without Unity, package installs or changes to game settings. The model tests do not substitute for actual Unity play tests.
 
-Manual integration checklist: entry/exit with a real player, quest/NPC preservation, equipment continuity, returning at the configured safe point, save/restart, repeated upgrades and reload, actual Korean rendering/layout at team target resolutions, play exit/re-entry, and game-wide quest save participants when that system exists.
+See `Docs/ManualSaveImplementation.md` at the project root for current wiring, completed checks and remaining manual checks.
+
+Additional integration checklist: entry/exit with a real player, quest/NPC preservation, equipment continuity, returning at the configured safe point, save/restart, repeated upgrades and reload, actual Korean rendering/layout at team target resolutions, play exit/re-entry, and game-wide quest save participants when that system exists.
 
 Enter Play mode, then run `Tools > HideOut > Run isolated play checks` (Ctrl+Shift+F9). The check supports the project's enforced Forest startup scene, exercises real Unity components and the entrance prefab in an unsaved temporary origin scene, and exits Play mode to restore the original editor scene. It uses uniquely named saves under project `Temp/HideOutValidation`, checks runtime errors/EventSystem warnings, and writes results to `Temp/HideOutValidation/play-checks.txt`. It never writes the production or sandbox save.

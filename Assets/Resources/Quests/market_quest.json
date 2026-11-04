@@ -1,5 +1,15 @@
 {
   "questName": "반동분자를 찾으러 가기",
-  "objective": "숲에서 목적이 같은 여자를 찾기",
-  "showObjective": false
+  "objective": "몬스터 5마리 처치 후 NPC에게 보고",
+  "showObjective": true,
+  "questId": "market_quest",
+  "objectives": [
+    {
+      "kind": "kill",
+      "targetId": "monster",
+      "required": 5
+    }
+  ],
+  "rewardCoins": 50,
+  "rewardActionPoints": 5
 }

@@ -44,7 +44,8 @@ namespace BehindTheGear.HideOut
         private readonly TMP_Text[] resourceValues = new TMP_Text[4];
         private readonly Image[] resourceBars = new Image[2];
         private readonly List<Sprite> hudSprites = new();
-        private TMP_Text feedbackText;
+        private TMP_Text feedbackText, questSummaryText;
+        private readonly List<GameObject> suspendedFieldCanvases = new();
         private TMP_Text upgradeTitle;
         private TMP_Text upgradeLevel;
         private TMP_Text progressText;
@@ -166,7 +167,8 @@ namespace BehindTheGear.HideOut
                 }
             }
 
-            try { player.Initialize(settings, !HideOutTravel.CanReturn); }
+            SaveGameSession.Configure(settings);
+            try { player.Initialize(settings, persistent == null && !HideOutTravel.CanReturn); }
             catch (Exception exception)
             {
                 Debug.LogError("[HideOut] " + exception.Message, this);
@@ -188,7 +190,15 @@ namespace BehindTheGear.HideOut
                 control.enabled = false;
             }
 
+            // The continued player rig carries field HUDs. Suspend their canvases during the base UI.
+            foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (canvas.gameObject.scene == gameObject.scene || canvas.rootCanvas != canvas || !canvas.gameObject.activeInHierarchy
+                    || canvas.GetComponent<SceneFadeTransition>() != null || canvas.GetComponent<DeathFadeTransition>() != null) continue;
+                suspendedFieldCanvases.Add(canvas.gameObject); canvas.gameObject.SetActive(false);
+            }
             BuildUI();
+            QuestJournal.Publish();
             player.Changed += Refresh;
             player.UpgradeSucceeded += OnFacilityUpgraded;
             player.Inventory.Changed += Refresh;
@@ -199,6 +209,8 @@ namespace BehindTheGear.HideOut
         {
             if (released) return;
             released = true;
+            foreach (var canvas in suspendedFieldCanvases) if (canvas != null) canvas.SetActive(true);
+            suspendedFieldCanvases.Clear();
             if (body != null) body.simulated = bodyWasSimulated;
             foreach (var control in suspendedControls) if (control != null) control.enabled = true;
         }
@@ -867,6 +879,10 @@ namespace BehindTheGear.HideOut
             roomNameText.alignment = TextAlignmentOptions.Center;
 
             BuildResourceHud(parent);
+            Button(parent, "Main Menu Button", 24, 84, 126, 44, SaveGameSession.ReturnToMenu, new Color(.10f, .12f, .13f, .94f), 16)
+                .GetComponentInChildren<TMP_Text>().text = "메인 메뉴";
+            questSummaryText = Text(parent, "", 400, 52, 620, 44, 16, Accent);
+            questSummaryText.alignment = TextAlignmentOptions.Center;
             feedbackText = Text(parent, "", 400, 750, 800, 36, 17, Accent);
             feedbackText.alignment = TextAlignmentOptions.Center;
 
@@ -1047,7 +1063,8 @@ namespace BehindTheGear.HideOut
         {
             if (!HideOutTravel.CanReturn)
             {
-                player.SetMessage("직접 실행 테스트입니다. 플레이 구간의 HideOutEntrance로 진입하면 원래 위치로 돌아갑니다.");
+                if (!player.Sandbox) SaveGameSession.StartExpedition();
+                else player.SetMessage("직접 실행 샌드박스입니다.");
                 return;
             }
             player.StartCoroutine(HideOutTravel.Exit(player, gameObject.scene));
@@ -1209,7 +1226,7 @@ namespace BehindTheGear.HideOut
         private void UseSelectedFacility()
         {
             if (editorPreview || HideOutModel.IsExhibition(selected) || IsLocked(selected)) return;
-            if (selected == Facility.Bed) player.Save();
+            if (selected == Facility.Bed) { if (player.Save()) useFacilityButton.interactable = false; }
             else if (selected == Facility.Clinic) player.Heal();
             else if (selected == Facility.Potions) player.ReceivePotions();
             Refresh();
@@ -1476,6 +1493,7 @@ namespace BehindTheGear.HideOut
             resourceBars[0].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), 3f);
             resourceBars[1].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), 3f);
             feedbackText.text = player.Message;
+            if (questSummaryText != null) questSummaryText.text = QuestTracker.CurrentQuestName + (QuestTracker.ShowObjective ? "\n" + QuestTracker.CurrentObjective : "");
             RefreshStorageAppearance();
             RefreshFacilityLevels();
             RefreshHotspots();
@@ -1688,8 +1706,9 @@ namespace BehindTheGear.HideOut
             int maximum = MaxLevel(selected);
             var cost = HideOutModel.Next(state, settings.rules, selected);
             var presentation = settings.FindPresentation(selected);
+            useFacilityButton.interactable = !player.IsSaving;
             useFacilityButton.gameObject.SetActive(selected == Facility.Bed || selected == Facility.Clinic || selected == Facility.Potions);
-            useFacilityButton.GetComponentInChildren<TMP_Text>().text = selected == Facility.Bed ? "진행 상황 저장" : selected == Facility.Clinic ? "치료 이용" : "물약 수령";
+            useFacilityButton.GetComponentInChildren<TMP_Text>().text = selected == Facility.Bed ? "저장하기" : selected == Facility.Clinic ? "치료 이용" : "물약 수령";
             bool missingPotion = selected == Facility.Potions && settings.Find(settings.rules.potionId) == null;
             useFacilityButton.interactable = !IsLocked(selected) && !missingPotion && (selected != Facility.Potions || player.Now >= state.potionsReadyAt);
 

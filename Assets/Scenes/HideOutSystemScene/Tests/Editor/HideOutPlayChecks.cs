@@ -76,7 +76,7 @@ public static class HideOutPlayChecks
         b.UpgradeDummy();
         Check(b.State.levels[2] == 0 && b.State.dummyWeaponBonuses.Count == 0 && !File.Exists(save), "missing weapon blocks dummy upgrade without saving or spending"); yield return null;
         b.GrantTestResources();
-        Check(b.State.coins == 1000 && b.Health.CurrentHealth == 5 && File.Exists(save), "isolated transactional save and test grant"); yield return null;
+        Check(b.State.coins == 1000 && b.Health.CurrentHealth == 5 && !File.Exists(save), "test grant changes memory without automatic saving"); yield return null;
         b.Heal();
         Check(b.Health.CurrentHealth == 10 && b.State.clinicReadyAt > b.Now, "clinic heals and persists deadline"); yield return null;
         double deadline = b.State.clinicReadyAt;
@@ -115,13 +115,14 @@ public static class HideOutPlayChecks
         int storedBeforeSave = HideOutModel.Count(b.State.storage, "hideout_scrap");
         Check(storedBeforeSave > 0, "storage contains an item before save/load verification");
         b.Save(); yield return null;
+        b.Save(); yield return null;
         for (int i=0;i<3;i++) { b.Load(); yield return null; }
         Check(b.Inventory.Capacity == 20 && b.Health.MaxHealth == 27 && b.Melee.ResolvedDamage == damage + 1 && b.MaxMana == 101, "repeated load does not compound bonuses or discard other growth");
         Check(HideOutModel.Count(b.State.storage, "hideout_scrap") == storedBeforeSave,
             "save/load preserves storage item IDs, quantities and slot-backed capacity");
         Check(b.State.clinicReadyAt == deadline && b.State.potionsReadyAt > b.Now, "load preserves both cooldowns");
         Check(File.Exists(save + ".bak"), "atomic save retains previous backup");
-        var snapshot = JsonUtility.FromJson<HideOutSave>(File.ReadAllText(save));
+        var snapshot = ManualSaveStore.Read(save);
         Check(snapshot.equipment[0] == settings.testWeaponId && snapshot.questInventory.Count == b.Inventory.QuestCapacity
             && HideOutModel.DummyBonus(snapshot, settings.testWeaponId) == 1,
             "save includes equipment, quest inventory and weapon-specific dummy bonus");
@@ -135,7 +136,7 @@ public static class HideOutPlayChecks
         string badPath = Path.GetFullPath("Temp/HideOutValidation/occupied-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(badPath);
         field.SetValue(b, badPath);
         coins = b.State.coins; level = b.State.levels[1]; int hp = b.Health.CurrentHealth;
-        b.Upgrade(Facility.Bed);
+        Check(!b.Save(), "manual save reports IO failure");
         Check(b.State.coins == coins && b.State.levels[1] == level && b.Health.CurrentHealth == hp, "save IO failure leaves live costs/levels/HP unchanged");
         field.SetValue(b, save);
         var appearance = b.gameObject.AddComponent<HideOutAppearance>();
@@ -299,7 +300,7 @@ public static class HideOutPlayChecks
         timeout=Time.realtimeSinceStartup+15;
         while (Object.FindFirstObjectByType<HideOutScene>()==null && Time.realtimeSinceStartup<timeout) yield return null;
         yield return null; yield return null;
-        Check(b.Inventory.Capacity==bagBeforeTravel && b.Health.MaxHealth==37, "second visit does not duplicate permanent bonuses");
+        Check(b.Inventory.Capacity==bagBeforeTravel && b.Health.MaxHealth==27, "second visit retains the manual-save bed level without duplicating bonuses");
         exit=HideOutTravel.Exit(b,SceneManager.GetSceneByPath(settings.scenePath)); while(exit.MoveNext()) yield return exit.Current;
         // Guard exits Play mode, which restores the original editor scene without saving these objects.
     }

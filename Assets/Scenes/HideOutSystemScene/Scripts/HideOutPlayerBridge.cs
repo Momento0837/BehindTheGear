@@ -29,7 +29,8 @@ namespace BehindTheGear.HideOut
         public string Message { get; private set; } = "시설을 선택하세요.";
         public event Action Changed;
         public event Action<Facility, int> UpgradeSucceeded;
-        private bool busy, saveBlocked;
+        private bool busy;
+        public bool IsSaving => busy;
         private int lastCommandFrame = -1;
         private float nextDummyUpgradeTime;
         private float nextStorageUpgradeTime;
@@ -52,7 +53,7 @@ namespace BehindTheGear.HideOut
             }
         }
         private string validationSavePath;
-        public string SavePath => validationSavePath ?? Path.Combine(Application.persistentDataPath, "HideOutPrototype", Sandbox ? "sandbox-v1.json" : "player-v1.json");
+        public string SavePath => validationSavePath ?? (Sandbox ? Path.Combine(Application.persistentDataPath, "HideOutPrototype", "sandbox-v2.json") : ManualSaveStore.SlotPath);
 #if UNITY_EDITOR
         public void InitializeEditorSample(HideOutSettings settings)
         {
@@ -85,18 +86,7 @@ namespace BehindTheGear.HideOut
             if (Inventory == null || Health == null) throw new InvalidOperationException("PlayerInventory and PlayerHealth are required on the player.");
             State = new HideOutSave { baseMana = settings.rules.baseMana, mana = settings.rules.baseMana };
             Capture(State); HideOutModel.Normalize(State, settings.rules);
-            if (File.Exists(SavePath))
-            {
-                try
-                {
-                    var loaded = ReadSave();
-                    // Entry from a live play scene keeps the live player; only an explicit load restores them.
-                    if (!sandbox) { State = loaded; ApplyBonuses(); Capture(loaded); }
-                    State = loaded; Apply(State);
-                    Message = sandbox ? "테스트 저장 복원 완료" : "기지 진행 복원 · 현재 플레이어 상태 유지";
-                }
-                catch (Exception e) { saveBlocked = true; Message = "저장 읽기 실패 — 원본 보호를 위해 저장 차단: " + e.Message; Debug.LogError(Message, this); }
-            }
+            // Initialization never reads a disk slot. Continue owns production loading.
             ApplyBonuses();
         }
         private void Update()
@@ -121,8 +111,8 @@ namespace BehindTheGear.HideOut
                 Capture(State);
                 var candidate = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
                 string result = operation(candidate); // Failed operations throw before publishing.
+                SaveSnapshotValidation.StampFacilities(candidate, Settings);
                 Validate(candidate);
-                WriteSave(candidate);
                 State = candidate; Apply(State); Message = result; Changed?.Invoke();
                 return true;
             }
@@ -195,7 +185,26 @@ namespace BehindTheGear.HideOut
             if (!HideOutModel.ReceivePotions(s, Settings.rules, Settings, Now, out string message)) throw new InvalidOperationException(message);
             return message;
         });
-        public bool Save() => Change(s => "수동 저장 완료");
+        public bool Save()
+        {
+            if (busy || lastCommandFrame == Time.frameCount) return false;
+            busy = true; lastCommandFrame = Time.frameCount;
+            try
+            {
+                var snapshot = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+                Capture(snapshot);
+                snapshot.version = 2;
+                snapshot.facilities.Clear();
+                foreach (Facility f in Enum.GetValues(typeof(Facility)))
+                    snapshot.facilities.Add(new FacilityProgress { facilityId = Settings.FindPresentation(f).facilityId,
+                        level = snapshot.levels[(int)f], unlocked = !HideOutModel.Locked(snapshot, f) });
+                Validate(snapshot);
+                ManualSaveStore.Write(SavePath, snapshot);
+                SetMessage("저장 완료"); return true;
+            }
+            catch (Exception e) { SetMessage("저장 실패 · 직전 저장을 유지합니다: " + e.Message); return false; }
+            finally { busy = false; }
+        }
         public void Transfer(bool deposit, int index) => Change(s =>
         {
             int n = HideOutModel.Move(deposit ? s.inventory : s.storage, deposit ? s.storage : s.inventory, index, Settings);
@@ -216,31 +225,32 @@ namespace BehindTheGear.HideOut
         public void Load()
         {
             if (busy) return;
-            try { var loaded = ReadSave(); Validate(loaded); State = loaded; Apply(State); SetMessage("저장 복원 완료"); }
+            try { RestoreSnapshot(ManualSaveStore.Read(SavePath)); SetMessage("저장 복원 완료"); }
             catch (Exception e) { SetMessage("불러오기 실패: " + e.Message); }
         }
-        private HideOutSave ReadSave()
+        public void RestoreSnapshot(HideOutSave snapshot)
         {
-            var loaded = JsonUtility.FromJson<HideOutSave>(File.ReadAllText(SavePath));
-            if (loaded == null || loaded.version != 1) throw new InvalidDataException("지원하지 않거나 손상된 저장 형식");
-            HideOutModel.Normalize(loaded, Settings.rules); Validate(loaded); return loaded;
-        }
-        private void WriteSave(HideOutSave candidate)
-        {
-            if (saveBlocked) throw new IOException("기존 저장 읽기 실패 상태입니다. 원본을 덮어쓰지 않습니다.");
-            string path = SavePath;
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            string temporary = path + ".tmp";
-            using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+            Validate(snapshot);
+            var previous = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+            Capture(previous);
+            try
             {
-                var bytes = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(candidate, true));
-                stream.Write(bytes, 0, bytes.Length); stream.Flush(true);
+                State = snapshot; Apply(snapshot); QuestJournal.Restore(snapshot.quests);
+                RoomDropCache.Clear(); Changed?.Invoke();
             }
-            if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
-            else File.Move(temporary, path);
+            catch
+            {
+                State = previous; Apply(previous); QuestJournal.Restore(previous.quests); throw;
+            }
+        }
+        public static void ValidateSnapshot(HideOutSave snapshot, HideOutSettings settings)
+        {
+            settings.ValidateCatalog();
+            ValidateData(snapshot, settings);
         }
         private void Capture(HideOutSave s)
         {
+            s.quests = QuestJournal.Capture();
             s.hp = Health.CurrentHealth;
             s.healthConfiguration = JsonUtility.ToJson(Health);
             s.playerStats = JsonUtility.ToJson(Inventory.Stats);
@@ -266,6 +276,14 @@ namespace BehindTheGear.HideOut
         }
         private void Validate(HideOutSave s)
         {
+            ValidateData(s, Settings);
+            foreach (var component in GetComponents<MonoBehaviour>())
+                if (component is IHideOutSaveParticipant participant)
+                { var entry = s.extensions.Find(x => x.key == participant.SaveKey); if (entry != null) participant.ValidateJson(entry.json); }
+        }
+        private static void ValidateData(HideOutSave s, HideOutSettings Settings)
+        {
+            SaveSnapshotValidation.ValidateStructure(s, Settings);
             if (s.coins < 0 || s.actionPoints < 0 || s.hp < 0 || s.baseInventorySlots < 1)
                 throw new InvalidDataException("잘못된 저장 수치입니다. 원본은 유지됩니다.");
             foreach (var list in new[] { s.inventory, s.questInventory, s.storage })
@@ -273,8 +291,13 @@ namespace BehindTheGear.HideOut
                     if (slot == null || slot.count < 0 || (string.IsNullOrEmpty(slot.id) && slot.count != 0)
                         || !slot.Empty && (Settings.Find(slot.id) == null || slot.count > Settings.MaxStack(slot.id)))
                         throw new InvalidDataException("미등록 아이템 또는 잘못된 스택입니다. Settings의 Items 목록을 확인하세요.");
-            foreach (string id in s.equipment) if (!string.IsNullOrEmpty(id) && Settings.Find(id) == null) throw new InvalidDataException("미등록 장비: " + id);
-            foreach (string id in s.quickSlots) if (!string.IsNullOrEmpty(id) && Settings.Find(id) == null) throw new InvalidDataException("미등록 퀵슬롯: " + id);
+            for (int i = 0; i < 6; i++)
+            {
+                string id = s.equipment[i]; var item = Settings.Find(id);
+                if (!string.IsNullOrEmpty(id) && (item == null || !item.IsEquipment || (int)item.Slot != i + 1))
+                    throw new InvalidDataException("잘못된 장착 부위: " + id);
+            }
+            foreach (string id in s.quickSlots) if (!string.IsNullOrEmpty(id) && (Settings.Find(id) == null || !Settings.Find(id).IsConsumable)) throw new InvalidDataException("미등록 퀵슬롯: " + id);
             var weaponIds = new HashSet<string>();
             foreach (var record in s.dummyWeaponBonuses)
             {
@@ -283,9 +306,6 @@ namespace BehindTheGear.HideOut
                     || weapon.Slot != InventoryItemDefinition.EquipmentSlot.Weapon || !weaponIds.Add(record.weaponId))
                     throw new InvalidDataException("잘못되거나 중복된 허수아비 무기 강화 기록입니다.");
             }
-            foreach (var component in GetComponents<MonoBehaviour>())
-                if (component is IHideOutSaveParticipant participant)
-                { var entry = s.extensions.Find(x => x.key == participant.SaveKey); if (entry != null) participant.ValidateJson(entry.json); }
         }
         private void ApplyBonuses()
         {
@@ -294,6 +314,7 @@ namespace BehindTheGear.HideOut
         }
         private void Apply(HideOutSave s)
         {
+            Inventory.ClearForRestore();
             if (!string.IsNullOrEmpty(s.playerStats)) JsonUtility.FromJsonOverwrite(s.playerStats, Inventory.Stats);
             if (!string.IsNullOrEmpty(s.healthConfiguration)) JsonUtility.FromJsonOverwrite(s.healthConfiguration, Health);
             if (!string.IsNullOrEmpty(s.inventoryConfiguration)) JsonUtility.FromJsonOverwrite(s.inventoryConfiguration, Inventory);

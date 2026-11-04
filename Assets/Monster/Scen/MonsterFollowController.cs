@@ -327,6 +327,7 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void Die()
     {
+        QuestJournal.Record("kill", "monster", 1);
         Stop();
         CreateDrops();
         foreach (var collider in GetComponentsInChildren<Collider2D>()) collider.enabled = false;

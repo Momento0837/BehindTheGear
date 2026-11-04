@@ -14,6 +14,8 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
     private void Select(PlayerControlScheme scheme)
     {
         if (selecting) return;
+        var menu = GetComponent<ManualSaveMenu>();
+        if (menu != null && !menu.ChoosingControls) return;
         selecting = true;
         PlayerControlSchemeSettings.Select(scheme);
         SceneFadeTransition.LoadScene(gameSceneName, fadeDuration, success =>

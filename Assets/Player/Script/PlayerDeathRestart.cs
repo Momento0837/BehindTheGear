@@ -81,6 +81,7 @@ internal sealed class DeathFadeTransition : MonoBehaviour
         }
         yield return new WaitForSecondsRealtime(.5f);
         yield return Fade(0f, 1f, fadeDuration);
+        RoomDropCache.Clear();
         StorySceneFlow.RestartAtCombat = true;
         yield return SceneManager.LoadSceneAsync("Forest");
         // The opening quest presentation takes over the black screen before revealing combat.

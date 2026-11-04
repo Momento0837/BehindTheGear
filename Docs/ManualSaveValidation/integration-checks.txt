@@ -1,0 +1,52 @@
+PASS empty isolated slot
+PASS new game through production menu and control selection
+PASS serialized Forest entrance and interaction layer
+PASS normal entrance opens existing hideout UI with live player
+PASS entering hideout does not save
+PASS actual equipment operation
+PASS facility upgrade updates live slots without disk write
+PASS inventory, stats, facility and quest changes do not save
+PASS bed interaction writes and acknowledges only successful save
+PASS saved quest 2/5 and stable facility IDs
+PASS unsaved changes leave last manual save byte-identical
+PASS overwrite cancellation keeps menu and slot
+PASS overwrite approval starts new session without replacing file
+PASS Continue starts directly in hideout UI
+PASS Continue restores 2/5 instead of unsaved 4/5
+PASS coins, equipment, permanent stats and facility slots restored
+PASS Continue can leave hideout with gameplay controls restored
+PASS actual monster death events advance 2/5 to ready 5/5
+PASS production portal A to B captures uncollected drops
+PASS existing market NPC presents restored ready quest
+PASS NPC completion dialogue reports and rewards once
+PASS repeated quest report cannot double reward
+PASS A to B to A restores one exact drop without initial-loot duplication
+PASS actual pickup removes only accepted items
+PASS collected drops do not resurrect on revisit
+PASS manual save after report
+PASS claimed save reload cannot double reward
+PASS locked temporary file reports save failure
+PASS failed write preserves last good save
+PASS invalid snapshot rejected before partial application
+PASS corrupt file is rejected without initialization
+PASS unsupported format version is rejected
+PASS checksum corruption is rejected
+PASS atomic replace keeps prior backup
+PASS slot deletion also removes backup
+PASS A to B captures uncollected drop
+PASS arrival A snapshot reserved before departing B replaces cache
+PASS empty departing room replaces previous cache
+PASS failed transition leaves cache unchanged
+PASS A to B to C replaces cache with empty B snapshot
+PASS partial pickup leaves unaccepted quantity on ground
+PASS full inventory cannot delete remaining ground quantity
+PASS pickup removes ground item only when all quantity entered inventory
+PASS session end clears drop cache
+PASS approved overwrite keeps previous save during new field play
+PASS new game initializes independent permanent state
+PASS first new-game manual save succeeds
+PASS first successful manual save replaces previous slot
+PASS Continue uses newly overwritten save
+PASS delete cancellation preserves slot
+PASS confirmed menu deletion removes current, legacy and backup saves
+Unity 6000.3.23f1: 51 checks, PASSED

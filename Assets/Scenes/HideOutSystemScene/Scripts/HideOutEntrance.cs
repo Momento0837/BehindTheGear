@@ -24,7 +24,6 @@ namespace BehindTheGear.HideOut
             catch (Exception e) { Debug.LogError(e.Message, this); return; }
             var position = returnPoint != null ? returnPoint.position : player.transform.position;
             Scene origin = gameObject.scene;
-            if (!bridge.Change(s => { s.returnScene = origin.path; s.returnX = position.x; s.returnY = position.y; s.returnZ = position.z; return "기지 진입 정보 저장"; })) return;
             entering = true;
             // Player hosts the coroutine because this entrance's scene roots are suspended.
             bridge.StartCoroutine(HideOutTravel.Enter(bridge, origin, position, () => entering = false));
@@ -42,7 +41,8 @@ namespace BehindTheGear.HideOut
         private static bool travelling;
         public static bool CanReturn => origin.IsValid() && origin.isLoaded;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void Reset() { origin = default; suspended.Clear(); travelling = false; }
+        private static void Reset() => ClearSession();
+        public static void ClearSession() { origin = default; suspended.Clear(); travelling = false; }
         public static IEnumerator Enter(HideOutPlayerBridge bridge, Scene from, Vector3 position, Action finished)
         {
             if (travelling) { finished(); yield break; }
@@ -70,12 +70,12 @@ namespace BehindTheGear.HideOut
             while (!operation.isDone) yield return null;
             Scene hideout = SceneManager.GetSceneByPath(bridge.Settings.scenePath);
             SceneManager.SetActiveScene(hideout);
+            RoomDropCache.Clear();
             travelling = false; finished();
         }
         public static IEnumerator Exit(HideOutPlayerBridge bridge, Scene hideout)
         {
             if (travelling || !CanReturn) { bridge.SetMessage("직접 실행한 테스트 씬입니다. 복귀할 플레이 구간이 없습니다."); yield break; }
-            if (!bridge.Save()) yield break;
             travelling = true;
             var view = UnityEngine.Object.FindFirstObjectByType<HideOutScene>();
             if (view != null)
