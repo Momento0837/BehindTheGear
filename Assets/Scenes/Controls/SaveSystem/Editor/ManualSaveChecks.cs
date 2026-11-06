@@ -11,6 +11,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using Object = UnityEngine.Object;
 
 [InitializeOnLoad]
@@ -21,11 +23,16 @@ public static class ManualSaveChecks
     private static double deadline;
     private static readonly StringBuilder report = new();
     private static int checks;
+    private static Mouse validationMouse;
     static ManualSaveChecks()
     {
+        const string refreshRequest = "Temp/HideOutValidation/request-ui-checks.flag";
+        if ((File.Exists("Temp/ManualSaveValidation/request.txt") || SessionState.GetBool(Key, false)) && File.Exists(refreshRequest))
+            File.Delete(refreshRequest); // The existing watcher is used only to refresh these source edits.
         EditorApplication.update += Tick;
         EditorApplication.playModeStateChanged += state =>
         {
+            if (state == PlayModeStateChange.ExitingPlayMode) ReleaseValidationMouse();
             if (state != PlayModeStateChange.EnteredEditMode || !SessionState.GetBool(Key + ".restore", false)) return;
             SessionState.SetBool(Key + ".restore", false);
             string original = SessionState.GetString(Key + ".scene", "");
@@ -40,6 +47,8 @@ public static class ManualSaveChecks
     public static void Run()
     {
         if (Application.isPlaying || EditorSceneManager.GetActiveScene().isDirty) throw new InvalidOperationException("Run from a saved scene in Edit mode.");
+        SessionState.SetInt(Key + ".controlScheme", (int)PlayerControlSchemeSettings.Current);
+        SessionState.SetBool(Key + ".hadControlPreference", PlayerPrefs.HasKey("BehindTheGear.PlayerControlScheme"));
         routine = null;
         SessionState.SetString(Key + ".scene", EditorSceneManager.GetActiveScene().path);
         EditorSceneManager.OpenScene("Assets/Scenes/Controls/ControlSchemeSelect.unity");
@@ -50,7 +59,13 @@ public static class ManualSaveChecks
         if (!SessionState.GetBool(Key, false)) return;
         if (!Application.isPlaying) return;
         if (EditorApplication.isPaused) EditorApplication.isPaused = false;
-        if (routine == null) { routine = SessionState.GetBool(Key + ".restart", false) ? RestartChecks() : Checks(); deadline = EditorApplication.timeSinceStartup + 180; report.Clear(); checks = 0; }
+        if (routine == null)
+        {
+            validationMouse = InputSystem.AddDevice<Mouse>("ManualSaveValidationMouse");
+            InputSystem.onBeforeUpdate += FeedValidationMouse;
+            routine = SessionState.GetBool(Key + ".restart", false) ? RestartChecks() : Checks();
+            deadline = EditorApplication.timeSinceStartup + 180; report.Clear(); checks = 0;
+        }
         try
         {
             if (EditorApplication.timeSinceStartup > deadline) throw new TimeoutException("Integration check timeout");
@@ -66,7 +81,27 @@ public static class ManualSaveChecks
         File.WriteAllText("Temp/ManualSaveValidation/" + (SessionState.GetBool(Key + ".restart", false) ? "restart-checks.txt" : "integration-checks.txt"), report.ToString());
         SessionState.SetBool(Key, false); SessionState.SetBool(Key + ".restore", true); SessionState.SetBool(Key + ".restart", false);
         ManualSaveStore.UseValidationDirectory(null);
+        ReleaseValidationMouse();
+        // Menu-driven checks exercise real preferences; restore the user's selection afterward.
+        PlayerControlSchemeSettings.Select((PlayerControlScheme)SessionState.GetInt(Key + ".controlScheme", 0));
+        if (!SessionState.GetBool(Key + ".hadControlPreference", false))
+        {
+            PlayerPrefs.DeleteKey("BehindTheGear.PlayerControlScheme");
+            PlayerPrefs.Save();
+        }
         EditorApplication.isPlaying = false;
+    }
+    private static void FeedValidationMouse()
+    {
+        if (validationMouse == null || !validationMouse.added || InputState.currentUpdateType != InputUpdateType.Dynamic) return;
+        validationMouse.MakeCurrent();
+        InputSystem.QueueStateEvent(validationMouse, new MouseState { position = new Vector2(-1000, -1000) });
+    }
+    private static void ReleaseValidationMouse()
+    {
+        InputSystem.onBeforeUpdate -= FeedValidationMouse;
+        if (validationMouse != null && validationMouse.added) InputSystem.RemoveDevice(validationMouse);
+        validationMouse = null;
     }
     private static void Check(bool condition, string message)
     {
@@ -109,6 +144,8 @@ public static class ManualSaveChecks
         QuestJournal.Accept("market_quest"); QuestJournal.Record("kill", "monster", 2);
         Check(!ManualSaveStore.Exists, "inventory, stats, facility and quest changes do not save");
         var view = Object.FindFirstObjectByType<HideOutScene>();
+        // Editor updates can run before the loaded scene's Start and UI construction complete.
+        while (Read(view, "player") == null || Read(view, "cameraController") == null || Read(view, "upgradeOverlay") == null) yield return null;
         Call(view, "SelectFacility", Facility.Bed);
         while (!((GameObject)Read(view, "upgradeOverlay")).activeSelf) yield return null;
         // Invoke the same bed button callback after its camera focus animation.

@@ -60,10 +60,10 @@ public static class SaveGameSession
             SceneManager.LoadScene("ControlSchemeSelect");
         }
     }
-    public static void StartExpedition()
+    public static void StartExpedition(string sceneName = "Forest")
     {
         Expedition = true; RoomDropCache.Clear();
-        SceneFadeTransition.LoadScene("Forest", .4f);
+        SceneFadeTransition.LoadScene(sceneName, .4f);
     }
     public static void ReturnToMenu()
     {
