@@ -341,6 +341,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1386402002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0182a8b84de47e5afb1883d93d463a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollow2D
+  target: {fileID: 0}
+  followOffset: {x: 0, y: -2.5}
+  followVertical: 0
+  risingCameraY: 0.5
+  fallingCameraY: 0.1
+  verticalSpeedThreshold: 0.05
+  clampToHorizontalBounds: 0
+  horizontalWorldBounds: {x: -26.18, y: 26.18}
+  smoothTime: 0.22
+  maxFollowSpeed: 100
+  lookAheadDistance: 1.25
+  lookAheadSmoothTime: 0.25
+  lookAheadSpeedThreshold: 0.1
+  dialogueZoomRatio: 0.75
+  dialogueSmoothTime: 0.8
 --- !u!1 &7000000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -383,32 +410,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 713330376099478d9f49e123d2a1b504, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneSpawnPoint2D
   spawnPointId: FromDemoRightPortal
---- !u!114 &1386402002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0182a8b84de47e5afb1883d93d463a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollow2D
-  target: {fileID: 0}
-  followOffset: {x: 0, y: -2.5}
-  followVertical: 0
-  risingCameraY: 0.5
-  fallingCameraY: 0.1
-  verticalSpeedThreshold: 0.05
-  smoothTime: 0.22
-  maxFollowSpeed: 100
-  lookAheadDistance: 1.25
-  lookAheadSmoothTime: 0.25
-  lookAheadSpeedThreshold: 0.1
 --- !u!1001 &8800000000000000001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -417,21 +421,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4724206889844491030, guid: d8b31ada86f66f5488a1184b67575b0c, type: 3}
-      propertyPath: m_Name
-      value: Inventory_Canvas
-      objectReference: {fileID: 0}
     - target: {fileID: 848262178253198112, guid: d8b31ada86f66f5488a1184b67575b0c, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 848262178253198112, guid: d8b31ada86f66f5488a1184b67575b0c, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 848262178253198112, guid: d8b31ada86f66f5488a1184b67575b0c, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4724206889844491030, guid: d8b31ada86f66f5488a1184b67575b0c, type: 3}
+      propertyPath: m_Name
+      value: Inventory_Canvas
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

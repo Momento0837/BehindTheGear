@@ -97,8 +97,7 @@ public static class RequestedPolishCheck
                 Physics2D.SyncTransforms();
                 Bounds bounds = portal.GetComponent<BoxCollider2D>().bounds;
                 Check(Mathf.Abs(bounds.center.x + 5f) < .01f && Mathf.Abs(bounds.size.x - 6f) < .01f, "Garbage portal is centered at X -5 with width 6");
-                Check(Vector2.Distance(bounds.size, portal.GetComponent<SpriteRenderer>().bounds.size) < .01f,
-                    "Blue rectangle matches portal collider: " + bounds.size + " / " + portal.GetComponent<SpriteRenderer>().bounds.size);
+                Check(!portal.GetComponent<SpriteRenderer>().enabled, "Portal marker sprite is hidden");
                 player.transform.position = new Vector3(-7.3f, -2.5f, 0f);
                 Physics2D.SyncTransforms();
                 var controller = player.GetComponent<PlayerInteractionController>();

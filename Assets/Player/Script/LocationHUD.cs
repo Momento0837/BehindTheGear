@@ -35,11 +35,12 @@ public sealed class LocationHUD : MonoBehaviour
     private void Initialize()
     {
         var images = FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        var background = images.FirstOrDefault(i => i.name == "Info" && i.GetComponentInParent<Canvas>() != null);
+        var background = images.FirstOrDefault(i => i.name == "Info" &&
+            i.GetComponentInParent<Canvas>() is { isActiveAndEnabled: true });
         if (background == null)
         {
-            var canvas = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                .FirstOrDefault(c => c.name == "InGame_Canvas");
+            var canvas = FindObjectsByType<Canvas>(FindObjectsSortMode.None)
+                .FirstOrDefault(c => c.name == "InGame_Canvas" && c.isActiveAndEnabled);
             if (canvas == null)
             {
                 canvas = gameObject.AddComponent<Canvas>();

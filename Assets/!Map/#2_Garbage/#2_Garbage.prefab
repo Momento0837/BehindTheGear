@@ -47,7 +47,7 @@ GameObject:
   - component: {fileID: 7446141434044828305}
   - component: {fileID: 8028405802579599650}
   m_Layer: 0
-  m_Name: Far
+  m_Name: BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ Transform:
   m_GameObject: {fileID: 2689547566798782378}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 17.1}
+  m_LocalPosition: {x: 0, y: 0.07, z: 16.62}
   m_LocalScale: {x: 1.17, y: 1.17, z: 1.17}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -114,7 +114,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1307886297
-  m_SortingLayer: -2
+  m_SortingLayer: -3
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 5cdef7549be87af4586814a4bc81429a, type: 3}
@@ -229,7 +229,7 @@ GameObject:
   - component: {fileID: 7170515709516790523}
   - component: {fileID: 8481481660020240055}
   m_Layer: 0
-  m_Name: Mid
+  m_Name: Near
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -295,7 +295,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -858075449
+  m_SortingLayerID: 1167604599
   m_SortingLayer: -1
   m_SortingOrder: 0
   m_MaskInteraction: 0
@@ -321,7 +321,7 @@ GameObject:
   - component: {fileID: 8297087217932642718}
   - component: {fileID: 6872268239253216380}
   m_Layer: 0
-  m_Name: Near
+  m_Name: Default
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -532,7 +532,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -858075449
-  m_SortingLayer: -1
+  m_SortingLayer: -2
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 96b8a705222343944a98329725ebd825, type: 3}

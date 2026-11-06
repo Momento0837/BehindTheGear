@@ -7,6 +7,8 @@ using UnityEngine.Video;
 /// <summary>Prototype story wiring, limited to the two main story scenes.</summary>
 public sealed class StorySceneFlow : MonoBehaviour
 {
+    private const float GarbagePortalLeft = -8f;
+
     private ConversationDialogue dialogue;
     private CutsceneVideoSequence cutscene;
     private PlayerMovement2D player;
@@ -183,7 +185,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
-        portal.GetComponent<ScenePortal2D>().SetArea(-8f, -2f);
+        portal.GetComponent<ScenePortal2D>().SetArea(GarbagePortalLeft, -2f);
         portal.SetActive(false);
         dialogue.transform.position = new Vector3(65f, -2.5f, 0);
         inventory = player.GetComponent<PlayerInventory>();
@@ -361,6 +363,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         var body = player.GetComponent<Rigidbody2D>();
         if (body != null) { body.position = position; body.linearVelocity = Vector2.zero; }
         Vector2 mapBounds = marketMap ? new Vector2(44.92f, 97.28f) : new Vector2(-26.18f, 26.18f);
+        if (!marketMap && gameObject.scene.name == "Market") mapBounds.x = GarbagePortalLeft;
         var movementBounds = player.GetComponent<PlayerMapBounds2D>();
         if (movementBounds == null) movementBounds = player.gameObject.AddComponent<PlayerMapBounds2D>();
         movementBounds.SetHorizontalBounds(mapBounds);
