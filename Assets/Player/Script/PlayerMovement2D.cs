@@ -22,6 +22,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private bool jumpRequested;
     private bool dropping;
     private bool attackAnimationPlaying;
+    public bool IsAttacking => attackAnimationPlaying;
     private bool attackStateObserved;
     private bool bufferedNextAttack;
     private int comboAttackIndex;

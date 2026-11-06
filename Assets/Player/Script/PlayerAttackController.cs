@@ -19,14 +19,20 @@ public sealed class PlayerAttackController : MonoBehaviour
     [SerializeField] private UnityEvent onSecondaryClick;
     [SerializeField] private UnityEvent onSkillQ;
     [SerializeField] private UnityEvent onSkillE;
+    private PlayerSkills skills;
+    private PlayerGrenadeSkill grenades;
 
     private void Awake()
     {
+        // Wire authored scene players and the Continue prefab through the same implementation.
+        skills = GetComponent<PlayerSkills>() ?? gameObject.AddComponent<PlayerSkills>();
+        grenades = GetComponent<PlayerGrenadeSkill>() ?? gameObject.AddComponent<PlayerGrenadeSkill>();
         PlayerInputReader input = GetComponent<PlayerInputReader>();
         input.BasicAttackPressed += BasicAttack;
         input.SecondaryAttackPressed += SecondaryAttack;
         input.SkillOnePressed += SkillOne;
         input.SkillTwoPressed += SkillTwo;
+        input.SkillTwoReleased += ReleaseSkillTwo;
     }
 
     public void BasicAttack() => InvokeSharedOrLegacy(onBasicAttack,
@@ -35,11 +41,24 @@ public sealed class PlayerAttackController : MonoBehaviour
     public void SecondaryAttack() => InvokeSharedOrLegacy(onSecondaryAttack,
         PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSecondaryClick : onAttackX);
 
-    public void SkillOne() => InvokeSharedOrLegacy(onSkillOne,
-        PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillQ : onAttackC);
+    public void SkillOne()
+    {
+        if (!isActiveAndEnabled || !skills.TryUseStealth()) return;
+        InvokeSharedOrLegacy(onSkillOne,
+            PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillQ : onAttackC);
+    }
 
-    public void SkillTwo() => InvokeSharedOrLegacy(onSkillTwo,
-        PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillE : onAttackV);
+    public void SkillTwo()
+    {
+        if (isActiveAndEnabled) grenades.BeginAim();
+    }
+
+    public void ReleaseSkillTwo()
+    {
+        if (!isActiveAndEnabled || !grenades.TryThrow()) return;
+        InvokeSharedOrLegacy(onSkillTwo,
+            PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillE : onAttackV);
+    }
 
     public void AttackZ() => onAttackZ?.Invoke();
     public void AttackX() => onAttackX?.Invoke();

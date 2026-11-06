@@ -54,6 +54,9 @@ public sealed class MonsterFollowController : MonoBehaviour
     private float hitStopUntil;
     private float knockbackUntil;
     private float knockbackDirection;
+    private float skillStaggerUntil;
+    private float skillPushUntil;
+    private float skillPushVelocity;
     private Color normalColor;
     private float normalAnimatorSpeed;
     private Coroutine hitFeedback;
@@ -137,6 +140,20 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (CurrentHealth > 0 && PlayerSkills.IsHiddenFromMonsters(playerHealth))
+        {
+            attackPending = false;
+            if (IsAttacking)
+            {
+                actionUntil = 0f;
+                PlayAnimation("Idle");
+            }
+        }
+        if (CurrentHealth > 0 && Time.time < skillStaggerUntil)
+        {
+            body.linearVelocity = new Vector2(Time.time < skillPushUntil ? skillPushVelocity : 0f, body.linearVelocity.y);
+            return;
+        }
         if (CurrentHealth > 0 && Time.unscaledTime < hitStopUntil)
         {
             Stop();
@@ -155,7 +172,7 @@ public sealed class MonsterFollowController : MonoBehaviour
 
         bool playerInRange = player != null && Mathf.Abs(player.position.x - body.position.x) <= 8f;
         bool canChase = playerInRange && player != null && playerHealth != null && !playerHealth.IsDead
-            && !IsSightBlocked();
+            && !PlayerSkills.IsHiddenFromMonsters(playerHealth) && !IsSightBlocked();
         if (!canChase)
         {
             if (wasChasing)
@@ -183,7 +200,7 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     public void RecognizePlayer(PlayerHealth health)
     {
-        if (CurrentHealth <= 0 || health == null || health.IsDead) return;
+        if (CurrentHealth <= 0 || health == null || health.IsDead || PlayerSkills.IsHiddenFromMonsters(health)) return;
         player = health.transform;
         playerHealth = health;
         IgnorePlayerBodyCollision();
@@ -234,7 +251,8 @@ public sealed class MonsterFollowController : MonoBehaviour
     {
         if (Time.time < nextAttackTime) return;
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
-        if (playerHealth == null || playerHealth.IsDead) return;
+        if (playerHealth == null || playerHealth.IsDead || PlayerSkills.IsHiddenFromMonsters(playerHealth)
+            || Time.time < skillStaggerUntil) return;
 
         PlayAnimation("Attack", true);
         attackPending = true;
@@ -248,7 +266,8 @@ public sealed class MonsterFollowController : MonoBehaviour
         if (!isActiveAndEnabled || !attackPending || CurrentHealth <= 0 || animationState != "Attack") return;
         attackPending = false;
         if (attackSensor == null || !attackSensor.HasPlayer || playerHealth == null
-            || playerHealth.IsDead || IsSightBlocked()) return;
+            || playerHealth.IsDead || PlayerSkills.IsHiddenFromMonsters(playerHealth)
+            || Time.time < skillStaggerUntil || IsSightBlocked()) return;
         int damage = Mathf.Max(1, attackPower - playerHealth.Defense);
         playerHealth.TakeDamage(attackPower);
         Debug.Log($"[Monster] {name} attacked {player.name}: {damage} damage", this);
@@ -281,6 +300,19 @@ public sealed class MonsterFollowController : MonoBehaviour
         TakeDamage(damage);
         if (hitFeedback != null) StopCoroutine(hitFeedback);
         hitFeedback = StartCoroutine(HitFeedback());
+    }
+
+    public void TakeShockwaveDamage(int damage, float direction, float pushSpeed, float pushDuration, float staggerDuration)
+    {
+        if (!isActiveAndEnabled || damage <= 0 || CurrentHealth <= 0) return;
+        // Shockwave interrupts wind-up; ordinary melee keeps its existing super-armor rules.
+        attackPending = false;
+        actionUntil = 0f;
+        PlayAnimation("Idle", true);
+        skillPushVelocity = (direction < 0f ? -1f : 1f) * Mathf.Max(0f, pushSpeed);
+        skillPushUntil = Time.time + Mathf.Max(0f, pushDuration);
+        skillStaggerUntil = Time.time + Mathf.Max(pushDuration, staggerDuration);
+        TakeMeleeDamage(damage, direction);
     }
 
     private IEnumerator HitFeedback()

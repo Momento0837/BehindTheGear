@@ -14,6 +14,7 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action SecondaryAttackPressed;
     public event Action SkillOnePressed;
     public event Action SkillTwoPressed;
+    public event Action SkillTwoReleased;
     // Kept for callers that still use the original button-specific events.
     public event Action AttackZPressed;
     public event Action AttackXPressed;
@@ -108,6 +109,8 @@ public sealed class PlayerInputReader : MonoBehaviour
                 AttackVPressed?.Invoke();
             }
         }
+
+        if ((wasdScheme ? keyboard.eKey : keyboard.vKey).wasReleasedThisFrame) SkillTwoReleased?.Invoke();
 
         if (keyboard.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
     }

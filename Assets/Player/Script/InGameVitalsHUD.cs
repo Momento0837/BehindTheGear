@@ -87,6 +87,7 @@ public sealed class InGameVitalsHUD : MonoBehaviour
     {
         // Keep the authored HUD functional even if a prefab instance loses its optional hotbar component.
         if (GetComponent<InGameHotbarHUD>() == null) gameObject.AddComponent<InGameHotbarHUD>();
+        if (GetComponent<InGameSkillHUD>() == null) gameObject.AddComponent<InGameSkillHUD>();
     }
 
     private void LateUpdate()
