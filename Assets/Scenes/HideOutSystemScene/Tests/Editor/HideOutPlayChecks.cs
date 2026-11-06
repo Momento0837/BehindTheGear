@@ -254,6 +254,19 @@ public static class HideOutPlayChecks
                 Check(button.gameObject.activeInHierarchy && button.interactable,
                     buttonName + " accepts pointer input (active=" + button.gameObject.activeInHierarchy + ", interactable=" + button.interactable + ", camera=" + cameraController.State + ", moving=" + cameraController.IsMoving + ")");
                 ExecuteEvents.Execute(button.gameObject, new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left }, ExecuteEvents.pointerClickHandler);
+                if (facility == Facility.Dummy)
+                {
+                    timeout = Time.realtimeSinceStartup + 10;
+                    while ((!ScareCrowTrainingScene.IsActive || SceneFadeTransition.IsRunning) && Time.realtimeSinceStartup < timeout) yield return null;
+                    var training = Object.FindFirstObjectByType<ScareCrowTrainingScene>();
+                    Check(training != null && training.Player == b, buttonName + " opens training with the same live player");
+                    training.ReturnToBase();
+                    timeout = Time.realtimeSinceStartup + 10;
+                    while (ScareCrowTrainingScene.IsActive && Time.realtimeSinceStartup < timeout) yield return null;
+                    yield return null;
+                    Check(view.gameObject.activeInHierarchy && !body.simulated, buttonName + " returns to the retained base");
+                    continue;
+                }
                 timeout = Time.realtimeSinceStartup + 3f;
                 while (cameraController.IsMoving && Time.realtimeSinceStartup < timeout) yield return null;
                 yield return null;

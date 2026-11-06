@@ -1,0 +1,13 @@
+{
+  "unity": "6000.3.23f1",
+  "recorded_at": "2026-11-06T16:44:16.226703+09:00",
+  "checks": {
+    "save_integration": 51,
+    "save_restart": 12,
+    "scene_wiring": 4,
+    "player_skills": 56,
+    "training": 48,
+    "hideout_regression": 132
+  },
+  "windows_player_executable_tested": false
+}
