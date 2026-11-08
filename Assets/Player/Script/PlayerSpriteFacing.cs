@@ -4,6 +4,7 @@ using UnityEngine;
 public sealed class PlayerSpriteFacing : MonoBehaviour
 {
     public float FacingDirection { get; private set; } = 1f;
+    public Vector2 AimDirection => input != null ? input.AimDirection : Vector2.right;
     private SpriteRenderer spriteRenderer;
     private PlayerMovement2D movement;
     private PlayerInputReader input;

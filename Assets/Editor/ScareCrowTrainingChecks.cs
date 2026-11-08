@@ -44,6 +44,9 @@ public static class ScareCrowTrainingChecks
     private static void Tick()
     {
         if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+        const string visibilityRequest = "Temp/HideOutVisibilityValidation/request.flag";
+        if (File.Exists(visibilityRequest) && Application.isPlaying && !SessionState.GetBool(Armed, false))
+        { File.Delete(visibilityRequest); VerifyBasePlayerVisibility(); }
         if (File.Exists(Output + "checks.flag") && !EditorApplication.isPlayingOrWillChangePlaymode)
         { File.Delete(Output + "checks.flag"); Run(); }
         if (!SessionState.GetBool(Armed, false)) return;
@@ -93,6 +96,82 @@ public static class ScareCrowTrainingChecks
         var copy = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(b.State)); copy.activeClock = 0;
         return JsonUtility.ToJson(copy);
     }
+
+    [MenuItem("Tools/HideOut/Verify base player visibility during Play")]
+    public static void VerifyBasePlayerVisibility()
+    {
+        const string folder = "Temp/HideOutVisibilityValidation/";
+        if (!Application.isPlaying || Application.unityVersion != "6000.3.23f1")
+            throw new InvalidOperationException("Requires Play mode in Unity 6000.3.23f1.");
+        var liveView = Object.FindObjectsByType<HideOutScene>(FindObjectsSortMode.None)
+            .FirstOrDefault(view => view.TrainingPlayer != null && view.gameObject.activeInHierarchy);
+        if (liveView == null) throw new InvalidOperationException("Open the hideout base before running visibility checks.");
+        Directory.CreateDirectory(folder); Report.Clear(); checks = errors = 0;
+        GameObject actor = null, host = null;
+        Exception failure = null;
+        Application.logMessageReceived += Observe;
+        try
+        {
+            var live = liveView.TrainingPlayer;
+            string liveData = Progress(live);
+            Vector3 livePosition = live.transform.position;
+            liveView.SuspendPlayer();
+            Check(live.gameObject.activeInHierarchy && live.isActiveAndEnabled && live.Inventory.isActiveAndEnabled,
+                "live save rig and inventory remain active");
+            Check(live.GetComponentsInChildren<SpriteRenderer>(true).All(r => r.forceRenderingOff),
+                "all live player sprites are excluded from rendering in the current base");
+
+            actor = new GameObject("Isolated visibility check player"); actor.SetActive(false);
+            SceneManager.MoveGameObjectToScene(actor, liveView.gameObject.scene);
+            actor.transform.position = new Vector3(10000, 10000, 0);
+            var body = actor.AddComponent<Rigidbody2D>(); body.gravityScale = 0;
+            var sprite = actor.AddComponent<SpriteRenderer>();
+            var child = new GameObject("Previously hidden child"); child.transform.SetParent(actor.transform, false);
+            var hidden = child.AddComponent<SpriteRenderer>(); hidden.enabled = false; hidden.forceRenderingOff = true;
+            actor.AddComponent<PlayerStats>(); actor.AddComponent<PlayerInventory>();
+            JsonUtility.FromJsonOverwrite("{\"controlsToDisable\":[]}", actor.AddComponent<PlayerControlLock>());
+            actor.AddComponent<PlayerHealth>();
+            var input = actor.AddComponent<PlayerInputReader>();
+            var bridge = actor.AddComponent<HideOutPlayerBridge>(); actor.SetActive(true);
+            string isolatedPath = Path.GetFullPath(folder + "unused-test-save.json");
+            bridge.InitializeForValidation(live.Settings, isolatedPath);
+            string before = Progress(bridge);
+            Vector3 position = actor.transform.position;
+            host = new GameObject("Isolated visibility check view"); host.SetActive(false);
+            SceneManager.MoveGameObjectToScene(host, liveView.gameObject.scene);
+            var view = host.AddComponent<HideOutScene>(); view.enabled = false;
+            typeof(HideOutScene).GetField("player", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(view, bridge);
+            host.SetActive(true);
+            view.SuspendPlayer(); view.SuspendPlayer();
+            Check(sprite.forceRenderingOff && hidden.forceRenderingOff && sprite.enabled && !hidden.enabled,
+                "suspension hides root and child sprites without changing their enabled states");
+            Check(!body.simulated && !input.enabled && Progress(bridge) == before && actor.transform.position == position,
+                "repeated suspension preserves player position and data while keeping field controls frozen");
+            view.ReleasePlayer();
+            Check(!sprite.forceRenderingOff && hidden.forceRenderingOff && body.simulated && input.enabled,
+                "release restores original visibility, physics and input including an already hidden child");
+            view.SuspendPlayer();
+            Check(sprite.forceRenderingOff, "returning to the base hides the same rig again");
+            Object.DestroyImmediate(host); host = null;
+            Check(!sprite.forceRenderingOff && hidden.forceRenderingOff && body.simulated && input.enabled,
+                "destroying or unloading the view restores the previous rendering state");
+            Check(Progress(bridge) == before && !File.Exists(isolatedPath),
+                "visibility transitions neither reset inventory/progression nor write a save file");
+            Check(Progress(live) == liveData && live.transform.position == livePosition
+                && live.GetComponentsInChildren<SpriteRenderer>(true).All(r => r.forceRenderingOff),
+                "existing live gameplay data and position are unchanged and the base player remains hidden");
+        }
+        catch (Exception error) { failure = error; }
+        finally
+        {
+            if (host != null) Object.DestroyImmediate(host);
+            if (actor != null) Object.DestroyImmediate(actor);
+            Application.logMessageReceived -= Observe;
+            if (failure != null) Report.AppendLine("FAIL " + failure);
+            Report.AppendLine($"Unity {Application.unityVersion}; {checks} checks; {errors} runtime errors; {(failure == null && errors == 0 ? "PASSED" : "FAILED")}");
+            File.WriteAllText(folder + "result.txt", Report.ToString());
+        }
+    }
     private static int VisibleNumbers(ScareCrowTrainingScene training) => training.trainingCanvas.GetComponentsInChildren<TMP_Text>()
         .Count(x => x.name == "Pooled Damage Number" && x.gameObject.activeSelf);
 
@@ -110,6 +189,10 @@ public static class ScareCrowTrainingChecks
         var movement = player.GetComponent<PlayerMovement2D>();
         var input = player.GetComponent<PlayerInputReader>();
         Check(movement != null && body != null && player.Melee != null && player.GetComponent<Animator>() != null, "direct base Play uses the existing complete SavePlayerRig");
+        Check(player.gameObject.activeInHierarchy && player.isActiveAndEnabled && player.Inventory.isActiveAndEnabled
+            && player.GetComponentsInChildren<SpriteRenderer>(true).All(r => r.forceRenderingOff),
+            "base hides every player sprite while retaining the active save bridge and inventory data");
+        view.SuspendPlayer(); // Repeated suspension must preserve the original visible/physics state.
         Check(player.EquippedWeapon == null && player.State.coins == 0, "entry does not grant equipment or test resources");
         player.Change(s => { s.equipment[0] = view.settings.testWeaponId; s.coins = 500; s.actionPoints = 100;
             HideOutModel.Add(s.inventory, "hideout_scrap", 50, view.settings); s.mana = 67; return "isolated fixture"; });
@@ -153,6 +236,8 @@ public static class ScareCrowTrainingChecks
         Check(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None).Length == 1, "training has one active input context");
         Check(player.Health.CurrentHealth == hp && player.State.mana == mana && Progress(player) == progress && JsonUtility.ToJson(player.Inventory.Stats) == stats, "travel preserves HP MP growth equipment inventory currency and per-weapon upgrade data");
         Check(body.simulated && movement.enabled && input.enabled, "training restores the original movement attack input and physics");
+        Check(!player.GetComponent<SpriteRenderer>().forceRenderingOff,
+            "training restores player rendering even after repeated base suspension");
         Check(training.GetComponentsInChildren<HideOutDummy>().Length == 1 && training.GetComponentsInChildren<MonsterFollowController>().Length == 0, "training contains one dummy and no reward-bearing monsters");
         Check(training.gameObject.scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true))
             .All(t => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject) == 0), "serialized training scene contains no missing scripts");
@@ -213,6 +298,7 @@ public static class ScareCrowTrainingChecks
         Check(Progress(player) == progress && JsonUtility.ToJson(player.Inventory.Stats) == stats, "repeated dummy hits create no currency items XP or quest progress");
         ScreenCapture.CaptureScreenshot(Path.GetFullPath(Output + "training-critical.png")); yield return null;
         yield return new WaitForSeconds(1);
+        player.GetComponent<PlayerAttackController>().SelectThrowSkill(PlayerAttackController.ThrowSkill.Grenade);
         var grenades = player.GetComponent<PlayerGrenadeSkill>();
         Check(grenades.Remaining == 5 && grenades.BeginAim(), "Training player has five grenades and can preview a throw");
         yield return new WaitForSeconds(.3f);
@@ -260,6 +346,8 @@ public static class ScareCrowTrainingChecks
         Check(view.gameObject.activeInHierarchy && !body.simulated && !input.enabled && player.transform.position == basePosition,
             $"real ESC restores the retained base position and frozen base control context (active={view.gameObject.activeInHierarchy}, simulated={body.simulated}, input={input.enabled}, position={player.transform.position}, expected={basePosition})");
         Check(Progress(player) == progress && player.Health.CurrentHealth == hp && player.State.mana == mana, "return retains upgrades and actual HP MP including skill expenditure");
+        Check(player.GetComponentsInChildren<SpriteRenderer>(true).All(r => r.forceRenderingOff),
+            "returning to base hides the retained rig again without moving or resetting its data");
         Click(shortcut);
         Check(baseCamera.IsMoving && !ScareCrowTrainingScene.IsActive, "bottom shortcut uses the same camera-first entry sequence");
         until = Time.realtimeSinceStartup + 10;
@@ -280,6 +368,8 @@ public static class ScareCrowTrainingChecks
         yield return null; yield return null;
         training = Object.FindFirstObjectByType<ScareCrowTrainingScene>();
         Check(training != null && training.Player == player, "direct training-scene load reuses the persistent rig without resetting data");
+        Check(!player.GetComponent<SpriteRenderer>().forceRenderingOff,
+            "unloading the base restores rendering for a direct training-scene load");
         training.OpenUpgrade(); yield return null;
         Check(training.trainingCanvas.GetComponentsInChildren<Button>().Any(b => b.name == "Dummy Upgrade Button")
             && player.GetComponent<PlayerControlLock>().IsLocked, "direct training-scene Play hosts the original facility panel without a second base scene");
@@ -290,5 +380,7 @@ public static class ScareCrowTrainingChecks
         yield return null; yield return null;
         Check(Object.FindFirstObjectByType<HideOutScene>() != null && Object.FindObjectsByType<PersistentPlayer2D>(FindObjectsSortMode.None).Length == 1,
             "direct training return opens the registered original base with one persistent player");
+        Check(player.GetComponentsInChildren<SpriteRenderer>(true).All(r => r.forceRenderingOff),
+            "direct training return also hides the persistent player inside the base");
     }
 }

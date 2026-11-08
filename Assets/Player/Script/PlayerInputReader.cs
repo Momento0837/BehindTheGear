@@ -11,6 +11,7 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action<bool> CrouchChanged;
     public event Action DashPressed;
     public bool WalkHeld { get; private set; }
+    public Vector2 AimDirection { get; private set; } = Vector2.right;
     public event Action JumpPressed;
     public event Action BasicAttackPressed;
     public event Action SecondaryAttackPressed;
@@ -29,19 +30,17 @@ public sealed class PlayerInputReader : MonoBehaviour
     private float horizontal;
     private bool crouching;
     private bool dashHeld;
-    private PlayerHealth playerHealth;
     private readonly List<RaycastResult> uiHits = new();
     private static int pointerSuppressedFrame = -1;
 
     public static void SuppressPointerForCurrentFrame() => pointerSuppressedFrame = Time.frameCount;
-
-    private void Awake() => playerHealth = GetComponent<PlayerHealth>();
 
     private void OnEnable()
     {
         // A key pressed while controls were disabled must be released before it can dash.
         var keyboard = Keyboard.current;
         dashHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        throwWasHeld = IsThrowHeld(keyboard);
     }
 
     private void Update()
@@ -51,8 +50,9 @@ public sealed class PlayerInputReader : MonoBehaviour
         bool dashPressed = shiftHeld && !dashHeld;
         // Consume the edge even while UI suppresses gameplay; never queue a dash.
         dashHeld = shiftHeld;
-        if (InventoryUI.GameplayInputSuppressedThisFrame)
+        if (InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
         {
+            throwWasHeld = IsThrowHeld(keyboard);
             WalkHeld = false;
             SetHorizontal(0f);
             SetCrouching(false);
@@ -60,6 +60,7 @@ public sealed class PlayerInputReader : MonoBehaviour
         }
         if (keyboard == null)
         {
+            throwWasHeld = false;
             WalkHeld = false;
             SetHorizontal(0f);
             SetCrouching(false);
@@ -73,13 +74,16 @@ public sealed class PlayerInputReader : MonoBehaviour
             ? (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f)
             : (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);
         SetHorizontal(nextHorizontal);
+        float verticalAim = wasdScheme
+            ? (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f)
+            : (keyboard.upArrowKey.isPressed ? 1f : 0f) - (keyboard.downArrowKey.isPressed ? 1f : 0f);
+        var aim = new Vector2(nextHorizontal, verticalAim);
+        if (aim.sqrMagnitude > 0) AimDirection = aim.normalized;
 
         bool nextCrouching = wasdScheme ? keyboard.sKey.isPressed : keyboard.downArrowKey.isPressed;
         SetCrouching(nextCrouching);
 
         if (dashPressed) DashPressed?.Invoke();
-
-        if (keyboard.kKey.wasPressedThisFrame) playerHealth?.TakeDamage(1);
 
         bool jumpPressed = (wasdScheme ? keyboard.wKey : keyboard.upArrowKey).wasPressedThisFrame
             || keyboard.spaceKey.wasPressedThisFrame;
@@ -104,7 +108,6 @@ public sealed class PlayerInputReader : MonoBehaviour
             }
 
             if (keyboard.qKey.wasPressedThisFrame) SkillOnePressed?.Invoke();
-            if (keyboard.eKey.wasPressedThisFrame) SkillTwoPressed?.Invoke();
         }
         else
         {
@@ -123,14 +126,13 @@ public sealed class PlayerInputReader : MonoBehaviour
                 SkillOnePressed?.Invoke();
                 AttackCPressed?.Invoke();
             }
-            if (keyboard.vKey.wasPressedThisFrame)
-            {
-                SkillTwoPressed?.Invoke();
-                AttackVPressed?.Invoke();
-            }
+            if (keyboard.vKey.wasPressedThisFrame) AttackVPressed?.Invoke();
         }
 
-        if ((wasdScheme ? keyboard.eKey : keyboard.vKey).wasReleasedThisFrame) SkillTwoReleased?.Invoke();
+        bool throwHeld = keyboard.eKey.isPressed || !wasdScheme && keyboard.vKey.isPressed;
+        if (throwHeld && !throwWasHeld) SkillTwoPressed?.Invoke();
+        if (!throwHeld && throwWasHeld) SkillTwoReleased?.Invoke();
+        throwWasHeld = throwHeld;
 
         if (keyboard.fKey.wasPressedThisFrame) InteractPressed?.Invoke();
     }
@@ -140,9 +142,14 @@ public sealed class PlayerInputReader : MonoBehaviour
         WalkHeld = false;
         var keyboard = Keyboard.current;
         dashHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        throwWasHeld = IsThrowHeld(keyboard);
         SetHorizontal(0f);
         SetCrouching(false);
     }
+
+    private bool throwWasHeld;
+    private static bool IsThrowHeld(Keyboard keyboard) => keyboard != null && (keyboard.eKey.isPressed
+        || PlayerControlSchemeSettings.Current == PlayerControlScheme.ArrowKeys && keyboard.vKey.isPressed);
 
     private void SetHorizontal(float value)
     {

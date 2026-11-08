@@ -229,6 +229,7 @@ public static class PlayerSkillChecks
         yield return new WaitForSeconds(.15f); PlayReviewKeyboard.Held = Array.Empty<Key>();
         Check(skills.IsStealthed && mana.CurrentMana == 85, "Real Q key reaches stealth through the existing input reader");
         yield return new WaitForSeconds(.1f);
+        actor.GetComponent<PlayerAttackController>().SelectThrowSkill(PlayerAttackController.ThrowSkill.Grenade);
         var grenades = actor.GetComponent<PlayerGrenadeSkill>();
         Check(grenades.Remaining == 5, "Existing player auto-wires five grenades without replacing the rig");
         PlayReviewKeyboard.Held = new[] { Key.E };

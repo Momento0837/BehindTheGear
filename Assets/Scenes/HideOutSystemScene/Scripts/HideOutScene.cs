@@ -51,6 +51,8 @@ namespace BehindTheGear.HideOut
         private GameObject storagePanel;
         private GameObject tooltip;
         private TMP_Text tooltipText;
+        private RectTransform tooltipAnchor;
+        private readonly Vector3[] tooltipCorners = new Vector3[4];
         private readonly TMP_Text[] resourceValues = new TMP_Text[4];
         private readonly Image[] resourceBars = new Image[2];
         private readonly List<Sprite> hudSprites = new();
@@ -117,8 +119,10 @@ namespace BehindTheGear.HideOut
         private float nextRefresh;
         private Rigidbody2D body;
         private bool bodyWasSimulated;
-        private bool released;
+        private bool released = true;
         private readonly List<Behaviour> suspendedControls = new();
+        private readonly Dictionary<SpriteRenderer, bool> suspendedPlayerRenderers = new();
+        private readonly List<SpriteRenderer> playerRenderers = new();
         private readonly Dictionary<Facility, Image> hotspotRings = new();
         private readonly Dictionary<Facility, Button> facilityButtons = new();
         private readonly Dictionary<Facility, TMP_Text> facilityLevelLabels = new();
@@ -203,6 +207,9 @@ namespace BehindTheGear.HideOut
 
         public void SuspendPlayer()
         {
+            if (player == null) return;
+            HidePlayerRenderers();
+            if (!released) return;
             released = false;
             body = player.GetComponent<Rigidbody2D>();
             if (body != null)
@@ -231,11 +238,26 @@ namespace BehindTheGear.HideOut
         {
             if (released) return;
             released = true;
+            foreach (var pair in suspendedPlayerRenderers)
+                if (pair.Key != null) pair.Key.forceRenderingOff = pair.Value;
+            suspendedPlayerRenderers.Clear();
             foreach (var canvas in suspendedFieldCanvases) if (canvas != null) canvas.SetActive(true);
             suspendedFieldCanvases.Clear();
             if (body != null) body.simulated = bodyWasSimulated;
             foreach (var control in suspendedControls) if (control != null) control.enabled = true;
             suspendedControls.Clear();
+        }
+
+        private void HidePlayerRenderers()
+        {
+            // Preserve data and Animator state; suppress only the body's rendering in the base.
+            player.GetComponentsInChildren(true, playerRenderers);
+            foreach (var renderer in playerRenderers)
+            {
+                if (!suspendedPlayerRenderers.ContainsKey(renderer))
+                    suspendedPlayerRenderers.Add(renderer, renderer.forceRenderingOff);
+                renderer.forceRenderingOff = true;
+            }
         }
 
         private void OnDestroy()
@@ -272,6 +294,7 @@ namespace BehindTheGear.HideOut
 
         private void LateUpdate()
         {
+            if (!released && player != null) HidePlayerRenderers();
             if (hideoutCamera == null || canvasRect == null) return;
             foreach (var pair in facilityOverlayRoots)
                 if (facilityWorldAnchors.TryGetValue(pair.Key, out Transform anchor))
@@ -280,6 +303,7 @@ namespace BehindTheGear.HideOut
                 PositionOverlay(dummyTargetRect, isometricEnvironment.DummyBodyAnchor.position + Vector3.down * .95f);
             if (dummyPopupRect != null && isometricEnvironment != null && isometricEnvironment.DummyBodyAnchor != null)
                 PositionOverlay(dummyPopupRect, isometricEnvironment.DummyBodyAnchor.position + Vector3.up * .35f);
+            PositionTooltip();
         }
 
         private void BuildUI()
@@ -408,7 +432,7 @@ namespace BehindTheGear.HideOut
             lockButton.GetComponent<Image>().sprite = circleSprite;
             Text(lockButton.transform, "잠금", 10, 29, 100, 34, 22, new Color(.55f, .56f, .55f)).alignment = TextAlignmentOptions.Center;
             Text(lockButton.transform, "LOCKED", 10, 62, 100, 24, 12, new Color(.34f, .36f, .36f)).alignment = TextAlignmentOptions.Center;
-            AddHover(lockButton.gameObject, () => ShowLockedTooltip(275, 400), HideTooltip);
+            AddHover(lockButton.gameObject, () => ShowLockedTooltip(lockButton.GetComponent<RectTransform>()), HideTooltip);
             Box(parent, "Locked Shade", 0, 118, 405, 594, new Color(0, 0, 0, .38f));
         }
 
@@ -466,7 +490,7 @@ namespace BehindTheGear.HideOut
             var level = Text(hotspot.transform, "", -10, 80, 100, 24, 14, Color.white);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[Facility.Storage] = level;
-            AddHover(hotspot.gameObject, () => ShowFacilityTooltip(Facility.Storage, 778, 372), HideTooltip);
+            AddFacilityHover(hotspot, Facility.Storage);
         }
 
         private void BuildTreatmentBooth(Transform parent)
@@ -560,7 +584,7 @@ namespace BehindTheGear.HideOut
             var dummyLevel = Text(sword.transform, "", -14, 72, 100, 24, 14, Color.white);
             dummyLevel.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[Facility.Dummy] = dummyLevel;
-            AddHover(sword.gameObject, () => ShowFacilityTooltip(Facility.Dummy, 850, 132), HideTooltip);
+            AddFacilityHover(sword, Facility.Dummy);
 
             dummyDamagePopup = Text(parent, "", 645, 92, 310, 54, 30, new Color(1f, .77f, .30f));
             dummyDamagePopup.alignment = TextAlignmentOptions.Center;
@@ -718,7 +742,7 @@ namespace BehindTheGear.HideOut
             var level = Text(button.transform, "", -10, 80, 100, 24, 14, Color.white);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[facility] = level;
-            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, x + 94, y - 2), HideTooltip);
+            AddFacilityHover(button, facility);
             return button.gameObject;
         }
 
@@ -732,6 +756,10 @@ namespace BehindTheGear.HideOut
                 OnDummySelected, new Color(1f, 1f, 1f, .001f), 0);
             dummyTargetRect = dummyTargetButton.GetComponent<RectTransform>();
             CenterAnchors(dummyTargetRect);
+            // The large transparent body target must not cover the facility icon's hover/click area.
+            dummyTargetRect.SetAsFirstSibling();
+            AddFacilityHover(dummyTargetButton, Facility.Dummy,
+                facilityButtons.TryGetValue(Facility.Dummy, out var dummyIcon) ? dummyIcon.GetComponent<RectTransform>() : dummyTargetRect);
 
             dummyDamagePopup = Text(parent, "", 0, 0, 250, 58, 34, new Color(1f, .72f, .28f));
             dummyDamagePopup.alignment = TextAlignmentOptions.Center;
@@ -768,7 +796,7 @@ namespace BehindTheGear.HideOut
             TMP_Text level = Text(root, "", 0, 119, 184, 24, 15, Accent);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[facility] = level;
-            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, 0f, 0f), HideTooltip);
+            AddFacilityHover(button, facility);
         }
 
         private void DrawRegisteredIcon(Facility facility, Transform parent)
@@ -866,6 +894,7 @@ namespace BehindTheGear.HideOut
                 var button = Button(content, "Shortcut " + facility, i * cardStride, 0, 244, 88,
                     () => SelectFacility(facility), PanelSoft, 0);
                 shortcutButtons[facility] = button;
+                AddFacilityHover(button, facility);
                 var iconRoot = new GameObject("Icon", typeof(RectTransform)).GetComponent<RectTransform>();
                 iconRoot.SetParent(button.transform, false); Rect(iconRoot, 0, 0, 88, 88);
                 DrawRegisteredIcon(facility, iconRoot);
@@ -1531,23 +1560,58 @@ namespace BehindTheGear.HideOut
             if (player.State.levels[(int)selected] > previous) player.SetMessage($"{DisplayName(selected)} 업그레이드 완료");
         }
 
-        private void ShowFacilityTooltip(Facility facility, float x, float y)
+        private void AddFacilityHover(Button button, Facility facility, RectTransform anchor = null)
         {
-            Rect(tooltip.GetComponent<RectTransform>(), 661, 74, 278, 84);
-            bool locked = IsLocked(facility);
-            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
-            tooltip.SetActive(true);
+            var target = anchor != null ? anchor : button.GetComponent<RectTransform>();
+            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, target), HideTooltip);
         }
 
-        private void ShowLockedTooltip(float x, float y)
+        private void ShowFacilityTooltip(Facility facility, RectTransform anchor)
         {
-            Rect(tooltip.GetComponent<RectTransform>(), 661, 74, 278, 84);
+            bool locked = IsLocked(facility);
+            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
+            ShowTooltip(anchor);
+        }
+
+        private void ShowLockedTooltip(RectTransform anchor)
+        {
             tooltipText.text = "미해금 구역\n아직 해금되지 않은 시설입니다";
+            ShowTooltip(anchor);
+        }
+
+        private void ShowTooltip(RectTransform anchor)
+        {
+            tooltipAnchor = anchor;
+            var parent = (RectTransform)tooltip.transform.parent;
+            Vector2 preferred = tooltipText.GetPreferredValues(tooltipText.text);
+            float width = Mathf.Min(Mathf.Max(278f, preferred.x + 28f), Mathf.Min(360f, parent.rect.width - 20f));
+            preferred = tooltipText.GetPreferredValues(tooltipText.text, width - 28f, Mathf.Infinity);
+            float height = Mathf.Min(Mathf.Max(84f, preferred.y + 20f), parent.rect.height - 20f);
+            Rect(tooltip.GetComponent<RectTransform>(), 0, 0, width, height);
+            Rect(tooltipText.rectTransform, 14, 10, width - 28f, height - 20f);
+            tooltip.transform.SetAsLastSibling();
             tooltip.SetActive(true);
+            PositionTooltip();
+        }
+
+        private void PositionTooltip()
+        {
+            if (tooltip == null || !tooltip.activeSelf) return;
+            if (tooltipAnchor == null || !tooltipAnchor.gameObject.activeInHierarchy) { HideTooltip(); return; }
+            var rect = tooltip.GetComponent<RectTransform>();
+            var parent = (RectTransform)rect.parent;
+            tooltipAnchor.GetWorldCorners(tooltipCorners);
+            Vector3 topRight = parent.InverseTransformPoint(tooltipCorners[2]);
+            // Keep the whole panel above/right of the icon, with a small readable gap.
+            float x = Mathf.Clamp(topRight.x + 16f, parent.rect.xMin + 10f, parent.rect.xMax - rect.rect.width - 10f);
+            float top = Mathf.Clamp(topRight.y + 12f + rect.rect.height,
+                parent.rect.yMin + rect.rect.height + 10f, parent.rect.yMax - 10f);
+            Rect(rect, x - parent.rect.xMin, parent.rect.yMax - top, rect.rect.width, rect.rect.height);
         }
 
         private void HideTooltip()
         {
+            tooltipAnchor = null;
             if (tooltip != null) tooltip.SetActive(false);
         }
 
@@ -1875,7 +1939,8 @@ namespace BehindTheGear.HideOut
 
         private void AddHover(GameObject target, UnityEngine.Events.UnityAction enter, UnityEngine.Events.UnityAction exit)
         {
-            var trigger = target.AddComponent<EventTrigger>();
+            var trigger = target.GetComponent<EventTrigger>() ?? target.AddComponent<EventTrigger>();
+            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerEnter || entry.eventID == EventTriggerType.PointerExit);
             var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
             enterEntry.callback.AddListener(_ => enter());
             trigger.triggers.Add(enterEntry);
