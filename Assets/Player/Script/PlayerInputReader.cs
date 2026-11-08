@@ -9,6 +9,8 @@ public sealed class PlayerInputReader : MonoBehaviour
 {
     public event Action<float> MoveChanged;
     public event Action<bool> CrouchChanged;
+    public event Action DashPressed;
+    public bool WalkHeld { get; private set; }
     public event Action JumpPressed;
     public event Action BasicAttackPressed;
     public event Action SecondaryAttackPressed;
@@ -26,6 +28,7 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private float horizontal;
     private bool crouching;
+    private bool dashHeld;
     private PlayerHealth playerHealth;
     private readonly List<RaycastResult> uiHits = new();
     private static int pointerSuppressedFrame = -1;
@@ -34,21 +37,36 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private void Awake() => playerHealth = GetComponent<PlayerHealth>();
 
+    private void OnEnable()
+    {
+        // A key pressed while controls were disabled must be released before it can dash.
+        var keyboard = Keyboard.current;
+        dashHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+    }
+
     private void Update()
     {
+        Keyboard keyboard = Keyboard.current;
+        bool shiftHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+        bool dashPressed = shiftHeld && !dashHeld;
+        // Consume the edge even while UI suppresses gameplay; never queue a dash.
+        dashHeld = shiftHeld;
         if (InventoryUI.GameplayInputSuppressedThisFrame)
         {
+            WalkHeld = false;
             SetHorizontal(0f);
             SetCrouching(false);
             return;
         }
-        Keyboard keyboard = Keyboard.current;
         if (keyboard == null)
         {
+            WalkHeld = false;
             SetHorizontal(0f);
             SetCrouching(false);
             return;
         }
+
+        WalkHeld = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
 
         bool wasdScheme = PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe;
         float nextHorizontal = wasdScheme
@@ -58,6 +76,8 @@ public sealed class PlayerInputReader : MonoBehaviour
 
         bool nextCrouching = wasdScheme ? keyboard.sKey.isPressed : keyboard.downArrowKey.isPressed;
         SetCrouching(nextCrouching);
+
+        if (dashPressed) DashPressed?.Invoke();
 
         if (keyboard.kKey.wasPressedThisFrame) playerHealth?.TakeDamage(1);
 
@@ -117,6 +137,9 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     private void OnDisable()
     {
+        WalkHeld = false;
+        var keyboard = Keyboard.current;
+        dashHeld = keyboard != null && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
         SetHorizontal(0f);
         SetCrouching(false);
     }
