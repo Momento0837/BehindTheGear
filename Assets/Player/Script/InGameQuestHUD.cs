@@ -359,7 +359,8 @@ public sealed class InGameQuestHUD : MonoBehaviour
             questText.text = content;
             FitText();
         }
-        if (questRoot != null) questRoot.SetActive(content.Length > 0);
+        // The exclamation icon remains visible even between objectives; only the text clears.
+        if (questRoot != null) questRoot.SetActive(true);
     }
 
     private void BeginTransition()

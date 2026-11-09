@@ -1,40 +1,124 @@
 {
   "items": [
-    { "id": "health_potion", "name": "", "description": "" },
-    { "id": "mana_potion", "name": "", "description": "" },
-    { "id": "copper_gear", "name": "", "description": "" },
-    { "id": "tutorial_gear", "name": "", "description": "" },
-    { "id": "sky_crystal", "name": "", "description": "" }
-  ],
-  "stats": [
-    { "id": "Persuasion", "name": "설득", "description": "" },
-    { "id": "Evasion", "name": "회피", "description": "" },
-    { "id": "Attack", "name": "공격", "description": "" },
-    { "id": "Defense", "name": "방어", "description": "" },
-    { "id": "Stealth", "name": "은신", "description": "" }
-  ],
-  "equipmentSlots": [
-    { "id": "Weapon", "name": "무기", "description": "" },
-    { "id": "Armor", "name": "방어구", "description": "" },
-    { "id": "Accessory", "name": "장신구", "description": "" },
-    { "id": "Head", "name": "머리", "description": "" },
-    { "id": "Shoes", "name": "신발", "description": "" },
-    { "id": "Other", "name": "기타", "description": "" }
-  ],
-  "categories": [
-    { "id": "All", "name": "전체", "description": "" },
-    { "id": "Misc", "name": "잡화", "description": "" },
-    { "id": "Consumable", "name": "소비", "description": "" },
-    { "id": "Equipment", "name": "장비", "description": "" },
-    { "id": "Quest", "name": "퀘스트", "description": "" }
-  ],
-  "ui": [
-    { "id": "capacityFormat", "text": "상태 -\n\nCount {0}/{1}\n\nQuest {2}/{3}\n\nCategory {4}" },
-    { "id": "emptyTooltip", "text": "아이템 위에 마우스를 올리면 설명을 확인할 수 있습니다." },
-    { "id": "tooltipFormat", "text": "<size=105%>{0}</size>  x{1}\n카테고리: {2}\n{3}" },
-    { "id": "equipmentTooltipFormat", "text": "<size=105%>{0}</size>\n{1}" },
-    { "id": "equipmentEffectFormat", "text": "{0} +{1}" },
-    { "id": "quickSlotFormat", "text": "퀵슬롯 {0}" },
-    { "id": "inventoryHint", "text": "[I] 인벤토리" }
+    {
+      "id": "health_potion",
+      "display": {
+        "name": "",
+        "description": "체력을 회복하는 붉은 포션입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "mana_potion",
+      "display": {
+        "name": "",
+        "description": "마나를 회복하는 푸른 포션입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "copper_gear",
+      "display": {
+        "name": "",
+        "description": "임시 장비 슬롯 검증용 구리 장비입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "tutorial_gear",
+      "display": {
+        "name": "헤진 망토",
+        "description": "쓰레기 더미에서 주웠다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "sky_crystal",
+      "display": {
+        "name": "",
+        "description": "퀘스트 아이템 획득 검증용으로 빛나는 결정입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    }
   ]
 }

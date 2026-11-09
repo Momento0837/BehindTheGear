@@ -47,7 +47,7 @@ namespace BehindTheGear.HideOut
             {
                 if (!Initialized) return 0;
                 var weapon = EquippedWeapon;
-                return (weapon != null ? weapon.GetStatIncrease(PersonalStatType.Attack) + HideOutModel.DummyBonus(State, weapon.ItemId) : 0)
+                return (weapon != null ? HideOutModel.DummyBonus(State, weapon.ItemId) : 0)
                     + (Inventory.Stats != null ? Inventory.Stats.AttackPowerBonus : 0);
             }
         }

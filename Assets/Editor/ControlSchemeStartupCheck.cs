@@ -12,10 +12,11 @@ public static class ControlSchemeStartupCheck
 {
     private const string Active = "BTG.ControlStartupCheck";
     private const string Preference = "BehindTheGear.PlayerControlScheme";
-    private const string Output = "C:/Users/user/Documents/ChatGPT/BehindTheGear/play-review/control-startup-validation";
+    private const string Output = "Temp/control-startup-validation";
     private static int phase;
     private static double started, since;
     private static float origin;
+    private static bool mainMenuStarted, sawBlack;
 
     static ControlSchemeStartupCheck()
     {
@@ -75,6 +76,7 @@ public static class ControlSchemeStartupCheck
             if (started == 0)
             {
                 started = since = now;
+                mainMenuStarted = sawBlack = false;
                 new GameObject("Control Check Keyboard").AddComponent<PlayReviewKeyboard>();
             }
             Require(now - started < 45, "Startup check timed out at phase " + phase);
@@ -82,6 +84,29 @@ public static class ControlSchemeStartupCheck
             {
                 Require(SceneManager.GetActiveScene().name == "ControlSchemeSelect", "First screen is not control selection");
                 if (now - since < .5) return;
+                var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
+                var controls = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                    .First(c => c.name == "Control Selection Canvas");
+                if (!mainMenuStarted)
+                {
+                    Require(menu != null && !controls.gameObject.activeSelf, "Main menu must appear before control selection");
+                    var buttons = menu.GetComponentsInChildren<Button>();
+                    buttons.First(b => b.name == "Quit").onClick.Invoke();
+                    Require(EditorApplication.isPlaying, "Quit must be ignored in the Editor");
+                    ScreenCapture.CaptureScreenshot(Path.GetFullPath(Output + "/main-menu-" + mode + ".png"));
+                    buttons.First(b => b.name == "Start").onClick.Invoke();
+                    buttons.First(b => b.name == "Start").onClick.Invoke();
+                    Require(buttons.All(b => !b.interactable), "Menu buttons must be disabled during transition");
+                    mainMenuStarted = true;
+                    return;
+                }
+                if (SceneFadeTransition.IsRunning)
+                {
+                    sawBlack |= UnityEngine.Object.FindObjectsByType<Image>(FindObjectsSortMode.None)
+                        .Any(i => i.name == "Black Fade" && i.color.a >= .99f);
+                    return;
+                }
+                Require(sawBlack && controls.gameObject.activeSelf && menu == null, "Start must fade through black to control selection");
                 var selection = UnityEngine.Object.FindFirstObjectByType<ControlSchemeSelectScene>();
                 Require(selection != null, "Selection controller missing");
                 string method = wasd ? "SelectWasdMouseQe" : "SelectArrowKeys";
@@ -133,7 +158,7 @@ public static class ControlSchemeStartupCheck
                 if (Time.unscaledTime - since < .35) return;
                 var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>();
                 Require(Mathf.Abs(player.transform.position.x - origin) < .1f, "Unselected movement keys moved player");
-                File.AppendAllText(Output + "/result.txt", (wasd ? "WASD" : "Arrow") + ": selection screen -> Forest, choice retained, selected keys move, other keys ignored, duplicate click guarded.\n");
+                File.AppendAllText(Output + "/result.txt", (wasd ? "WASD" : "Arrow") + ": main menu -> black fade -> selection screen -> Forest, Editor Quit ignored, choice retained, selected keys move, other keys ignored, duplicate click guarded.\n");
                 PlayReviewKeyboard.Held = Array.Empty<Key>();
                 if (wasd)
                 {

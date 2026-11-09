@@ -25,18 +25,28 @@ public sealed class PlayerStats : MonoBehaviour
 
     public int AvailablePoints => availablePoints;
     public int StatSpreadLimit => statSpreadLimit;
-    public int Evasion => evasion;
-    public int Stealth => stealth;
-    public int Attack => attack;
-    public int Defense => defense;
-    public int Persuasion => persuasion;
-    public float MonsterAttackIgnoreChance => evasion * .005f;
-    public float DetectionGainMultiplier => Mathf.Max(0f, 1f - stealth * .015f);
-    public int AttackPowerBonus => attack;
-    public float DamageReduction => defense < 2 ? 0f : defense * .005f;
-    public int ShopPriceDiscount => persuasion;
+    public int Evasion => GetValue(PersonalStatType.Evasion);
+    public int Stealth => GetValue(PersonalStatType.Stealth);
+    public int Attack => GetValue(PersonalStatType.Attack);
+    public int Defense => GetValue(PersonalStatType.Defense);
+    public int Persuasion => GetValue(PersonalStatType.Persuasion);
+    public float MonsterAttackIgnoreChance => Mathf.Clamp01(Evasion * .005f);
+    public float DetectionGainMultiplier => Mathf.Max(0f, 1f - Stealth * .015f);
+    public int AttackPowerBonus => Attack;
+    public float DamageReduction => Defense < 2 ? 0f : Mathf.Clamp01(Defense * .005f);
+    public int ShopPriceDiscount => Persuasion;
 
     public int GetValue(PersonalStatType type)
+    {
+        int total = GetBaseValue(type);
+        var inventory = GetComponent<PlayerInventory>();
+        if (inventory != null)
+            for (int i = 1; i <= 6; i++)
+                total += inventory.GetEquipped((InventoryItemDefinition.EquipmentSlot)i)?.GetStatIncrease(type) ?? 0;
+        return Mathf.Max(0, total);
+    }
+
+    public int GetBaseValue(PersonalStatType type)
     {
         return type switch
         {
@@ -57,7 +67,7 @@ public sealed class PlayerStats : MonoBehaviour
             return false;
         }
 
-        int current = GetValue(type);
+        int current = GetBaseValue(type);
         if (current + 1 > GetLowestStatValue() + statSpreadLimit)
         {
             message = "스탯 편차 제한으로 강화할 수 없습니다.";
@@ -69,6 +79,17 @@ public sealed class PlayerStats : MonoBehaviour
 
         string displayName = GetDisplayName(type);
         message = $"{displayName}{GetSubjectParticle(displayName)} 1 증가했습니다.";
+        Changed?.Invoke();
+        return true;
+    }
+
+    public bool TryDowngrade(PersonalStatType type, out string message)
+    {
+        int current = GetBaseValue(type);
+        if (current <= 0) { message = "줄일 수 있는 스탯이 없습니다."; return false; }
+        SetValue(type, current - 1);
+        availablePoints++;
+        message = $"{GetDisplayName(type)} 1 감소, 포인트 1 반환";
         Changed?.Invoke();
         return true;
     }
@@ -87,7 +108,7 @@ public sealed class PlayerStats : MonoBehaviour
             PersonalStatType.Evasion => $"몬스터 공격 무시 +{GetValue(type) * .5f:0.#}%",
             PersonalStatType.Stealth => $"발각 증가 속도 -{GetValue(type) * 1.5f:0.#}%",
             PersonalStatType.Attack => $"공격력 +{AttackPowerBonus}, 인벤토리 +{Attack * 2}칸",
-            PersonalStatType.Defense => defense < 2 ? "2부터 피해 경감 적용" : $"받는 피해 -{defense * .5f:0.#}%",
+            PersonalStatType.Defense => Defense < 2 ? "2부터 피해 경감 적용" : $"받는 피해 -{Defense * .5f:0.#}%",
             PersonalStatType.Persuasion => $"상점 가격 -{ShopPriceDiscount}원",
             _ => string.Empty
         };

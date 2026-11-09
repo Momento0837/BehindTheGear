@@ -264,6 +264,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         try
         {
             yield return SceneFadeTransition.FadeThrough(PrepareMarket);
+            // Show the arrival objective before the player reaches the NPC greeting trigger.
+            ShowGuide("market_arrival");
         }
         finally
         {

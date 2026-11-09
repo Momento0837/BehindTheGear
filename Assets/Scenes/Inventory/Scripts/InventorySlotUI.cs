@@ -16,6 +16,13 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
     private bool generateNameLabel = true;
     private bool useLockedAlpha;
     private bool locked;
+    private bool dragging;
+    public Vector3 IconWorldPosition => icon != null ? icon.rectTransform.TransformPoint(icon.rectTransform.rect.center) : transform.position;
+    public void SetDragging(bool value)
+    {
+        dragging = value;
+        if (icon != null) icon.color = new Color(1f, 1f, 1f, dragging ? 0f : 1f);
+    }
     private bool ownsNameLabel;
     private Material registrationFlashMaterial;
     private Material originalIconMaterial;
@@ -197,7 +204,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
 
     public void OnBeginDrag(PointerEventData data) { if (!locked && data.button == PointerEventData.InputButton.Left) owner.BeginDrag(index, data); }
     public void OnDrag(PointerEventData data) { if (!locked) owner.Drag(data); }
-    public void OnEndDrag(PointerEventData data) => owner.CancelDrag();
+    public void OnEndDrag(PointerEventData data) => owner.EndDrag();
     public void OnDrop(PointerEventData data) { if (!locked && data.button == PointerEventData.InputButton.Left) owner.Drop(index); }
     public void OnPointerClick(PointerEventData data)
     {
