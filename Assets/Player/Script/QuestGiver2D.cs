@@ -41,7 +41,14 @@ public sealed class QuestGiver2D : MonoBehaviour
     private QuestPickup2D activeQuestItem;
     private DialoguePurpose activeDialoguePurpose;
 
-    public QuestStage CurrentStage { get; private set; }
+    private string QuestId => QuestJournal.Id(questDefinition != null ? questDefinition : Resources.Load<TextAsset>("Quests/collection_quest"));
+    public QuestStage CurrentStage => (QuestStage)(QuestJournal.Find(QuestId)?.stage ?? 0);
+    public void ConfigureDefinition(TextAsset definition) => questDefinition = definition;
+    private void Start()
+    {
+        if (CurrentStage == QuestStage.WaitingForItem && QuestJournal.Definition(QuestId)?.objectives[0].kind == "collect")
+            SpawnQuestItem();
+    }
 
     private void Awake()
     {
@@ -81,11 +88,13 @@ public sealed class QuestGiver2D : MonoBehaviour
                 PlayQuestDialogue(questCompletedDialogue, DialoguePurpose.Completion);
                 break;
             case QuestStage.WaitingForItem:
-                // Keep one active pickup in the world until it is collected.
+                var record = QuestJournal.Find(QuestId);
+                var definition = QuestJournal.Definition(QuestId);
+                conversationDialogue.ShowChoices("김철수", definition.objective + " " +
+                    string.Join(" · ", System.Array.ConvertAll(record.amounts, n => n.ToString())), "확인", "닫기", _ => { });
                 break;
             case QuestStage.Completed:
-                CurrentStage = QuestStage.NotStarted;
-                ShowQuestChoices();
+                conversationDialogue.ShowChoices("김철수", "이미 완료한 부탁이야. 고마워!", "확인", "닫기", _ => { });
                 break;
         }
     }
@@ -117,9 +126,10 @@ public sealed class QuestGiver2D : MonoBehaviour
 
         if (finishedPurpose == DialoguePurpose.Acceptance && CurrentStage == QuestStage.NotStarted)
         {
-            if (!SpawnQuestItem()) return;
-            CurrentStage = QuestStage.WaitingForItem;
-            QuestTracker.Accept(this, questDefinition != null ? questDefinition : Resources.Load<TextAsset>("Quests/collection_quest"));
+            var definition = QuestJournal.Definition(QuestId);
+            if (definition?.objectives == null) return;
+            if (definition.objectives[0].kind == "collect" && !SpawnQuestItem()) return;
+            QuestJournal.Accept(QuestId);
             onQuestAccepted?.Invoke();
         }
         else if (finishedPurpose == DialoguePurpose.Rejection)
@@ -128,9 +138,14 @@ public sealed class QuestGiver2D : MonoBehaviour
         }
         else if (finishedPurpose == DialoguePurpose.Completion && CurrentStage == QuestStage.ReadyToComplete)
         {
-            CurrentStage = QuestStage.Completed;
-            QuestTracker.Complete(this);
-            onQuestCompleted?.Invoke();
+            var inventory = PlayerTargetRegistry.Current != null ? PlayerTargetRegistry.Current.GetComponent<PlayerInventory>() : FindFirstObjectByType<PlayerInventory>();
+            var bridge = inventory != null ? inventory.GetComponent<BehindTheGear.HideOut.HideOutPlayerBridge>() : null;
+            if (bridge == null && inventory != null && SaveGameSession.Settings != null)
+            {
+                bridge = inventory.gameObject.AddComponent<BehindTheGear.HideOut.HideOutPlayerBridge>();
+                bridge.Initialize(SaveGameSession.Settings, false);
+            }
+            if (QuestJournal.Report(QuestId, bridge)) onQuestCompleted?.Invoke();
         }
     }
 
@@ -159,6 +174,6 @@ public sealed class QuestGiver2D : MonoBehaviour
     {
         if (CurrentStage != QuestStage.WaitingForItem || item == null || item != activeQuestItem) return;
         activeQuestItem = null;
-        CurrentStage = QuestStage.ReadyToComplete;
+        // PlayerInventory.Add already recorded the accepted item amount.
     }
 }

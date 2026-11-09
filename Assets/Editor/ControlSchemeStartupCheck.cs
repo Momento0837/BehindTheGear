@@ -59,6 +59,7 @@ public static class ControlSchemeStartupCheck
         PlayerPrefs.Save();
         SessionState.SetBool(Active, false);
         PlayReviewKeyboard.Held = Array.Empty<Key>();
+        ManualSaveStore.UseValidationDirectory(null);
         EditorApplication.isPlaying = false;
         Debug.Log("CONTROL_STARTUP_CHECK " + message);
         if (Application.isBatchMode)
@@ -77,6 +78,7 @@ public static class ControlSchemeStartupCheck
             {
                 started = since = now;
                 mainMenuStarted = sawBlack = false;
+                ManualSaveStore.UseValidationDirectory(Path.GetFullPath(Output + "/slot-" + Guid.NewGuid().ToString("N")));
                 new GameObject("Control Check Keyboard").AddComponent<PlayReviewKeyboard>();
             }
             Require(now - started < 45, "Startup check timed out at phase " + phase);
@@ -106,7 +108,11 @@ public static class ControlSchemeStartupCheck
                         .Any(i => i.name == "Black Fade" && i.color.a >= .99f);
                     return;
                 }
-                Require(sawBlack && controls.gameObject.activeSelf && menu == null, "Start must fade through black to control selection");
+                Require(sawBlack && !controls.gameObject.activeSelf && menu == null, "Start must fade through black to the save menu");
+                var saveMenu = UnityEngine.Object.FindFirstObjectByType<ManualSaveMenu>();
+                Require(saveMenu != null, "Save menu missing");
+                saveMenu.NewGame();
+                Require(saveMenu.ChoosingControls && controls.gameObject.activeSelf, "New Game must reveal control selection");
                 var selection = UnityEngine.Object.FindFirstObjectByType<ControlSchemeSelectScene>();
                 Require(selection != null, "Selection controller missing");
                 string method = wasd ? "SelectWasdMouseQe" : "SelectArrowKeys";
@@ -158,7 +164,7 @@ public static class ControlSchemeStartupCheck
                 if (Time.unscaledTime - since < .35) return;
                 var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>();
                 Require(Mathf.Abs(player.transform.position.x - origin) < .1f, "Unselected movement keys moved player");
-                File.AppendAllText(Output + "/result.txt", (wasd ? "WASD" : "Arrow") + ": main menu -> black fade -> selection screen -> Forest, Editor Quit ignored, choice retained, selected keys move, other keys ignored, duplicate click guarded.\n");
+                File.AppendAllText(Output + "/result.txt", (wasd ? "WASD" : "Arrow") + ": main menu -> black fade -> save menu -> new game -> selection screen -> Forest, Editor Quit ignored, choice retained, selected keys move, other keys ignored, duplicate click guarded.\n");
                 PlayReviewKeyboard.Held = Array.Empty<Key>();
                 if (wasd)
                 {

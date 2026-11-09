@@ -351,10 +351,11 @@ MonoBehaviour:
   items:
   - {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}
   - {fileID: 11400000, guid: 827c77effb72482181f134b6e55728dd, type: 2}
-  - {fileID: 11400000, guid: 644e5b747a684e5695f7129042e0ecb5, type: 2}
-  - {fileID: 11400000, guid: 509a4e4686b34fae82f7b67091f78168, type: 2}
   - {fileID: 11400000, guid: a5a85a23e3084a11a6f4ccd7793b1164, type: 2}
   - {fileID: 11400000, guid: f1e592654b504720a15535c7edc8a3a9, type: 2}
+  - {fileID: 11400000, guid: 644e5b747a684e5695f7129042e0ecb5, type: 2}
+  - {fileID: 11400000, guid: 509a4e4686b34fae82f7b67091f78168, type: 2}
+  - {fileID: 11400000, guid: d88c47c8aa6e47f09cad433586a9a40b, type: 2}
   scenePath: Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity
   testWeaponId: hideout_test_weapon
   appearanceSprites:

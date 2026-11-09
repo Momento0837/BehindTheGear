@@ -3,14 +3,17 @@ using UnityEngine;
 
 namespace BehindTheGear.HideOut
 {
-    public sealed class HideOutDummy : MonoBehaviour, IMeleeDamageReceiver
+    public sealed class HideOutDummy : MonoBehaviour, ICombatHitReceiver
     {
         public int LastDamage { get; private set; }
         public int Hits { get; private set; }
+        public CombatHit LastHit { get; private set; }
         public event Action Hit;
-        public void ReceiveMeleeDamage(int damage)
+        public void ReceiveMeleeDamage(int damage) => ReceiveHit(new CombatHit(damage));
+        public void ReceiveHit(CombatHit hit)
         {
-            LastDamage = Mathf.Max(0, damage); Hits++; Hit?.Invoke();
+            LastHit = hit;
+            LastDamage = hit.Damage; Hits++; Hit?.Invoke();
         }
         public void Test(HideOutPlayerBridge player)
         {

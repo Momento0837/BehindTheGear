@@ -1,0 +1,4 @@
+PASS Assets/Scenes/Controls/ControlSchemeSelect.unity
+PASS Assets/Scenes/Main/Forest.unity
+PASS Assets/Scenes/Main/Market.unity
+PASS hideout build scene, catalog and continue player prefab

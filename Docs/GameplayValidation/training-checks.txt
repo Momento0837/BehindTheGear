@@ -1,0 +1,49 @@
+PASS direct base Play uses the existing complete SavePlayerRig
+PASS entry does not grant equipment or test resources
+PASS world click starts the existing facility camera move before fading or loading training
+PASS camera reaches the authored dummy facility zoom before the scene transition
+PASS new training camera and player bind while the fade is fully black
+PASS training is revealed gradually and the existing fade clears completely
+PASS world icon opens the existing ScareCrowScene with the same live player
+PASS rapid world and shortcut clicks load the training scene once
+PASS training has one persistent player
+PASS training has one active input context
+PASS travel preserves HP MP growth equipment inventory currency and per-weapon upgrade data
+PASS training restores the original movement attack input and physics
+PASS training contains one dummy and no reward-bearing monsters
+PASS serialized training scene contains no missing scripts
+PASS authored map sprites materials player marker camera and Korean font references resolve
+PASS HUD uses the real equipped weapon name
+PASS real configured movement input moves the existing player on the authored floor
+PASS actual animated melee resolves final equipped damage once across overlapping colliders without fabricating criticals
+PASS one final hit produces one pooled damage number
+PASS last-hit HUD reads final damage
+PASS Existing training player can prepare a stealth attack
+PASS Real equipped animation delivers the one-swing stealth bonus as final damage without fabricating a critical
+PASS existing successive swing policy remains one hit per swing
+PASS strong presentation changes no damage and creates one number
+PASS explicit final critical metadata combines with strong style in one unclamped number (integration seam test)
+PASS critical display follows supplied combat metadata
+PASS visual sway returns exactly to rest without moving target or hitbox
+PASS repeated dummy hits create no currency items XP or quest progress
+PASS Training player has five grenades and can preview a throw
+PASS Training throw spends one actual grenade
+PASS Real grenade fuse hits the authored dummy once with 24 final damage
+PASS Grenade uses the existing dummy number pool and last-hit HUD
+PASS existing shockwave skill remains usable in training
+PASS existing area attack delivers its resolved damage once to the same receiver
+PASS facility button opens the original upgrade panel with existing control lock
+PASS original paid facility upgrade immediately changes the equipped weapon bonus
+PASS Existing bridge capture includes the consumed grenade count through its save extension
+PASS real ESC closes the facility panel first without leaving training
+PASS real ESC restores the retained base position and frozen base control context (active=True, simulated=False, input=False, position=(-4.44, -0.36, 0.00), expected=(-4.44, -0.36, 0.00))
+PASS return retains upgrades and actual HP MP including skill expenditure
+PASS bottom shortcut uses the same camera-first entry sequence
+PASS bottom shortcut re-enters with the same functioning player
+PASS Base and training scene travel never refills used grenades
+PASS equipment event refreshes HUD to the no-weapon notice without granting a weapon
+PASS return button tolerates duplicate clicks and retains one player
+PASS direct training-scene load reuses the persistent rig without resetting data
+PASS direct training-scene Play hosts the original facility panel without a second base scene
+PASS direct training return opens the registered original base with one persistent player
+Unity 6000.3.23f1; 48 checks; 0 runtime errors; PASSED

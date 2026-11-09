@@ -19,10 +19,12 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     private BoxCollider2D playerCollider;
     private readonly Collider2D[] hitBuffer = new Collider2D[16];
     private readonly HashSet<MonsterFollowController> hitMonsters = new();
+    private readonly HashSet<IMeleeDamageReceiver> hitReceivers = new();
     private ContactFilter2D monsterFilter;
     private float facingDirection = 1f;
     private float nextAttackTime;
     private bool comboHitPending;
+    private int swingStealthBonus;
     private PlayerMovement2D movement;
     private static readonly int[] AttackEffectStateHashes =
     {
@@ -47,7 +49,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     {
         if (target == null || Time.time < nextAttackTime) return false;
         nextAttackTime = Time.time + attackCooldown;
-        target.ReceiveMeleeDamage(ResolvedDamage);
+        target.ReceiveMeleeDamage(ResolveSwingDamage());
         return true;
     }
 
@@ -74,9 +76,10 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     public void BeginComboSwing()
     {
         comboHitPending = true;
+        swingStealthBonus = GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0;
     }
 
-    public void CancelComboSwing() => comboHitPending = false;
+    public void CancelComboSwing() { comboHitPending = false; swingStealthBonus = 0; }
 
     public void ResolveComboHit(int attackIndex)
     {
@@ -88,25 +91,43 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
 
     private void ResolveHit(float direction)
     {
+        int damage = ResolveSwingDamage();
         Vector2 size = new(attackRange, playerCollider.bounds.size.y);
         Vector2 center = playerCollider.bounds.center + Vector3.right * direction
             * (playerCollider.bounds.extents.x + attackRange * .5f);
         int hitCount = Physics2D.OverlapBox(center, size, 0f, monsterFilter, hitBuffer);
         hitMonsters.Clear();
+        hitReceivers.Clear();
         for (int i = 0; i < hitCount; i++)
         {
             MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
             if (monster != null && monster.CurrentHealth > 0 && hitMonsters.Add(monster))
             {
-                monster.TakeMeleeDamage(ResolvedDamage, direction);
+                monster.TakeMeleeDamage(damage, direction);
                 movement?.ApplyHitStop(.05f);
             }
             else if (monster == null)
             {
-                foreach (MonoBehaviour component in hitBuffer[i].GetComponents<MonoBehaviour>())
-                    if (component is IMeleeDamageReceiver receiver) { receiver.ReceiveMeleeDamage(ResolvedDamage); break; }
+                foreach (MonoBehaviour component in hitBuffer[i].GetComponentsInParent<MonoBehaviour>())
+                    if (component is IMeleeDamageReceiver receiver)
+                    {
+                        if (hitReceivers.Add(receiver))
+                        {
+                            // This resolver currently has no critical roll. Preserve that combat policy.
+                            if (receiver is ICombatHitReceiver detailed) detailed.ReceiveHit(new CombatHit(damage));
+                            else receiver.ReceiveMeleeDamage(damage);
+                        }
+                        break;
+                    }
             }
         }
+    }
+
+    private int ResolveSwingDamage()
+    {
+        int bonus = swingStealthBonus + (GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0);
+        swingStealthBonus = 0;
+        return ResolvedDamage + bonus;
     }
 
     public void PlayComboEffect(int attackIndex)

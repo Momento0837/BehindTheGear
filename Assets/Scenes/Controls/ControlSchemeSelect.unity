@@ -1657,6 +1657,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8112000001}
   - component: {fileID: 8112000002}
+  - component: {fileID: 8112000003}
   m_Layer: 0
   m_Name: Control Scheme Selection
   m_TagString: Untagged
@@ -1695,6 +1696,20 @@ MonoBehaviour:
   fadeDuration: 0.8
   mainMenuPrefab: {fileID: 8113000000, guid: 61dcb3ae50988884a9ed266f7ed25f80, type: 3}
   controlSelectionCanvas: {fileID: 685379722}
+--- !u!114 &8112000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8112000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cff182d90b8c0bc498ba27a3f6f5fb4c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ManualSaveMenu
+  settings: {fileID: 11400000, guid: f19fa4f2e4eb4f388485315264ecc993, type: 2}
+  continuePlayerPrefab: {fileID: 482447334495655640, guid: 00f4c36b06926154cbb549c1a6bae419, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

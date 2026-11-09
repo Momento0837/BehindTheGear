@@ -1,5 +1,15 @@
 {
   "questName": "물건을 찾아서",
   "objective": "퀘스트 물건을 찾아 가져오기",
-  "showObjective": false
+  "showObjective": true,
+  "questId": "collection_quest",
+  "objectives": [
+    {
+      "kind": "collect",
+      "targetId": "sky_crystal",
+      "required": 1
+    }
+  ],
+  "rewardCoins": 20,
+  "rewardActionPoints": 2
 }

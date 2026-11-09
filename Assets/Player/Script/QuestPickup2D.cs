@@ -30,7 +30,10 @@ public sealed class QuestPickup2D : MonoBehaviour
         if (questItem != null)
         {
             int requiredAmount = Mathf.Max(1, amount);
-            if (inventory == null || inventory.Add(questItem, requiredAmount) < requiredAmount) return;
+            if (inventory == null) return;
+            int accepted = inventory.Add(questItem, requiredAmount);
+            amount = requiredAmount - accepted;
+            if (amount > 0) return;
         }
 
         collected = true;

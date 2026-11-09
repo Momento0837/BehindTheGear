@@ -21,6 +21,7 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
             return;
         }
 
+        GetComponent<ManualSaveMenu>()?.SetVisible(false);
         showingMainMenu = true;
         controlSelectionCanvas.SetActive(false);
         mainMenu = Instantiate(mainMenuPrefab);
@@ -35,10 +36,19 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
         {
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             mainMenu.gameObject.SetActive(false);
-            controlSelectionCanvas.SetActive(true);
+            var saveMenu = GetComponent<ManualSaveMenu>();
+            if (saveMenu != null) saveMenu.SetVisible(true);
+            else controlSelectionCanvas.SetActive(true);
         }, fadeDuration);
         showingMainMenu = false;
         Destroy(mainMenu.gameObject);
+    }
+
+    public void ShowControlsForNewGame()
+    {
+        showingMainMenu = false;
+        if (mainMenu != null) mainMenu.gameObject.SetActive(false);
+        controlSelectionCanvas.SetActive(true);
     }
 
     public void SelectWasdMouseQe() => Select(PlayerControlScheme.WasdMouseQe);
@@ -48,6 +58,8 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
     private void Select(PlayerControlScheme scheme)
     {
         if (showingMainMenu || selecting || SceneFadeTransition.IsRunning) return;
+        var menu = GetComponent<ManualSaveMenu>();
+        if (menu != null && !menu.ChoosingControls) return;
         selecting = true;
         PlayerControlSchemeSettings.Select(scheme);
         SceneFadeTransition.LoadScene(gameSceneName, fadeDuration, success =>

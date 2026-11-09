@@ -26,6 +26,16 @@ namespace BehindTheGear.HideOut
         }
 
         public HideOutSettings settings;
+        [Tooltip("Existing gameplay rig used only when playing the base scene without a live player.")]
+        public GameObject trainingPlayerPrefab;
+        [Tooltip("Seconds for each half of the training scene fade, after the facility camera arrives.")]
+        [Min(.05f)] public float trainingFadeDuration = .4f;
+        private bool trainingTransitionPending;
+        public HideOutPlayerBridge TrainingPlayer => player;
+        private Transform trainingPanelParent;
+        private bool trainingPanelOnly;
+        private HideOutDummy trainingPanelTarget;
+        public bool TrainingUpgradeVisible => trainingPanelParent != null && dummyPanel.activeSelf;
         [Tooltip("Show the temporary hideout and HUD in Scene/Game views before Play.")]
         public bool editorAutoPreview = true;
 
@@ -41,10 +51,13 @@ namespace BehindTheGear.HideOut
         private GameObject storagePanel;
         private GameObject tooltip;
         private TMP_Text tooltipText;
+        private RectTransform tooltipAnchor;
+        private readonly Vector3[] tooltipCorners = new Vector3[4];
         private readonly TMP_Text[] resourceValues = new TMP_Text[4];
         private readonly Image[] resourceBars = new Image[2];
         private readonly List<Sprite> hudSprites = new();
-        private TMP_Text feedbackText;
+        private TMP_Text feedbackText, questSummaryText;
+        private readonly List<GameObject> suspendedFieldCanvases = new();
         private TMP_Text upgradeTitle;
         private TMP_Text upgradeLevel;
         private TMP_Text progressText;
@@ -106,8 +119,10 @@ namespace BehindTheGear.HideOut
         private float nextRefresh;
         private Rigidbody2D body;
         private bool bodyWasSimulated;
-        private bool released;
+        private bool released = true;
         private readonly List<Behaviour> suspendedControls = new();
+        private readonly Dictionary<SpriteRenderer, bool> suspendedPlayerRenderers = new();
+        private readonly List<SpriteRenderer> playerRenderers = new();
         private readonly Dictionary<Facility, Image> hotspotRings = new();
         private readonly Dictionary<Facility, Button> facilityButtons = new();
         private readonly Dictionary<Facility, TMP_Text> facilityLevelLabels = new();
@@ -150,6 +165,12 @@ namespace BehindTheGear.HideOut
                         return;
                     }
                 }
+                else if (trainingPlayerPrefab != null)
+                {
+                    var rig = Instantiate(trainingPlayerPrefab);
+                    var inventory = rig.GetComponentInChildren<PlayerInventory>();
+                    player = inventory.GetComponent<HideOutPlayerBridge>() ?? inventory.gameObject.AddComponent<HideOutPlayerBridge>();
+                }
                 else
                 {
                     GameObject actor = new("HideOut Sandbox Player");
@@ -166,7 +187,8 @@ namespace BehindTheGear.HideOut
                 }
             }
 
-            try { player.Initialize(settings, !HideOutTravel.CanReturn); }
+            SaveGameSession.Configure(settings);
+            try { player.Initialize(settings, persistent == null && !HideOutTravel.CanReturn); }
             catch (Exception exception)
             {
                 Debug.LogError("[HideOut] " + exception.Message, this);
@@ -174,6 +196,21 @@ namespace BehindTheGear.HideOut
                 return;
             }
 
+            SuspendPlayer();
+            BuildUI();
+            QuestJournal.Publish();
+            player.Changed += Refresh;
+            player.UpgradeSucceeded += OnFacilityUpgraded;
+            player.Inventory.Changed += Refresh;
+            Refresh();
+        }
+
+        public void SuspendPlayer()
+        {
+            if (player == null) return;
+            HidePlayerRenderers();
+            if (!released) return;
+            released = false;
             body = player.GetComponent<Rigidbody2D>();
             if (body != null)
             {
@@ -188,19 +225,39 @@ namespace BehindTheGear.HideOut
                 control.enabled = false;
             }
 
-            BuildUI();
-            player.Changed += Refresh;
-            player.UpgradeSucceeded += OnFacilityUpgraded;
-            player.Inventory.Changed += Refresh;
-            Refresh();
+            // The continued player rig carries field HUDs. Suspend their canvases during the base UI.
+            foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (canvas.gameObject.scene == gameObject.scene || canvas.rootCanvas != canvas || !canvas.gameObject.activeInHierarchy
+                    || canvas.GetComponent<SceneFadeTransition>() != null || canvas.GetComponent<DeathFadeTransition>() != null) continue;
+                suspendedFieldCanvases.Add(canvas.gameObject); canvas.gameObject.SetActive(false);
+            }
         }
 
         public void ReleasePlayer()
         {
             if (released) return;
             released = true;
+            foreach (var pair in suspendedPlayerRenderers)
+                if (pair.Key != null) pair.Key.forceRenderingOff = pair.Value;
+            suspendedPlayerRenderers.Clear();
+            foreach (var canvas in suspendedFieldCanvases) if (canvas != null) canvas.SetActive(true);
+            suspendedFieldCanvases.Clear();
             if (body != null) body.simulated = bodyWasSimulated;
             foreach (var control in suspendedControls) if (control != null) control.enabled = true;
+            suspendedControls.Clear();
+        }
+
+        private void HidePlayerRenderers()
+        {
+            // Preserve data and Animator state; suppress only the body's rendering in the base.
+            player.GetComponentsInChildren(true, playerRenderers);
+            foreach (var renderer in playerRenderers)
+            {
+                if (!suspendedPlayerRenderers.ContainsKey(renderer))
+                    suspendedPlayerRenderers.Add(renderer, renderer.forceRenderingOff);
+                renderer.forceRenderingOff = true;
+            }
         }
 
         private void OnDestroy()
@@ -237,6 +294,7 @@ namespace BehindTheGear.HideOut
 
         private void LateUpdate()
         {
+            if (!released && player != null) HidePlayerRenderers();
             if (hideoutCamera == null || canvasRect == null) return;
             foreach (var pair in facilityOverlayRoots)
                 if (facilityWorldAnchors.TryGetValue(pair.Key, out Transform anchor))
@@ -245,6 +303,7 @@ namespace BehindTheGear.HideOut
                 PositionOverlay(dummyTargetRect, isometricEnvironment.DummyBodyAnchor.position + Vector3.down * .95f);
             if (dummyPopupRect != null && isometricEnvironment != null && isometricEnvironment.DummyBodyAnchor != null)
                 PositionOverlay(dummyPopupRect, isometricEnvironment.DummyBodyAnchor.position + Vector3.up * .35f);
+            PositionTooltip();
         }
 
         private void BuildUI()
@@ -284,7 +343,7 @@ namespace BehindTheGear.HideOut
             BuildExhibitionPanel(baseView.transform);
             BuildShortcutBar(baseView.transform);
             storagePanel.transform.localScale = Vector3.one * .86f;
-            Rect(storagePanel.GetComponent<RectTransform>(), 895, 45, 770, 820);
+            Rect(storagePanel.GetComponent<RectTransform>(), 895, 88, 770, 820);
             upgradeOverlay.transform.Find("Upgrade Panel").localScale = Vector3.one * .86f;
             Rect(upgradeOverlay.transform.Find("Upgrade Panel").GetComponent<RectTransform>(), 1020, 45, 650, 820);
             Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
@@ -373,7 +432,7 @@ namespace BehindTheGear.HideOut
             lockButton.GetComponent<Image>().sprite = circleSprite;
             Text(lockButton.transform, "잠금", 10, 29, 100, 34, 22, new Color(.55f, .56f, .55f)).alignment = TextAlignmentOptions.Center;
             Text(lockButton.transform, "LOCKED", 10, 62, 100, 24, 12, new Color(.34f, .36f, .36f)).alignment = TextAlignmentOptions.Center;
-            AddHover(lockButton.gameObject, () => ShowLockedTooltip(275, 400), HideTooltip);
+            AddHover(lockButton.gameObject, () => ShowLockedTooltip(lockButton.GetComponent<RectTransform>()), HideTooltip);
             Box(parent, "Locked Shade", 0, 118, 405, 594, new Color(0, 0, 0, .38f));
         }
 
@@ -431,7 +490,7 @@ namespace BehindTheGear.HideOut
             var level = Text(hotspot.transform, "", -10, 80, 100, 24, 14, Color.white);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[Facility.Storage] = level;
-            AddHover(hotspot.gameObject, () => ShowFacilityTooltip(Facility.Storage, 778, 372), HideTooltip);
+            AddFacilityHover(hotspot, Facility.Storage);
         }
 
         private void BuildTreatmentBooth(Transform parent)
@@ -525,7 +584,7 @@ namespace BehindTheGear.HideOut
             var dummyLevel = Text(sword.transform, "", -14, 72, 100, 24, 14, Color.white);
             dummyLevel.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[Facility.Dummy] = dummyLevel;
-            AddHover(sword.gameObject, () => ShowFacilityTooltip(Facility.Dummy, 850, 132), HideTooltip);
+            AddFacilityHover(sword, Facility.Dummy);
 
             dummyDamagePopup = Text(parent, "", 645, 92, 310, 54, 30, new Color(1f, .77f, .30f));
             dummyDamagePopup.alignment = TextAlignmentOptions.Center;
@@ -683,7 +742,7 @@ namespace BehindTheGear.HideOut
             var level = Text(button.transform, "", -10, 80, 100, 24, 14, Color.white);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[facility] = level;
-            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, x + 94, y - 2), HideTooltip);
+            AddFacilityHover(button, facility);
             return button.gameObject;
         }
 
@@ -697,6 +756,10 @@ namespace BehindTheGear.HideOut
                 OnDummySelected, new Color(1f, 1f, 1f, .001f), 0);
             dummyTargetRect = dummyTargetButton.GetComponent<RectTransform>();
             CenterAnchors(dummyTargetRect);
+            // The large transparent body target must not cover the facility icon's hover/click area.
+            dummyTargetRect.SetAsFirstSibling();
+            AddFacilityHover(dummyTargetButton, Facility.Dummy,
+                facilityButtons.TryGetValue(Facility.Dummy, out var dummyIcon) ? dummyIcon.GetComponent<RectTransform>() : dummyTargetRect);
 
             dummyDamagePopup = Text(parent, "", 0, 0, 250, 58, 34, new Color(1f, .72f, .28f));
             dummyDamagePopup.alignment = TextAlignmentOptions.Center;
@@ -733,7 +796,7 @@ namespace BehindTheGear.HideOut
             TMP_Text level = Text(root, "", 0, 119, 184, 24, 15, Accent);
             level.alignment = TextAlignmentOptions.Center;
             facilityLevelLabels[facility] = level;
-            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, 0f, 0f), HideTooltip);
+            AddFacilityHover(button, facility);
         }
 
         private void DrawRegisteredIcon(Facility facility, Transform parent)
@@ -785,24 +848,53 @@ namespace BehindTheGear.HideOut
 
         private void BuildShortcutBar(Transform parent)
         {
+            const float viewportWidth = 1416f;
+            const float cardStride = 250f;
             var bar = Box(parent, "Facility Shortcuts", 24, 794, 1552, 100, new Color(.035f, .045f, .05f, .98f));
             bar.raycastTarget = true;
-            var viewport = Box(bar.transform, "Viewport", 8, 4, 1536, 92, Color.clear);
+            var viewport = Box(bar.transform, "Viewport", 68, 4, viewportWidth, 92, Color.clear);
             viewport.raycastTarget = true;
             viewport.gameObject.AddComponent<RectMask2D>();
             var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
             content.SetParent(viewport.transform, false);
-            Rect(content, 0, 0, Mathf.Max(1536, settings.topView.shortcutOrder.Length * 250), 92);
+            Rect(content, 0, 0, Mathf.Max(viewportWidth, settings.topView.shortcutOrder.Length * cardStride), 92);
             var scroll = bar.gameObject.AddComponent<ScrollRect>();
             scroll.viewport = viewport.rectTransform; scroll.content = content;
             scroll.horizontal = true; scroll.vertical = false; scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.scrollSensitivity = 35f;
+
+            void ScrollShortcuts(int direction)
+            {
+                float overflow = content.rect.width - viewport.rectTransform.rect.width;
+                if (overflow <= 0f) return;
+                scroll.StopMovement();
+                scroll.horizontalNormalizedPosition = Mathf.Clamp01(scroll.horizontalNormalizedPosition + direction * cardStride / overflow);
+            }
+
+            var previous = Button(bar.transform, "Previous Facilities", 8, 4, 52, 92,
+                () => ScrollShortcuts(-1), PanelSoft, 32);
+            previous.GetComponentInChildren<TMP_Text>().text = "<";
+            var next = Button(bar.transform, "Next Facilities", 1492, 4, 52, 92,
+                () => ScrollShortcuts(1), PanelSoft, 32);
+            next.GetComponentInChildren<TMP_Text>().text = ">";
+
+            void RefreshNavigation()
+            {
+                float overflow = content.rect.width - viewport.rectTransform.rect.width;
+                float offset = scroll.horizontalNormalizedPosition * overflow;
+                previous.interactable = overflow > .5f && offset > .5f;
+                next.interactable = overflow > .5f && offset < overflow - .5f;
+            }
+
+            scroll.onValueChanged.AddListener(_ => RefreshNavigation());
+            RefreshNavigation();
             for (int i = 0; i < settings.topView.shortcutOrder.Length; i++)
             {
                 Facility facility = settings.topView.shortcutOrder[i];
-                var button = Button(content, "Shortcut " + facility, i * 250, 0, 244, 88,
+                var button = Button(content, "Shortcut " + facility, i * cardStride, 0, 244, 88,
                     () => SelectFacility(facility), PanelSoft, 0);
                 shortcutButtons[facility] = button;
+                AddFacilityHover(button, facility);
                 var iconRoot = new GameObject("Icon", typeof(RectTransform)).GetComponent<RectTransform>();
                 iconRoot.SetParent(button.transform, false); Rect(iconRoot, 0, 0, 88, 88);
                 DrawRegisteredIcon(facility, iconRoot);
@@ -867,6 +959,10 @@ namespace BehindTheGear.HideOut
             roomNameText.alignment = TextAlignmentOptions.Center;
 
             BuildResourceHud(parent);
+            Button(parent, "Main Menu Button", 24, 84, 126, 44, SaveGameSession.ReturnToMenu, new Color(.10f, .12f, .13f, .94f), 16)
+                .GetComponentInChildren<TMP_Text>().text = "메인 메뉴";
+            questSummaryText = Text(parent, "", 400, 52, 620, 44, 16, Accent);
+            questSummaryText.alignment = TextAlignmentOptions.Center;
             feedbackText = Text(parent, "", 400, 750, 800, 36, 17, Accent);
             feedbackText.alignment = TextAlignmentOptions.Center;
 
@@ -976,7 +1072,7 @@ namespace BehindTheGear.HideOut
         {
             if (editorPreview || HideOutModel.IsExhibition(facility)) return;
             Refresh(); // Apply the persisted appearance before the animation hook.
-            isometricEnvironment.PlayUpgradeFeedback(facility);
+            if (isometricEnvironment.isActiveAndEnabled) isometricEnvironment.PlayUpgradeFeedback(facility);
             onFacilityUpgraded.Invoke((int)facility, level);
         }
 
@@ -1045,12 +1141,10 @@ namespace BehindTheGear.HideOut
 
         private void ExitHideOut()
         {
-            if (!HideOutTravel.CanReturn)
-            {
-                player.SetMessage("직접 실행 테스트입니다. 플레이 구간의 HideOutEntrance로 진입하면 원래 위치로 돌아갑니다.");
-                return;
-            }
-            player.StartCoroutine(HideOutTravel.Exit(player, gameObject.scene));
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
+            // Temporary exit destination for every hideout entry path, including direct scene play.
+            HideOutTravel.ClearSession();
+            SaveGameSession.StartExpedition("Market");
         }
 
         private void OpenStoragePanel()
@@ -1157,6 +1251,7 @@ namespace BehindTheGear.HideOut
         private void SelectFacility(Facility facility)
         {
             if (editorPreview) { if (hasSelection && selected == facility) HideEditorDetails(); else ShowEditorSample(facility); return; }
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
             if (cameraController == null || cameraController.IsMoving || cameraController.ShouldSuppressFacilityClick
                 || dummyTesting && selected != facility) return;
             if (hasSelection && selected == facility) { ReturnToOverview(); return; }
@@ -1184,8 +1279,10 @@ namespace BehindTheGear.HideOut
             RefreshHotspots();
             RefreshFacilityInput();
 
+            trainingTransitionPending = facility == Facility.Dummy;
             if (!cameraController.TryFocus(anchor, focus.orthographicSize, () => OpenSelectedFacility(facility)))
             {
+                trainingTransitionPending = false;
                 hasSelection = false;
                 roomNameText.text = "전체 하이드아웃";
                 Refresh();
@@ -1200,7 +1297,10 @@ namespace BehindTheGear.HideOut
             switch (facility)
             {
                 case Facility.Storage: OpenStoragePanel(); break;
-                case Facility.Dummy: OpenDummyPanel(); break;
+                case Facility.Dummy:
+                    cameraController.enabled = false; // Hold the arrived framing throughout the fade.
+                    player.StartCoroutine(HideOutTravel.EnterTraining(this));
+                    break;
                 default: OpenUpgrade(facility); break;
             }
             RefreshFacilityInput();
@@ -1209,7 +1309,7 @@ namespace BehindTheGear.HideOut
         private void UseSelectedFacility()
         {
             if (editorPreview || HideOutModel.IsExhibition(selected) || IsLocked(selected)) return;
-            if (selected == Facility.Bed) player.Save();
+            if (selected == Facility.Bed) { if (player.Save()) useFacilityButton.interactable = false; }
             else if (selected == Facility.Clinic) player.Heal();
             else if (selected == Facility.Potions) player.ReceivePotions();
             Refresh();
@@ -1271,7 +1371,7 @@ namespace BehindTheGear.HideOut
 
         private void ReturnToOverview()
         {
-            if (cameraController == null || cameraController.IsMoving) return;
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController == null || cameraController.IsMoving) return;
             dummyTesting = false;
             exhibitionPanel.SetActive(false);
             HideStoragePanelSilently();
@@ -1292,10 +1392,65 @@ namespace BehindTheGear.HideOut
 
         private void OnDummySelected()
         {
-            if (cameraController != null && (cameraController.IsMoving || cameraController.ShouldSuppressFacilityClick)) return;
-            if (dummyTesting) AttackDummy();
-            else if (hasSelection && selected == Facility.Dummy) OpenDummyPanel();
-            else SelectFacility(Facility.Dummy);
+            SelectFacility(Facility.Dummy);
+        }
+
+        public void EnterTraining()
+        {
+            if (editorPreview || player == null) return;
+            SelectFacility(Facility.Dummy);
+        }
+
+        public void FinishTrainingTransition()
+        {
+            trainingTransitionPending = false;
+            if (cameraController != null)
+            {
+                cameraController.enabled = true;
+                // Reset the retained base only after its roots have been hidden by travel.
+                if (!gameObject.activeInHierarchy)
+                {
+                    cameraController.SnapToOverview();
+                    hasSelection = false;
+                    roomNameText.text = "전체 하이드아웃";
+                }
+            }
+            RefreshFacilityInput();
+        }
+
+        // Reparent the actual existing panel; costs, callbacks and upgrade logic remain unchanged.
+        public void InitializeTrainingPanel(HideOutPlayerBridge bridge, HideOutDummy target)
+        {
+            // Direct training-scene Play hosts only the existing panel, without a second base or player.
+            enabled = false;
+            trainingPanelOnly = true;
+            player = bridge; settings = bridge.Settings; dummy = target;
+            BuildDummyPanel(transform);
+            player.Changed += Refresh;
+            player.Inventory.Changed += Refresh;
+        }
+
+        public void OpenTrainingUpgrade(Transform parent, HideOutDummy target)
+        {
+            if (trainingPanelParent != null) return;
+            trainingPanelTarget = target;
+            trainingPanelParent = dummyPanel.transform.parent;
+            dummyPanel.transform.SetParent(parent, false);
+            Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
+            dummyTestButton.gameObject.SetActive(false);
+            dummyPanel.SetActive(true);
+            RefreshDummyPanel();
+        }
+
+        public void CloseTrainingUpgrade()
+        {
+            if (trainingPanelParent == null) return;
+            dummyPanel.SetActive(false);
+            dummyPanel.transform.SetParent(trainingPanelParent, false);
+            Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
+            trainingPanelParent = null;
+            trainingPanelTarget = null;
+            dummyTestButton.gameObject.SetActive(true);
         }
 
         private void OpenDummyPanel()
@@ -1312,6 +1467,7 @@ namespace BehindTheGear.HideOut
 
         private void CloseDummyPanel()
         {
+            if (trainingPanelParent != null) { CloseTrainingUpgrade(); return; }
             ReturnToOverview();
         }
 
@@ -1322,6 +1478,11 @@ namespace BehindTheGear.HideOut
         }
 
         private void StartOrAttackDummyTest()
+        {
+            EnterTraining();
+        }
+
+        private void LegacyDummyTest()
         {
             if (player.EquippedWeapon == null)
             {
@@ -1399,23 +1560,58 @@ namespace BehindTheGear.HideOut
             if (player.State.levels[(int)selected] > previous) player.SetMessage($"{DisplayName(selected)} 업그레이드 완료");
         }
 
-        private void ShowFacilityTooltip(Facility facility, float x, float y)
+        private void AddFacilityHover(Button button, Facility facility, RectTransform anchor = null)
         {
-            Rect(tooltip.GetComponent<RectTransform>(), 661, 74, 278, 84);
-            bool locked = IsLocked(facility);
-            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
-            tooltip.SetActive(true);
+            var target = anchor != null ? anchor : button.GetComponent<RectTransform>();
+            AddHover(button.gameObject, () => ShowFacilityTooltip(facility, target), HideTooltip);
         }
 
-        private void ShowLockedTooltip(float x, float y)
+        private void ShowFacilityTooltip(Facility facility, RectTransform anchor)
         {
-            Rect(tooltip.GetComponent<RectTransform>(), 661, 74, 278, 84);
+            bool locked = IsLocked(facility);
+            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
+            ShowTooltip(anchor);
+        }
+
+        private void ShowLockedTooltip(RectTransform anchor)
+        {
             tooltipText.text = "미해금 구역\n아직 해금되지 않은 시설입니다";
+            ShowTooltip(anchor);
+        }
+
+        private void ShowTooltip(RectTransform anchor)
+        {
+            tooltipAnchor = anchor;
+            var parent = (RectTransform)tooltip.transform.parent;
+            Vector2 preferred = tooltipText.GetPreferredValues(tooltipText.text);
+            float width = Mathf.Min(Mathf.Max(278f, preferred.x + 28f), Mathf.Min(360f, parent.rect.width - 20f));
+            preferred = tooltipText.GetPreferredValues(tooltipText.text, width - 28f, Mathf.Infinity);
+            float height = Mathf.Min(Mathf.Max(84f, preferred.y + 20f), parent.rect.height - 20f);
+            Rect(tooltip.GetComponent<RectTransform>(), 0, 0, width, height);
+            Rect(tooltipText.rectTransform, 14, 10, width - 28f, height - 20f);
+            tooltip.transform.SetAsLastSibling();
             tooltip.SetActive(true);
+            PositionTooltip();
+        }
+
+        private void PositionTooltip()
+        {
+            if (tooltip == null || !tooltip.activeSelf) return;
+            if (tooltipAnchor == null || !tooltipAnchor.gameObject.activeInHierarchy) { HideTooltip(); return; }
+            var rect = tooltip.GetComponent<RectTransform>();
+            var parent = (RectTransform)rect.parent;
+            tooltipAnchor.GetWorldCorners(tooltipCorners);
+            Vector3 topRight = parent.InverseTransformPoint(tooltipCorners[2]);
+            // Keep the whole panel above/right of the icon, with a small readable gap.
+            float x = Mathf.Clamp(topRight.x + 16f, parent.rect.xMin + 10f, parent.rect.xMax - rect.rect.width - 10f);
+            float top = Mathf.Clamp(topRight.y + 12f + rect.rect.height,
+                parent.rect.yMin + rect.rect.height + 10f, parent.rect.yMax - 10f);
+            Rect(rect, x - parent.rect.xMin, parent.rect.yMax - top, rect.rect.width, rect.rect.height);
         }
 
         private void HideTooltip()
         {
+            tooltipAnchor = null;
             if (tooltip != null) tooltip.SetActive(false);
         }
 
@@ -1467,6 +1663,7 @@ namespace BehindTheGear.HideOut
 
         private void Refresh()
         {
+            if (trainingPanelOnly) { if (dummyPanel != null && dummyPanel.activeSelf) RefreshDummyPanel(); return; }
             if (resourceValues[0] == null || player == null || !player.Initialized) return;
             var state = player.State;
             resourceValues[0].text = $"{player.Health.CurrentHealth}/{player.Health.MaxHealth}";
@@ -1476,6 +1673,7 @@ namespace BehindTheGear.HideOut
             resourceBars[0].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), 3f);
             resourceBars[1].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), 3f);
             feedbackText.text = player.Message;
+            if (questSummaryText != null) questSummaryText.text = QuestTracker.CurrentQuestName + (QuestTracker.ShowObjective ? "\n" + QuestTracker.CurrentObjective : "");
             RefreshStorageAppearance();
             RefreshFacilityLevels();
             RefreshHotspots();
@@ -1519,7 +1717,7 @@ namespace BehindTheGear.HideOut
 
         private void RefreshFacilityInput()
         {
-            bool moving = cameraController != null && cameraController.IsMoving;
+            bool moving = trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
             foreach (var pair in facilityButtons) pair.Value.interactable = !moving && (!dummyTesting || selected == pair.Key);
             foreach (var pair in shortcutButtons) pair.Value.interactable = !moving && (!dummyTesting || selected == pair.Key);
             if (dummyTargetButton != null)
@@ -1653,7 +1851,8 @@ namespace BehindTheGear.HideOut
             dummyWeaponText.text = weapon != null ? weapon.DisplayName : "장착 없음";
             dummyDamageText.text = weapon != null && player.Melee != null ? player.EquippedWeaponFinalDamage.ToString() : "-";
             dummyBonusText.text = weapon != null ? $"+{player.EquippedWeaponDummyBonus}" : "+0";
-            dummyLastDamageText.text = dummy.Hits > 0 ? dummy.LastDamage.ToString() : "-";
+            var target = trainingPanelTarget != null ? trainingPanelTarget : dummy;
+            dummyLastDamageText.text = target.Hits > 0 ? target.LastDamage.ToString() : "-";
 
             var lines = new List<string>();
             if (cost == null) lines.Add("최대 강화 단계");
@@ -1688,8 +1887,9 @@ namespace BehindTheGear.HideOut
             int maximum = MaxLevel(selected);
             var cost = HideOutModel.Next(state, settings.rules, selected);
             var presentation = settings.FindPresentation(selected);
+            useFacilityButton.interactable = !player.IsSaving;
             useFacilityButton.gameObject.SetActive(selected == Facility.Bed || selected == Facility.Clinic || selected == Facility.Potions);
-            useFacilityButton.GetComponentInChildren<TMP_Text>().text = selected == Facility.Bed ? "진행 상황 저장" : selected == Facility.Clinic ? "치료 이용" : "물약 수령";
+            useFacilityButton.GetComponentInChildren<TMP_Text>().text = selected == Facility.Bed ? "저장하기" : selected == Facility.Clinic ? "치료 이용" : "물약 수령";
             bool missingPotion = selected == Facility.Potions && settings.Find(settings.rules.potionId) == null;
             useFacilityButton.interactable = !IsLocked(selected) && !missingPotion && (selected != Facility.Potions || player.Now >= state.potionsReadyAt);
 
@@ -1739,7 +1939,8 @@ namespace BehindTheGear.HideOut
 
         private void AddHover(GameObject target, UnityEngine.Events.UnityAction enter, UnityEngine.Events.UnityAction exit)
         {
-            var trigger = target.AddComponent<EventTrigger>();
+            var trigger = target.GetComponent<EventTrigger>() ?? target.AddComponent<EventTrigger>();
+            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerEnter || entry.eventID == EventTriggerType.PointerExit);
             var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
             enterEntry.callback.AddListener(_ => enter());
             trigger.triggers.Add(enterEntry);

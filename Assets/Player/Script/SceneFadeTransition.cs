@@ -53,6 +53,16 @@ public sealed class SceneFadeTransition : MonoBehaviour
     }
 
     public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
+        => FadeThrough(InvokeWhileBlack(whileBlack), duration);
+
+    private static IEnumerator InvokeWhileBlack(Action action)
+    {
+        action?.Invoke();
+        yield break;
+    }
+
+    // Additive travel can finish loading and bind its camera while the screen stays opaque.
+    public static IEnumerator FadeThrough(IEnumerator whileBlack, float duration = .8f)
     {
         if (instance == null) CreateRuntimeInstance();
         while (instance.running) yield return null;
@@ -61,7 +71,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         try
         {
             yield return transition.Fade(0f, 1f, duration);
-            whileBlack?.Invoke();
+            if (whileBlack != null) yield return whileBlack;
             yield return null;
             yield return transition.Fade(1f, 0f, duration);
         }
@@ -80,12 +90,13 @@ public sealed class SceneFadeTransition : MonoBehaviour
         running = true;
         yield return Fade(0f, 1f, fadeDuration);
 
+        var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
         AsyncOperation load = null;
         try
         {
             load = SceneManager.LoadSceneAsync(sceneName);
         }
-        catch (ArgumentException exception)
+        catch (Exception exception)
         {
             Debug.LogException(exception, this);
         }
@@ -100,6 +111,9 @@ public sealed class SceneFadeTransition : MonoBehaviour
         }
 
         while (!load.isDone) yield return null;
+        // Let scene startup finish before replacing authored room drops.
+        yield return null; yield return null;
+        if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
         onComplete?.Invoke(true);

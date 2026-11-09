@@ -1,0 +1,57 @@
+PASS Runtime auto-wiring and visible player recognition
+PASS Visible player can be hit by an armed monster attack
+PASS Q can activate
+PASS Q costs 15 MP and makes player translucent
+PASS Q starts 12-second cooldown and 2.5-second duration
+PASS Attack sensor excludes invisible player
+PASS Wind-up attack cannot hit after Q and consumes pending hit
+PASS Already chasing monster returns to patrol during stealth
+PASS Repeated Q is rejected without spending MP
+PASS 2.5-second expiry restores alpha and recognition
+PASS Cooldown continues after stealth expires
+PASS Stealth reset fixture activates
+PASS Taking damage breaks stealth; Q does not grant invincibility
+PASS Disabling skills restores visibility
+PASS Disable/enable cannot reset cooldown
+PASS Archived shockwave can still be called independently
+PASS Archived shockwave retains its 25 MP cost
+PASS E deals 150% melee damage once per nearby monster and excludes distant enemies
+PASS E interrupts attack wind-up and staggers for 0.6 seconds
+PASS Shockwave pushes enemies away on both sides at speed 8
+PASS Repeated E is rejected without spending MP; independent 8-second cooldown
+PASS Insufficient MP does not start cooldown
+PASS Dialogue/inventory lock blocks both skills
+PASS Hideout physics suspension blocks both skills
+PASS Real Q key reaches stealth through the existing input reader
+PASS Existing player auto-wires five grenades without replacing the rig
+PASS Holding real E aims without spending ammunition
+PASS Holding E adjusts the angle and displays the ballistic trajectory
+PASS Releasing E throws one grenade, breaks stealth, and spends no shockwave MP
+PASS Arrow scheme maps stealth to C
+PASS Basic attack input breaks stealth
+PASS Arrow scheme maps hold and release grenade throwing to V
+PASS HUD labels follow selected control scheme
+PASS Grenade HUD shows real carried ammunition instead of an MP cost
+PASS Stealth can prepare the ambush fixture
+PASS First stealth swing deals 20 final damage while baseline melee stays 10
+PASS The next swing receives no lingering stealth bonus
+PASS Grenade can begin a fresh aimed throw
+PASS Cancelling aim consumes nothing and a release without aiming throws nothing
+PASS Grenade can aim again after cancellation
+PASS Releasing an accepted aim launches a physical grenade
+PASS Thrown body ignores the thrower's collider while its explosion can still hurt the player
+PASS Actual Rigidbody2D projectile travels forward and bends downward under gravity
+PASS Grenade detonates and cleans up after its real fuse
+PASS One grenade deals 24 to every nearby monster once, excluding distant enemies and duplicate colliders
+PASS Close explosion uses existing PlayerHealth and default defense for 4 self damage
+PASS Player outside the danger radius takes no self damage
+PASS A remaining carried grenade can be consumed exactly once
+PASS A remaining carried grenade can be consumed exactly once
+PASS Fifth throw immediately publishes the exhausted ammunition message
+PASS Empty supply cannot create a sixth grenade
+PASS HUD displays exhausted message and zero remaining grenades
+PASS Disable and enable never refills ammunition
+PASS Invalid saved ammunition is rejected without mutating the current supply
+PASS Existing save participant restores empty ammunition without an automatic refill
+PASS Dead player cannot cast skills or aim grenades
+PASS; Unity 6000.3.23f1; 56 checks; 0 runtime errors.

@@ -68,6 +68,11 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return null;
         player = FindFirstObjectByType<PlayerMovement2D>();
         if (player == null) yield break;
+        if (SaveGameSession.Expedition)
+        {
+            player.GetComponent<PlayerHealth>()?.ReviveAfterSceneRestart();
+            yield return FreeRoam(); yield break;
+        }
         locationHud = LocationHUD.Create();
         SceneManager.MoveGameObjectToScene(locationHud.gameObject, gameObject.scene);
         player.GetComponent<PlayerHealth>()?.ReviveAfterSceneRestart();
@@ -127,6 +132,53 @@ public sealed class StorySceneFlow : MonoBehaviour
         foreach (var monster in monsters) monster.BindPlayer(player.transform);
         if (gameObject.scene.name == "Forest") yield return Forest();
         else yield return Garbage();
+    }
+
+    private IEnumerator FreeRoam()
+    {
+        // Expeditions start at a safe fixed entrance; saved field position/combat are never replayed.
+        marketMap = gameObject.scene.name == "Market";
+        PlacePlayer(marketMap ? new Vector3(49f, -2.5f, 0) : new Vector3(-4.44f, -.36f, 0));
+        RoomDropCache.SetCurrent(gameObject.scene.path + (marketMap ? "#market" : ""));
+        foreach (var cutsceneObject in InScene<CutsceneVideoSequence>()) cutsceneObject.gameObject.SetActive(false);
+        var questGivers = InScene<QuestGiver2D>();
+        foreach (var npc in questGivers)
+        {
+            npc.enabled = true;
+            if (!marketMap)
+            {
+                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/collection_quest"));
+                npc.GetComponent<ConversationDialogue>()?.BindPlayer(player.GetComponent<PlayerControlLock>());
+                foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
+                foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
+                npc.GetComponent<Interactable2D>().enabled = true;
+            }
+            if (marketMap)
+            {
+                npc.transform.position = new Vector3(65f, -2.5f, 0);
+                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/market_quest"));
+                foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
+                foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
+                npc.GetComponent<Interactable2D>().enabled = true;
+                npc.GetComponent<ConversationDialogue>()?.BindPlayer(player.GetComponent<PlayerControlLock>());
+                npc.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
+            }
+        }
+        var exit = InScene<ScenePortal2D>().FirstOrDefault();
+        if (exit != null)
+        {
+            exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f);
+            var action = exit.GetComponent<StoryInteraction2D>() ?? exit.gameObject.AddComponent<StoryInteraction2D>();
+            action.Activated = _ => { if (!SceneFadeTransition.IsRunning) SceneFadeTransition.LoadScene(marketMap ? "Forest" : "Market", .4f); };
+            exit.gameObject.SetActive(true);
+        }
+        monsters = InScene<MonsterFollowController>();
+        foreach (var monster in monsters)
+        {
+            monster.BindPlayer(player.transform); monster.ConfigureLoot(sceneLoot); monster.SetTutorialProtection(false);
+        }
+        QuestJournal.Publish();
+        yield break;
     }
 
     private IEnumerator Forest()
@@ -276,7 +328,9 @@ public sealed class StorySceneFlow : MonoBehaviour
 
     private void PrepareMarket()
     {
+        var drops = RoomDropCache.Prepare(gameObject.scene.path + "#market");
         marketMap = true;
+        RoomDropCache.Commit(drops, gameObject.scene);
         PlacePlayer(new Vector3(49f, -2.5f, 0));
         QuestTracker.Complete(this);
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
@@ -316,7 +370,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         dialogue.PlayWithChoices(offer, "수락", "거절", choice =>
         {
             accepted = choice;
-            if (choice) AdvanceGuide("market_quest");
+            if (choice) { QuestJournal.Accept("market_quest"); AdvanceGuide("market_quest"); QuestJournal.Publish(); }
         }, startLine);
         while (!accepted.HasValue) yield return null;
         yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");

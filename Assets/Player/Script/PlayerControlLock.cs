@@ -10,6 +10,7 @@ public sealed class PlayerControlLock : MonoBehaviour
     [SerializeField] private Rigidbody2D playerBody;
 
     private int lockCount;
+    public bool IsLocked => lockCount > 0;
     private PlayerMovement2D playerMovement;
 
     private void Awake()

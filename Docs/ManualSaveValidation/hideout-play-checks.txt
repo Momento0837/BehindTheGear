@@ -1,0 +1,137 @@
+PASS fresh real Unity components
+PASS insufficient resources do not save or mutate
+PASS missing weapon blocks dummy upgrade without saving or spending
+PASS test grant changes memory without automatic saving
+PASS clinic heals and persists deadline
+PASS full HP/cooldown failure preserves deadline
+PASS bed increases max HP without healing
+PASS rapid duplicate input spends once and gives the equipped weapon one persistent bonus
+PASS real melee target receives calculated damage
+PASS melee cooldown prevents immediate second hit
+PASS rapid storage upgrade input applies one +2/+5 level and spends once
+PASS gym changes MP, not HP
+PASS real bag-to-storage transfer
+PASS real storage-to-bag conserves quantity
+PASS Selena starts locked
+PASS recruitment unlocks persisted potion delivery
+PASS storage contains an item before save/load verification
+PASS repeated load does not compound bonuses or discard other growth
+PASS save/load preserves storage item IDs, quantities and slot-backed capacity
+PASS load preserves both cooldowns
+PASS atomic save retains previous backup
+PASS save includes equipment, quest inventory and weapon-specific dummy bonus
+PASS same-frame double command applies once
+PASS manual save reports IO failure
+PASS save IO failure leaves live costs/levels/HP unchanged
+PASS level 2 appearance and explicit upgrade effect
+PASS level 4 appearance restored
+PASS level 6+ keeps final appearance without replay on load
+PASS entrance prefab references and trigger
+PASS interactable entrance loads actual HideOut and suspends origin
+PASS entry preserves HP inventory and weapon
+PASS HideOut freezes existing player controls and physics
+PASS HideOut owns exactly one active EventSystem
+PASS isometric view starts at the configured orthographic overview
+PASS 3D isometric diorama keeps facility panels in screen space
+PASS legacy room navigation buttons are absent
+PASS gentle pan moves a small distance from the overview without zooming
+PASS repeated pan stops at the boundary without overscroll
+PASS reverse pan responds immediately at the boundary
+PASS storage focus accepts one camera move
+PASS storage focus completes at its configured zoom
+PASS overview return accepts one camera move
+PASS camera returns to the configured overview zoom
+PASS 창고 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 창고 Facility Icon focuses camera
+PASS 창고 Facility Icon opens its facility panel after movement
+PASS 창고 Facility Icon remains clickable when focused
+PASS 창고 Facility Icon second click returns to overview
+PASS Shortcut Storage accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Storage focuses camera
+PASS Shortcut Storage opens its facility panel after movement
+PASS Shortcut Storage remains clickable when focused
+PASS Shortcut Storage second click returns to overview
+PASS 치료 부스 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 치료 부스 Facility Icon focuses camera
+PASS 치료 부스 Facility Icon opens its facility panel after movement
+PASS 치료 부스 Facility Icon remains clickable when focused
+PASS 치료 부스 Facility Icon second click returns to overview
+PASS Shortcut Clinic accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Clinic focuses camera
+PASS Shortcut Clinic opens its facility panel after movement
+PASS Shortcut Clinic remains clickable when focused
+PASS Shortcut Clinic second click returns to overview
+PASS 허수아비 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 허수아비 Facility Icon focuses camera
+PASS 허수아비 Facility Icon opens its facility panel after movement
+PASS 허수아비 Facility Icon remains clickable when focused
+PASS 허수아비 Facility Icon second click returns to overview
+PASS Shortcut Dummy accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Dummy focuses camera
+PASS Shortcut Dummy opens its facility panel after movement
+PASS Shortcut Dummy remains clickable when focused
+PASS Shortcut Dummy second click returns to overview
+PASS 침대 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 침대 Facility Icon focuses camera
+PASS 침대 Facility Icon opens its facility panel after movement
+PASS 침대 Facility Icon remains clickable when focused
+PASS 침대 Facility Icon second click returns to overview
+PASS Shortcut Bed accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Bed focuses camera
+PASS Shortcut Bed opens its facility panel after movement
+PASS Shortcut Bed remains clickable when focused
+PASS Shortcut Bed second click returns to overview
+PASS 물약 보관대 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 물약 보관대 Facility Icon focuses camera
+PASS 물약 보관대 Facility Icon opens its facility panel after movement
+PASS 물약 보관대 Facility Icon remains clickable when focused
+PASS 물약 보관대 Facility Icon second click returns to overview
+PASS Shortcut Potions accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Potions focuses camera
+PASS Shortcut Potions opens its facility panel after movement
+PASS Shortcut Potions remains clickable when focused
+PASS Shortcut Potions second click returns to overview
+PASS 체력단련실 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 체력단련실 Facility Icon focuses camera
+PASS 체력단련실 Facility Icon opens its facility panel after movement
+PASS 체력단련실 Facility Icon remains clickable when focused
+PASS 체력단련실 Facility Icon second click returns to overview
+PASS Shortcut Gym accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Gym focuses camera
+PASS Shortcut Gym opens its facility panel after movement
+PASS Shortcut Gym remains clickable when focused
+PASS Shortcut Gym second click returns to overview
+PASS 식탁 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 식탁 Facility Icon focuses camera
+PASS 식탁 Facility Icon opens its facility panel after movement
+PASS 식탁 Facility Icon remains clickable when focused
+PASS 식탁 Facility Icon second click returns to overview
+PASS Shortcut Dining accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Dining focuses camera
+PASS Shortcut Dining opens its facility panel after movement
+PASS Shortcut Dining remains clickable when focused
+PASS Shortcut Dining second click returns to overview
+PASS 무기제작실 Facility Icon accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS 무기제작실 Facility Icon focuses camera
+PASS 무기제작실 Facility Icon opens its facility panel after movement
+PASS 무기제작실 Facility Icon remains clickable when focused
+PASS 무기제작실 Facility Icon second click returns to overview
+PASS Shortcut Workshop accepts pointer input (active=True, interactable=True, camera=Overview, moving=False)
+PASS Shortcut Workshop focuses camera
+PASS Shortcut Workshop opens its facility panel after movement
+PASS Shortcut Workshop remains clickable when focused
+PASS Shortcut Workshop second click returns to overview
+PASS all facility click toggles preserve progress and resources
+PASS entry and selection never replay upgrade feedback
+PASS all six facilities restore visible stage at level 0
+PASS all six facilities restore visible stage at level 2
+PASS all six facilities restore visible stage at level 4
+PASS all six facilities restore visible stage at level 6
+PASS all six facilities restore visible stage at level 9
+PASS real paid upgrade plays one environment feedback
+PASS save reload restores art without replaying feedback
+PASS exit restores exact origin active states
+PASS exit restores configured position controls and physics
+PASS exit retains player progression
+PASS second visit retains the manual-save bed level without duplicating bonuses
+Unity 6000.3.23f1; 136 checks; PASSED

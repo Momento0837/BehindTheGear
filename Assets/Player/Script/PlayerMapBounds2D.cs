@@ -9,6 +9,9 @@ public sealed class PlayerMapBounds2D : MonoBehaviour
     private BoxCollider2D hitbox;
     private Vector2 horizontalBounds;
     private bool configured;
+    public bool HasHorizontalBounds => configured;
+    public Vector2 HorizontalBounds => horizontalBounds;
+    public void ClearHorizontalBounds() => configured = false;
 
     private void Awake()
     {

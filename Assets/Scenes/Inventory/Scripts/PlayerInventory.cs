@@ -72,6 +72,12 @@ public sealed class PlayerInventory : MonoBehaviour
         }
     }
 
+    public void ClearForRestore()
+    {
+        slots = Array.Empty<Slot>(); questSlots = Array.Empty<Slot>();
+        Array.Clear(quickSlotReadyAt, 0, quickSlotReadyAt.Length); itemReadyAt.Clear();
+    }
+
     public void NotifyContentsChanged() => Changed?.Invoke();
 
     public PlayerStats Stats => stats;
@@ -202,6 +208,7 @@ public sealed class PlayerInventory : MonoBehaviour
         if (accepted > 0)
         {
             Changed?.Invoke();
+            QuestJournal.Record("collect", item.ItemId, accepted);
             ItemCollected?.Invoke(item, accepted);
         }
 

@@ -15,7 +15,8 @@ public sealed class WindowsQuitOnEscape : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && !InventoryUI.EscapeHandledThisFrame)
+        if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && !InventoryUI.EscapeHandledThisFrame
+            && !BehindTheGear.HideOut.ScareCrowTrainingScene.IsActive)
             Application.Quit(0);
     }
 #endif

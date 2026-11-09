@@ -18,7 +18,7 @@ public sealed class MonsterRangeTrigger2D : MonoBehaviour
             for (int i = 0; i < count; i++)
             {
                 var health = overlaps[i].GetComponentInParent<PlayerHealth>();
-                if (health == null || health.IsDead) continue;
+                if (health == null || health.IsDead || PlayerSkills.IsHiddenFromMonsters(health)) continue;
                 owner.RecognizePlayer(health);
                 return true;
             }
