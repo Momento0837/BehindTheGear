@@ -13,6 +13,9 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     [SerializeField] private PlayerControlLock playerControlLock;
     [SerializeField] private ConversationDialogue dialogueAfterVideo;
     [SerializeField, Min(.1f)] private float skipHoldSeconds = 3f;
+    [Header("Skip UI Colors")]
+    [SerializeField] private Color spaceTextColor = Color.white;
+    [SerializeField] private Color countdownTextColor = Color.white;
 
     public bool IsPlaying => playing;
     public System.Func<System.Action, IEnumerator> EndingTransition { get; set; }
@@ -21,10 +24,10 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private bool ownsLock;
     private bool ending;
     private float heldSeconds;
-    private static readonly string[] SkipMessages = { "스킵중.", "스킵중..", "스킵중..." };
     private bool[] uiWasActive;
     private GameObject skipRoot;
     private TMP_Text skipText;
+    private TMP_Text countdownText;
     private Image skipFill;
     private Texture2D skipRingTexture;
     private GameObject videoRoot;
@@ -116,9 +119,9 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     {
         float progress = Mathf.Clamp01(heldSeconds / skipHoldSeconds);
         skipFill.fillAmount = progress;
-        skipText.text = progress > 0f
-            ? SkipMessages[Mathf.FloorToInt(heldSeconds / .3f) % SkipMessages.Length]
-            : $"Space {skipHoldSeconds:0.#}초 길게 누르기 · 컷신 스킵";
+        skipText.color = spaceTextColor;
+        countdownText.color = countdownTextColor;
+        countdownText.SetText("{0}", Mathf.Max(1, Mathf.CeilToInt(skipHoldSeconds - heldSeconds)));
     }
 
     private void OnVideoFinished(VideoPlayer _) { if (playing) Finish(true); }
@@ -216,33 +219,33 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
         scaler.matchWidthOrHeight = .5f;
-        var panel = new GameObject("Skip Panel", typeof(RectTransform), typeof(Image));
+        var panel = new GameObject("Skip Panel", typeof(RectTransform));
         var rect = panel.GetComponent<RectTransform>();
         rect.SetParent(skipRoot.transform, false);
         rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.one;
         rect.anchoredPosition = new Vector2(-24, -24);
-        rect.sizeDelta = new Vector2(480, 84);
-        panel.GetComponent<Image>().color = new Color(0, 0, 0, .7f);
-        panel.GetComponent<Image>().raycastTarget = false;
+        rect.sizeDelta = new Vector2(170, 64);
         var label = new GameObject("Skip Label", typeof(RectTransform), typeof(TextMeshProUGUI));
         var labelRect = label.GetComponent<RectTransform>();
         labelRect.SetParent(rect, false);
         labelRect.anchorMin = Vector2.zero;
         labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(12, 0);
-        labelRect.offsetMax = new Vector2(-92, 0);
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = new Vector2(-76, 0);
         skipText = label.GetComponent<TextMeshProUGUI>();
         var inventoryUi = FindFirstObjectByType<InventoryUI>();
         skipText.font = inventoryUi != null && inventoryUi.UiFont != null ? inventoryUi.UiFont : TMP_Settings.defaultFontAsset;
         skipText.fontSize = 22;
-        skipText.alignment = TextAlignmentOptions.Center;
+        skipText.text = "SPACE";
+        skipText.color = spaceTextColor;
+        skipText.alignment = TextAlignmentOptions.MidlineRight;
         skipText.raycastTarget = false;
         Sprite ringSprite = CreateSkipRingSprite();
         var track = new GameObject("Skip Ring Track", typeof(RectTransform), typeof(Image));
         var trackRect = track.GetComponent<RectTransform>();
         trackRect.SetParent(rect, false);
         trackRect.anchorMin = trackRect.anchorMax = new Vector2(1, .5f);
-        trackRect.anchoredPosition = new Vector2(-46, 0);
+        trackRect.anchoredPosition = new Vector2(-32, 0);
         trackRect.sizeDelta = new Vector2(64, 64);
         var trackImage = track.GetComponent<Image>();
         trackImage.sprite = ringSprite;
@@ -262,6 +265,18 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         skipFill.fillClockwise = true;
         skipFill.color = new Color(.8f, 1f, .45f);
         skipFill.raycastTarget = false;
+        var countdown = new GameObject("Skip Countdown", typeof(RectTransform), typeof(TextMeshProUGUI));
+        var countdownRect = countdown.GetComponent<RectTransform>();
+        countdownRect.SetParent(trackRect, false);
+        countdownRect.anchorMin = Vector2.zero;
+        countdownRect.anchorMax = Vector2.one;
+        countdownRect.offsetMin = countdownRect.offsetMax = Vector2.zero;
+        countdownText = countdown.GetComponent<TextMeshProUGUI>();
+        countdownText.font = skipText.font;
+        countdownText.fontSize = 24;
+        countdownText.alignment = TextAlignmentOptions.Midline;
+        countdownText.color = countdownTextColor;
+        countdownText.raycastTarget = false;
     }
 
     private void CreateVideoUi()

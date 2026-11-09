@@ -113,7 +113,9 @@ public static class FullGameplayReview
                     if (!skipChecked && (float)Get(video, "heldSeconds") > .7f)
                     {
                         var text = (TMPro.TMP_Text)Get(video, "skipText");
-                        Check(text.text.StartsWith("스킵중") && !text.text.Contains("%"), "Skip animation text");
+                        var countdown = (TMPro.TMP_Text)Get(video, "countdownText");
+                        Check(text.text == "SPACE" && int.TryParse(countdown.text, out int remaining)
+                            && remaining >= 1 && remaining <= 3, "Skip label and countdown");
                         skipChecked = true; Shot("02-skip-animation");
                     }
                     return;

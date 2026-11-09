@@ -167,7 +167,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         var exit = InScene<ScenePortal2D>().FirstOrDefault();
         if (exit != null)
         {
-            exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f);
+            exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f, lightFacesRight: !marketMap);
             var action = exit.GetComponent<StoryInteraction2D>() ?? exit.gameObject.AddComponent<StoryInteraction2D>();
             action.Activated = _ => { if (!SceneFadeTransition.IsRunning) SceneFadeTransition.LoadScene(marketMap ? "Forest" : "Market", .4f); };
             exit.gameObject.SetActive(true);
@@ -337,7 +337,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
         marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
         marketBubble.Finished += () => { if (!marketNpcSpoken) ShowGuide("market_talk"); };
-        portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f);
+        portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f, lightFacesRight: false);
         portal.SetActive(true);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
