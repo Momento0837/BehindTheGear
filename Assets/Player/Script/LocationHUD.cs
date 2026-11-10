@@ -18,6 +18,12 @@ public sealed class LocationHUD : MonoBehaviour
     private float elapsed;
     private bool presenting;
     private readonly Queue<string> notices = new();
+    public void Dismiss()
+    {
+        notices.Clear(); presenting = false; elapsed = 0;
+        if (visibility != null) visibility.alpha = 0;
+    }
+    private void OnDisable() => Dismiss();
     private const float HeightInSeconds = .2f;
     private const float WidthInSeconds = .3f;
     private const float FadeInSeconds = HeightInSeconds + WidthInSeconds;

@@ -140,14 +140,18 @@ public sealed class StorySceneFlow : MonoBehaviour
         marketMap = gameObject.scene.name == "Market";
         PlacePlayer(marketMap ? new Vector3(49f, -2.5f, 0) : new Vector3(-4.44f, -.36f, 0));
         RoomDropCache.SetCurrent(gameObject.scene.path + (marketMap ? "#market" : ""));
-        foreach (var cutsceneObject in InScene<CutsceneVideoSequence>()) cutsceneObject.gameObject.SetActive(false);
+        locationHud = LocationHUD.Create();
+        SceneManager.MoveGameObjectToScene(locationHud.gameObject, gameObject.scene);
+        dialogue = InScene<ConversationDialogue>().FirstOrDefault(d => d.GetComponent<BlackMarkerNpc>() != null);
+        cutscene = InScene<CutsceneVideoSequence>().FirstOrDefault();
+        if (cutscene != null) { cutscene.gameObject.SetActive(true); cutscene.BindPlayer(player.GetComponent<PlayerControlLock>()); }
         var questGivers = InScene<QuestGiver2D>();
         foreach (var npc in questGivers)
         {
             npc.enabled = true;
             if (!marketMap)
             {
-                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/collection_quest"));
+                npc.enabled = false;
                 npc.GetComponent<ConversationDialogue>()?.BindPlayer(player.GetComponent<PlayerControlLock>());
                 foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
                 foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
@@ -156,7 +160,7 @@ public sealed class StorySceneFlow : MonoBehaviour
             if (marketMap)
             {
                 npc.transform.position = new Vector3(65f, -2.5f, 0);
-                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/market_quest"));
+                npc.enabled = false;
                 foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
                 foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
                 npc.GetComponent<Interactable2D>().enabled = true;
@@ -169,7 +173,10 @@ public sealed class StorySceneFlow : MonoBehaviour
         {
             exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f, lightFacesRight: !marketMap);
             var action = exit.GetComponent<StoryInteraction2D>() ?? exit.gameObject.AddComponent<StoryInteraction2D>();
-            action.Activated = _ => { if (!SceneFadeTransition.IsRunning) SceneFadeTransition.LoadScene(marketMap ? "Forest" : "Market", .4f); };
+            portal = exit.gameObject;
+            action.Activated = UsePortal;
+            ready = !marketMap;
+            if (marketMap && dialogue != null) PrepareMarket();
             exit.gameObject.SetActive(true);
         }
         monsters = InScene<MonsterFollowController>();
@@ -370,7 +377,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         dialogue.PlayWithChoices(offer, "수락", "거절", choice =>
         {
             accepted = choice;
-            if (choice) { QuestJournal.Accept("market_quest"); AdvanceGuide("market_quest"); QuestJournal.Publish(); }
+            if (choice) AdvanceGuide("market_quest");
         }, startLine);
         while (!accepted.HasValue) yield return null;
         yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");

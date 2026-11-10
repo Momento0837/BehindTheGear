@@ -101,10 +101,10 @@ public sealed class InGameSkillHUD : MonoBehaviour
         if (titles[1] != null)
         {
             float remaining = daggers != null ? daggers.CooldownRemaining : 0;
-            titles[1].text = wasd ? "E 독 단검" : "E/V 독 단검";
-            timers[1].fontSize = 19; timers[1].text = remaining > 0 ? $"{remaining:0.0}s" : "3개 동시 투척";
+            titles[1].text = wasd ? "E 단검 투척" : "E/V 단검 투척";
+            timers[1].fontSize = 19; timers[1].text = remaining > 0 ? $"{remaining:0.0}s" : "준비";
             float duration = daggers != null && daggers.Settings != null ? daggers.Settings.poisonDuration : 4;
-            costs[1].text = $"독 {duration:0.#}초 · 3연"; costs[1].color = new Color(.55f, .9f, .6f);
+            costs[1].text = "MP 10%"; costs[1].color = new Color(.55f, .9f, .6f);
             cooldowns[1].fillAmount = daggers == null ? 0 : remaining / Mathf.Max(.01f, daggers.Cooldown);
         }
         if (grenadeNotice != null) grenadeNotice.gameObject.SetActive(false);
@@ -138,10 +138,14 @@ public sealed class InGameSkillHUD : MonoBehaviour
         bool active = index == 0 && skills != null && skills.IsStealthed
             && (actions == null || actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth);
         bool insufficient = mana != null && mana.CurrentMana < cost;
-        timers[index].text = active ? $"은신 {skills.StealthRemaining:0.0}" : remaining > 0f ? $"{remaining:0.0}s"
+        var slotIcon = cooldowns[index].transform.parent.GetComponent<Image>();
+        if (slotIcon != null) slotIcon.color = insufficient && !active ? new Color(.7f, .7f, .7f, 1) : Color.white;
+        timers[index].text = active ? "은신 중" : remaining > 0f ? $"{remaining:0.0}s"
             : skills == null || !skills.CanUseSkills ? "" : insufficient ? "MP 부족" : "준비";
         timers[index].color = active ? new Color(.8f, .67f, 1f) : Color.white;
         costs[index].text = $"MP {cost}";
+        if (index == 0 && skills != null && (actions == null || actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth))
+            costs[index].text = $"MP {skills.StealthDrainPercent:0.#}% / 0.5초";
         costs[index].color = insufficient ? new Color(1f, .45f, .4f) : new Color(.65f, .85f, 1f);
         cooldowns[index].fillAmount = remaining / Mathf.Max(.01f, cooldown);
     }

@@ -5,7 +5,7 @@ public sealed class PoisonDaggerSettings : ScriptableObject
 {
     public const string ResourcePath = "PlayerSkills/PoisonDaggerSettings";
     [Header("Throw")]
-    [Min(0)] public float cooldown = 7f;
+    [Min(0)] public float cooldown = 30f;
     [Min(.01f)] public float projectileSpeed = 12f;
     [Min(0)] public float spawnOffset = .6f;
     [Min(0)] public float centerLeadDistance = .4f;

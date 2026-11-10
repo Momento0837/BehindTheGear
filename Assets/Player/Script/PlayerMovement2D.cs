@@ -7,13 +7,13 @@ public sealed class PlayerMovement2D : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float moveSpeed = 7f;
     [Header("Walk - hold Ctrl")]
-    [SerializeField, Min(0f)] private float walkSpeed = 3.5f;
+    [SerializeField, Min(0f)] private float walkSpeed = 5.25f;
     [Header("Dash - press Shift")]
     [SerializeField, Min(0f)] private float dashDistance = 3f;
     [SerializeField, Min(0f)] private float dashCooldown = 1f;
-    [SerializeField, Min(.01f)] private float dashDuration = .15f;
+    [SerializeField, Min(.01f)] private float dashDuration = .25f;
     [Header("Dash afterimages")]
-    [SerializeField] private bool dashAfterimages = true;
+    [SerializeField] private bool dashAfterimages = false;
     [SerializeField, Min(.01f)] private float afterimageInterval = .025f;
     [SerializeField, Min(.01f)] private float afterimageLifetime = .22f;
     [SerializeField] private Color afterimageTint = new(.3f, .85f, 1f, .45f);
@@ -106,6 +106,10 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void Awake()
     {
+        // Also migrate already-loaded scene instances carrying the previous defaults.
+        if (Mathf.Approximately(dashDuration, .15f)) dashDuration = .25f;
+        if (Mathf.Approximately(walkSpeed, 3.5f)) walkSpeed = 5.25f;
+        dashAfterimages = false;
         body = GetComponent<Rigidbody2D>();
         // Match the rendered player position to the camera's per-frame follow updates.
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -256,6 +260,12 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (animator != null && !hitStopped && !attackAnimationPlaying && playerHealth != null && !playerHealth.IsDead)
+        {
+            var locomotion = animator.GetCurrentAnimatorStateInfo(0);
+            bool walkingAnimation = locomotion.IsName("Running") || locomotion.IsName("Run") || locomotion.IsName("Walk");
+            animator.speed = walkingAnimation && playerInput.WalkHeld && !IsDashing ? walkSpeed / Mathf.Max(.01f, moveSpeed) : 1f;
+        }
         if (IsDashing && Time.time >= nextAfterimageAt) EmitAfterimage();
         if (hitStopped && Time.unscaledTime >= hitStopUntil)
         {

@@ -104,6 +104,10 @@ namespace BehindTheGear.HideOut
         public InventoryItemDefinition Find(string id)
         {
             foreach (var item in items) if (item != null && item.ItemId == id) return item;
+            // Saves written before the cloak received its authored JSON ID remain readable.
+            if (id == "tutorial_gear")
+                foreach (var item in items)
+                    if (item != null && item.ItemId == "Tattered_Cloak") return item;
             return null;
         }
         public int MaxStack(string id) => Find(id) != null ? Find(id).MaxStack : 0;

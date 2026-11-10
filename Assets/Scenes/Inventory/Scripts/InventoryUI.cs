@@ -1638,6 +1638,7 @@ public sealed class InventoryUI : MonoBehaviour
         {
             equipmentSlotIcons[index].enabled = item != null;
             equipmentSlotIcons[index].sprite = item != null ? item.Icon : null;
+            equipmentSlotIcons[index].rectTransform.localScale = Vector3.one * (item != null && item.ItemId == "Tattered_Cloak" ? 1.1f : 1f);
         }
     }
 

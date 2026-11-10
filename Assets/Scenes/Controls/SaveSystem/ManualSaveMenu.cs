@@ -31,16 +31,16 @@ public sealed class ManualSaveMenu : MonoBehaviour
         scaler.referenceResolution = new Vector2(1600, 900);
         panel = new GameObject("Slot 1", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(root.transform, false);
         var rect = (RectTransform)panel.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
-        panel.GetComponent<Image>().color = new Color(.025f, .035f, .045f, 1);
+        panel.GetComponent<Image>().color = new Color(.09f, .045f, .035f, 1);
         Label(panel.transform, "BEHIND THE GEAR", 110, 46);
         status = Label(panel.transform, "", 230, 24);
-        continueButton = Button(panel.transform, "이어하기", 350, Continue);
-        Button(panel.transform, "새 게임", 440, NewGame);
+        continueButton = Button(panel.transform, "이어하기", 440, Continue);
+        Button(panel.transform, "새 게임", 350, NewGame);
         deleteButton = Button(panel.transform, "삭제", 530, Delete);
         Label(panel.transform, "슬롯 1 · 침대에서 저장한 진행 상황만 이어집니다.", 670, 22);
         confirmation = new GameObject("Confirmation", typeof(RectTransform), typeof(Image)); confirmation.transform.SetParent(panel.transform, false);
         rect = (RectTransform)confirmation.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
-        confirmation.GetComponent<Image>().color = new Color(.03f, .04f, .05f, .99f);
+        confirmation.GetComponent<Image>().color = new Color(.11f, .055f, .04f, .99f);
         question = Label(confirmation.transform, "", 260, 25);
         Button(confirmation.transform, "확인", 430, Confirm);
         Button(confirmation.transform, "취소", 530, Cancel);
@@ -52,6 +52,13 @@ public sealed class ManualSaveMenu : MonoBehaviour
         bool exists = ManualSaveStore.Exists;
         if (continueButton != null) continueButton.interactable = exists;
         if (deleteButton != null) deleteButton.interactable = exists;
+        foreach (var button in new[] { continueButton, deleteButton })
+        {
+            if (button == null) continue;
+            var group = button.GetComponent<CanvasGroup>();
+            if (group == null) group = button.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = button.interactable ? 1f : .5f;
+        }
         if (status == null) return;
         try
         {
@@ -93,7 +100,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         var go = new GameObject(text, typeof(RectTransform), typeof(Image), typeof(Button)); go.transform.SetParent(parent, false);
         var rect = (RectTransform)go.transform; rect.anchorMin = rect.anchorMax = new Vector2(.5f, 1); rect.pivot = new Vector2(.5f, 1);
         rect.anchoredPosition = new Vector2(0, -top); rect.sizeDelta = new Vector2(420, 65);
-        go.GetComponent<Image>().color = new Color(.19f, .24f, .27f);
+        go.GetComponent<Image>().color = new Color(.34f, .17f, .12f);
         var label = Label(go.transform, text, 14, 26); label.rectTransform.sizeDelta = new Vector2(400, 40);
         var button = go.GetComponent<Button>(); button.onClick.AddListener(action); return button;
     }

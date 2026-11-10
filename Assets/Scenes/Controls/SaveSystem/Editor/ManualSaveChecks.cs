@@ -171,7 +171,7 @@ public static class ManualSaveChecks
         yield return null; bridge = Object.FindFirstObjectByType<HideOutPlayerBridge>(); inventory = bridge.Inventory;
         Check(SceneManager.GetActiveScene().path == settings.scenePath && !bridge.Sandbox, "Continue starts directly in hideout UI");
         Check(QuestJournal.Find("market_quest").amounts[0] == 2, "Continue restores 2/5 instead of unsaved 4/5");
-        Check(bridge.State.coins == saved.coins && inventory.GetEquipped(settings.Find("tutorial_gear").Slot)?.ItemId == "tutorial_gear"
+        Check(bridge.State.coins == saved.coins && inventory.GetEquipped(settings.Find("tutorial_gear").Slot)?.ItemId == "Tattered_Cloak"
             && inventory.Capacity == expectedCapacity + settings.rules.inventorySlotsPerLevel, "coins, equipment, permanent stats and facility slots restored");
         ScreenCapture.CaptureScreenshot("Temp/ManualSaveValidation/continue-hideout.png");
         SaveGameSession.StartExpedition();
@@ -289,7 +289,7 @@ public static class ManualSaveChecks
         yield return null;
         var bridge = Object.FindFirstObjectByType<HideOutPlayerBridge>();
         Check(bridge.State.levels[3] == 1 && bridge.Inventory.Stats.Attack == 1
-            && bridge.Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Accessory)?.ItemId == "tutorial_gear",
+            && bridge.Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Accessory)?.ItemId == "Tattered_Cloak",
             "disk restore across editor play-session restart preserves facilities, stats and equipment");
         Check(QuestJournal.Find("market_quest").rewardClaimed && !QuestJournal.Report("market_quest", bridge),
             "reward claim survives full play-session restart");
@@ -303,7 +303,7 @@ public static class ManualSaveChecks
         string legacyJson = JsonUtility.ToJson(legacy);
         File.WriteAllText(ManualSaveStore.LegacyPath, legacyJson);
         var readLegacy = ManualSaveStore.ReadSlot(); bridge.RestoreSnapshot(readLegacy);
-        Check(readLegacy.version == 1 && bridge.Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Accessory)?.ItemId == "tutorial_gear",
+        Check(readLegacy.version == 1 && bridge.Inventory.GetEquipped(InventoryItemDefinition.EquipmentSlot.Accessory)?.ItemId == "Tattered_Cloak",
             "original player-v1 format restores equipment and facilities");
         yield return null; Check(bridge.Save() && ManualSaveStore.ReadSlot().version == 2, "next bed save migrates legacy data to versioned slot");
         Check(File.ReadAllText(ManualSaveStore.LegacyPath) == legacyJson, "legacy migration preserves original file until explicit deletion");

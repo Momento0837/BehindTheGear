@@ -15,6 +15,14 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
 
     private void Awake()
     {
+        if (controlSelectionCanvas != null)
+            foreach (var image in controlSelectionCanvas.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+            {
+                Color color = image.color;
+                float value = Mathf.Max(color.r, color.g, color.b);
+                if (image.sprite == null || image.GetComponent<UnityEngine.UI.Button>() != null)
+                    image.color = new Color(value, value * .52f, value * .38f, color.a);
+            }
         if (mainMenuPrefab == null || controlSelectionCanvas == null)
         {
             Debug.LogError("[Startup] Assign the main menu prefab and control selection canvas.", this);

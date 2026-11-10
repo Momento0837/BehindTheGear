@@ -50,7 +50,7 @@ public sealed class PlayerInputReader : MonoBehaviour
         bool dashPressed = shiftHeld && !dashHeld;
         // Consume the edge even while UI suppresses gameplay; never queue a dash.
         dashHeld = shiftHeld;
-        if (InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
+        if (SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
         {
             throwWasHeld = IsThrowHeld(keyboard);
             WalkHeld = false;

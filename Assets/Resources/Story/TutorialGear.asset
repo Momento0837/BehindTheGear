@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f639198b0aa4b5f898c30fa6d4005e4, type: 3}
   m_Name: TutorialGear
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItemDefinition
-  itemId: tutorial_gear
+  itemId: Tattered_Cloak
   displayName: 망토
   description: 쓰레기 더미에서 찾은 걸칠 만한 망토입니다.
-  icon: {fileID: 0}
+  icon: {fileID: -4854882188765977121, guid: 285c05b335a61d3418ddeb8cb00003bd, type: 3}
   tint: {r: 0.88, g: 0.60, b: 0.22, a: 1}
   fallbackIcon: 2
   category: 2

@@ -1250,6 +1250,7 @@ namespace BehindTheGear.HideOut
 
         private void SelectFacility(Facility facility)
         {
+            if (IsLocked(facility)) return;
             if (editorPreview) { if (hasSelection && selected == facility) HideEditorDetails(); else ShowEditorSample(facility); return; }
             if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
             if (cameraController == null || cameraController.IsMoving || cameraController.ShouldSuppressFacilityClick
@@ -1292,6 +1293,7 @@ namespace BehindTheGear.HideOut
 
         private void OpenSelectedFacility(Facility facility)
         {
+            if (IsLocked(facility)) return;
             if (!hasSelection || selected != facility) return;
             if (HideOutModel.IsExhibition(facility)) { ShowExhibition(facility); RefreshFacilityInput(); return; }
             switch (facility)
@@ -1617,6 +1619,7 @@ namespace BehindTheGear.HideOut
 
         private bool IsLocked(Facility facility)
         {
+            if (facility != Facility.Bed) return true;
             var presentation = settings.FindPresentation(facility);
             return presentation != null && presentation.prototypeLocked || HideOutModel.Locked(player.State, facility);
         }
@@ -1705,10 +1708,10 @@ namespace BehindTheGear.HideOut
         private void RefreshFacilityLevels()
         {
             foreach (var pair in facilityLevelLabels)
-                pair.Value.text = HideOutModel.IsExhibition(pair.Key) ? "추후 구현" : IsLocked(pair.Key) ? "잠금 · 셀레나 영입 필요" : $"Lv. {player.State.levels[(int)pair.Key]}";
+                pair.Value.text = IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}";
             foreach (var pair in shortcutLabels)
             {
-                pair.Value.text = $"{DisplayName(pair.Key)}\n" + (HideOutModel.IsExhibition(pair.Key) ? "추후 구현" : IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}");
+                pair.Value.text = $"{DisplayName(pair.Key)}\n" + (IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}");
                 shortcutButtons[pair.Key].GetComponent<Image>().color = hasSelection && selected == pair.Key ? AccentSoft : PanelSoft;
             }
             isometricEnvironment.RefreshFacilityVisuals(player.State.levels);
@@ -1718,10 +1721,12 @@ namespace BehindTheGear.HideOut
         private void RefreshFacilityInput()
         {
             bool moving = trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
-            foreach (var pair in facilityButtons) pair.Value.interactable = !moving && (!dummyTesting || selected == pair.Key);
-            foreach (var pair in shortcutButtons) pair.Value.interactable = !moving && (!dummyTesting || selected == pair.Key);
+            foreach (var pair in facilityButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));
+            foreach (var pair in shortcutButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));
+            foreach (var pair in facilityButtons) pair.Value.interactable = !IsLocked(pair.Key) && !moving && (!dummyTesting || selected == pair.Key);
+            foreach (var pair in shortcutButtons) pair.Value.interactable = !IsLocked(pair.Key) && !moving && (!dummyTesting || selected == pair.Key);
             if (dummyTargetButton != null)
-                dummyTargetButton.interactable = !moving && (!hasSelection || selected == Facility.Dummy);
+                dummyTargetButton.interactable = false;
         }
 
         private void RefreshStorageAppearance()

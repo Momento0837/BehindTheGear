@@ -24,6 +24,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private bool ownsLock;
     private bool ending;
     private float heldSeconds;
+    private System.IDisposable worldPause;
     private bool[] uiWasActive;
     private GameObject skipRoot;
     private TMP_Text skipText;
@@ -66,6 +67,8 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private IEnumerator PlayRoutine()
     {
         playing = true;
+        worldPause = GameplayTimePause.Acquire();
+        videoPlayer.timeUpdateMode = VideoTimeUpdateMode.UnscaledGameTime;
         heldSeconds = 0f;
         playerControlLock?.Acquire();
         ownsLock = playerControlLock != null;
@@ -162,6 +165,8 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private void CompleteFinish(bool continueDialogue)
     {
         playing = false;
+        worldPause?.Dispose();
+        worldPause = null;
         ending = false;
         HideVideoPresentation();
         RestoreUiAfterVideo();

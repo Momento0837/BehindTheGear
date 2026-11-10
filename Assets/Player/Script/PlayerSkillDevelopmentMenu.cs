@@ -34,7 +34,7 @@ public sealed class PlayerSkillDevelopmentMenu : MonoBehaviour
         }
         if (ownsLock && (keyboard.escapeKey.wasPressedThisFrame || GetComponent<PlayerHealth>()?.IsDead == true)) Close();
         if (ownsLock && selectedLabel != null)
-            selectedLabel.text = $"Q / C  ·  {(actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth ? "은신" : "충격파")}     E / V  ·  {(actions.SelectedThrowSkill == PlayerAttackController.ThrowSkill.PoisonDaggers ? "독 단검" : "수류탄")}";
+            selectedLabel.text = $"Q / C  ·  {(actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth ? "은신" : "충격파")}     E / V  ·  {(actions.SelectedThrowSkill == PlayerAttackController.ThrowSkill.PoisonDaggers ? "단검 투척" : "수류탄")}";
     }
     public bool Open()
     {
@@ -76,7 +76,7 @@ public sealed class PlayerSkillDevelopmentMenu : MonoBehaviour
         selectedLabel = Label(window.transform, "", 30, 544, 920, 34, 17, new Color(.5f, .93f, .68f));
         throwPage = Page(window.transform, "Throw skills");
         Label(throwPage.transform, "투척 · E / V", 0, 0, 660, 35, 24, Color.white);
-        Card(throwPage.transform, "Equip poison daggers", "독 단검 · 3연 편대", "구현 완료  ·  직선 투척 / 독 / 쿨타임 7초\n중앙이 앞서고 두 단검이 나란히 뒤따릅니다.", 0,
+        Card(throwPage.transform, "Equip poison daggers", "단검 투척", "단검 1개 투척 · 적중 시 소멸\nMP 10% 소모 · 쿨타임 30초", 0,
             () => { actions.SelectThrowSkill(PlayerAttackController.ThrowSkill.PoisonDaggers); });
         Card(throwPage.transform, "Equip grenade", "수류탄 · 보존된 투척 스킬", "구현 완료  ·  누르고 조준, 놓아서 투척\n기존 탄약 · 포물선 · 충돌 폭발을 유지합니다.", 170,
             () => { actions.SelectThrowSkill(PlayerAttackController.ThrowSkill.Grenade); });

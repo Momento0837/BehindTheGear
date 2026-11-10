@@ -4,8 +4,8 @@ using UnityEngine;
 /// <summary>World-space portal hint and a soft additive light, independent of the portal's stretched scale.</summary>
 public sealed class PortalPresentation2D : MonoBehaviour
 {
-    [SerializeField, Min(1f)] private float revealDistance = 6f;
-    [SerializeField, Range(0f, 1f)] private float lightOpacity = .2f;
+    [SerializeField, Min(1f)] private float revealDistance = 2.5f;
+    [SerializeField, Range(0f, 1f)] private float lightOpacity = .3f;
     private Collider2D area, playerCollider;
     private SpriteRenderer portalSprite;
     private TextMeshPro hint;

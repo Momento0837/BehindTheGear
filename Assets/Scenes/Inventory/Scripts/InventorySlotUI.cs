@@ -72,6 +72,7 @@ public sealed class InventorySlotUI : MonoBehaviour, IBeginDragHandler, IDragHan
         if (registrationFlashing && (empty || icon.sprite != slot.Item.Icon)) StopRegistrationFlash();
         icon.enabled = !empty;
         icon.sprite = empty ? null : slot.Item.Icon;
+        icon.rectTransform.localScale = Vector3.one * (!empty && slot.Item.ItemId == "Tattered_Cloak" ? 1.1f : 1f);
         amount.text = empty || slot.Item.MaxStack == 1 ? "" : slot.Amount.ToString();
         amount.color = Amount;
         if (itemName != null) itemName.text = empty ? "" : slot.Item.DisplayName;

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c39e8017d89d7d4e8364637ef463255, type: 3}
   m_Name: PoisonDaggerSettings
   m_EditorClassIdentifier: Assembly-CSharp::PoisonDaggerSettings
-  cooldown: 7
+  cooldown: 30
   projectileSpeed: 12
   spawnOffset: 0.6
   centerLeadDistance: 0.4

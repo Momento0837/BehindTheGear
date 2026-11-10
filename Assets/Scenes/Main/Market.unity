@@ -13446,6 +13446,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement2D
   moveSpeed: 7
+  walkSpeed: 5.25
+  dashDuration: 0.25
+  dashAfterimages: 0
   jumpVelocity: 15
   crouchSpeedMultiplier: 0.7
   groundLayers:

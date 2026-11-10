@@ -69,7 +69,7 @@ public static class ItemConfigCheck
         var cloak = Resources.Load<InventoryItemDefinition>("Story/TutorialGear");
         Require(cloak.DisplayName == "헤진 망토" && cloak.Description == "쓰레기 더미에서 주웠다.", "User authored cloak text resolves actual asset id");
         // Temporary in-memory catalog only: do not alter the user's JSON for validation.
-        const string fixture = "{\"items\":[{\"id\":\"tutorial_gear\",\"display\":{\"name\":\"검증 망토\",\"description\":\"검증 설명\"},\"rarity\":\"Rare\",\"stats\":{\"increase\":{\"Attack\":3},\"decrease\":{\"Stealth\":2}}},{\"id\":\"health_potion\",\"display\":{\"name\":\"검증 포션\",\"description\":\"회복\"},\"rarity\":\"Advanced\"}]}";
+        const string fixture = "{\"items\":[{\"id\":\"Tattered_Cloak\",\"display\":{\"name\":\"검증 망토\",\"description\":\"검증 설명\"},\"rarity\":\"Rare\",\"stats\":{\"increase\":{\"Attack\":3},\"decrease\":{\"Stealth\":2}}},{\"id\":\"health_potion\",\"display\":{\"name\":\"검증 포션\",\"description\":\"회복\"},\"rarity\":\"Advanced\"}]}";
         Source.SetValue(null, new TextAsset(fixture)); InventoryItemCatalog.ReloadIfChanged();
         inv.Add(cloak, 1);
         var potion = AssetDatabase.LoadAssetAtPath<InventoryItemDefinition>("Assets/Scenes/Inventory/Items/HealthPotion.asset");
