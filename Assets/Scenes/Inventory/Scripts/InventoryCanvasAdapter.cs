@@ -58,6 +58,11 @@ public static class InventoryCanvasAdapter
                 if (slot == null) slot = background.gameObject.AddComponent<InventorySlotUI>();
                 slot.Initialize(ui, slots.Count, icon, amount, false, true);
                 slots.Add(slot);
+                int displayIndex = slots.Count - 1;
+                if (infoEquip != null)
+                    BindHover(background.gameObject, infoEquip.gameObject, icon,
+                        ((RectTransform)infoEquip).anchoredPosition, 0f,
+                        () => ui.ShowDetails(displayIndex), true);
             }
         }
 
@@ -78,7 +83,7 @@ public static class InventoryCanvasAdapter
             statRows[i] = row != null ? row.Find("Stat")?.GetComponent<TMP_Text>() : null;
             statButtons[i] = row != null ? row.Find("Plus")?.GetComponent<Button>() : null;
             Button minus = row != null ? row.Find("Minus")?.GetComponent<Button>() : null;
-            if (minus != null) minus.interactable = false;
+            if (minus != null) ui.BindStatMinus(i, minus);
         }
 
         string[] equipmentPaths =
@@ -365,8 +370,10 @@ public sealed class InventoryHoverReveal : MonoBehaviour, IPointerEnterHandler, 
 
     private void LateUpdate()
     {
-        if (!hovered || !followPointer || target == null || !target.activeInHierarchy) return;
-        PositionAtPointer();
+        if (!hovered || target == null || !target.activeInHierarchy) return;
+        if (requiredIcon != null && (!requiredIcon.enabled || requiredIcon.sprite == null)) { SetVisible(false); return; }
+        beforeReveal?.Invoke();
+        if (followPointer) PositionAtPointer();
     }
 
     private void PositionAtPointer()

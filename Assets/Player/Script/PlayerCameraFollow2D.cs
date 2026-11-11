@@ -28,6 +28,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
     private Rigidbody2D targetBody;
     private Camera attachedCamera;
+    private UnityEngine.Rendering.Universal.PixelPerfectCamera perspectivePixelSnap;
     private Vector3 followVelocity;
     private float lookAhead;
     private float lookAheadVelocity;
@@ -209,6 +210,18 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
     private void OnEnable()
     {
+        // Pixel Perfect's orthographic grid cannot stabilize multiple perspective depth planes.
+        // Keep the perspective follow continuous instead of quantizing its view each render.
+        if (attachedCamera != null && !attachedCamera.orthographic)
+        {
+            var pixelCamera = GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+            if (pixelCamera != null && pixelCamera.enabled)
+            {
+                perspectivePixelSnap = pixelCamera;
+                pixelCamera.enabled = false;
+                attachedCamera.ResetWorldToCameraMatrix();
+            }
+        }
         SceneManager.sceneLoaded += HandleSceneLoaded;
         RenderPipelineManager.beginCameraRendering -= ClampAtRender;
         RenderPipelineManager.beginCameraRendering += ClampAtRender;
@@ -359,9 +372,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         if (Mathf.Abs(deltaX) < .00001f && Mathf.Abs(deltaY) < .00001f) return;
         Matrix4x4 view = camera.worldToCameraMatrix;
         Vector3 correction = new Vector3(deltaX, deltaY, 0f);
-        transform.position += correction;
+        // Render-only boundary correction must not feed back into next frame's SmoothDamp.
         camera.worldToCameraMatrix = view * Matrix4x4.Translate(-correction);
-        followVelocity.x = 0f;
     }
 
     private void OnDisable()
@@ -370,5 +382,10 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         RenderPipelineManager.beginCameraRendering -= ClampAtRender;
         if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
+        if (perspectivePixelSnap != null)
+        {
+            perspectivePixelSnap.enabled = true;
+            perspectivePixelSnap = null;
+        }
     }
 }

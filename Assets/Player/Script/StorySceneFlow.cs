@@ -7,6 +7,8 @@ using UnityEngine.Video;
 /// <summary>Prototype story wiring, limited to the two main story scenes.</summary>
 public sealed class StorySceneFlow : MonoBehaviour
 {
+    private const float GarbagePortalLeft = -8f;
+
     private ConversationDialogue dialogue;
     private CutsceneVideoSequence cutscene;
     private PlayerMovement2D player;
@@ -138,14 +140,18 @@ public sealed class StorySceneFlow : MonoBehaviour
         marketMap = gameObject.scene.name == "Market";
         PlacePlayer(marketMap ? new Vector3(49f, -2.5f, 0) : new Vector3(-4.44f, -.36f, 0));
         RoomDropCache.SetCurrent(gameObject.scene.path + (marketMap ? "#market" : ""));
-        foreach (var cutsceneObject in InScene<CutsceneVideoSequence>()) cutsceneObject.gameObject.SetActive(false);
+        locationHud = LocationHUD.Create();
+        SceneManager.MoveGameObjectToScene(locationHud.gameObject, gameObject.scene);
+        dialogue = InScene<ConversationDialogue>().FirstOrDefault(d => d.GetComponent<BlackMarkerNpc>() != null);
+        cutscene = InScene<CutsceneVideoSequence>().FirstOrDefault();
+        if (cutscene != null) { cutscene.gameObject.SetActive(true); cutscene.BindPlayer(player.GetComponent<PlayerControlLock>()); }
         var questGivers = InScene<QuestGiver2D>();
         foreach (var npc in questGivers)
         {
             npc.enabled = true;
             if (!marketMap)
             {
-                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/collection_quest"));
+                npc.enabled = false;
                 npc.GetComponent<ConversationDialogue>()?.BindPlayer(player.GetComponent<PlayerControlLock>());
                 foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
                 foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
@@ -154,7 +160,7 @@ public sealed class StorySceneFlow : MonoBehaviour
             if (marketMap)
             {
                 npc.transform.position = new Vector3(65f, -2.5f, 0);
-                npc.ConfigureDefinition(Resources.Load<TextAsset>("Quests/market_quest"));
+                npc.enabled = false;
                 foreach (var renderer in npc.GetComponentsInChildren<SpriteRenderer>(true)) renderer.enabled = true;
                 foreach (var collider in npc.GetComponents<Collider2D>()) collider.enabled = true;
                 npc.GetComponent<Interactable2D>().enabled = true;
@@ -165,9 +171,12 @@ public sealed class StorySceneFlow : MonoBehaviour
         var exit = InScene<ScenePortal2D>().FirstOrDefault();
         if (exit != null)
         {
-            exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f);
+            exit.SetArea(marketMap ? 91f : -26.5f, marketMap ? 97.6f : -20.5f, lightFacesRight: !marketMap);
             var action = exit.GetComponent<StoryInteraction2D>() ?? exit.gameObject.AddComponent<StoryInteraction2D>();
-            action.Activated = _ => { if (!SceneFadeTransition.IsRunning) SceneFadeTransition.LoadScene(marketMap ? "Forest" : "Market", .4f); };
+            portal = exit.gameObject;
+            action.Activated = UsePortal;
+            ready = !marketMap;
+            if (marketMap && dialogue != null) PrepareMarket();
             exit.gameObject.SetActive(true);
         }
         monsters = InScene<MonsterFollowController>();
@@ -235,7 +244,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
-        portal.GetComponent<ScenePortal2D>().SetArea(-8f, -2f);
+        portal.GetComponent<ScenePortal2D>().SetArea(GarbagePortalLeft, -2f);
         portal.SetActive(false);
         dialogue.transform.position = new Vector3(65f, -2.5f, 0);
         inventory = player.GetComponent<PlayerInventory>();
@@ -314,6 +323,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         try
         {
             yield return SceneFadeTransition.FadeThrough(PrepareMarket);
+            // Show the arrival objective before the player reaches the NPC greeting trigger.
+            ShowGuide("market_arrival");
         }
         finally
         {
@@ -333,7 +344,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
         marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
         marketBubble.Finished += () => { if (!marketNpcSpoken) ShowGuide("market_talk"); };
-        portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f);
+        portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f, lightFacesRight: false);
         portal.SetActive(true);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
@@ -366,7 +377,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         dialogue.PlayWithChoices(offer, "수락", "거절", choice =>
         {
             accepted = choice;
-            if (choice) { QuestJournal.Accept("market_quest"); AdvanceGuide("market_quest"); QuestJournal.Publish(); }
+            if (choice) AdvanceGuide("market_quest");
         }, startLine);
         while (!accepted.HasValue) yield return null;
         yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
@@ -415,6 +426,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         var body = player.GetComponent<Rigidbody2D>();
         if (body != null) { body.position = position; body.linearVelocity = Vector2.zero; }
         Vector2 mapBounds = marketMap ? new Vector2(44.92f, 97.28f) : new Vector2(-26.18f, 26.18f);
+        if (!marketMap && gameObject.scene.name == "Market") mapBounds.x = GarbagePortalLeft;
         var movementBounds = player.GetComponent<PlayerMapBounds2D>();
         if (movementBounds == null) movementBounds = player.gameObject.AddComponent<PlayerMapBounds2D>();
         movementBounds.SetHorizontalBounds(mapBounds);

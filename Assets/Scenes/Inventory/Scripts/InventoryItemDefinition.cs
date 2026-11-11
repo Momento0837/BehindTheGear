@@ -26,22 +26,24 @@ public sealed class InventoryItemDefinition : ScriptableObject, IItemStatModifie
     private const float PotionRecoveryFraction = .25f;
 
     public string ItemId => itemId;
-    public string DisplayName => displayName;
-    public string Description => description;
+    public string DisplayName => InventoryItemCatalog.Find(itemId)?.display?.name is string name && !string.IsNullOrEmpty(name) ? name : displayName;
+    public string Description => InventoryItemCatalog.Find(itemId)?.display?.description ?? description;
+    public InventoryItemRarity Rarity => System.Enum.TryParse<InventoryItemRarity>(InventoryItemCatalog.Find(itemId)?.rarity, true, out var rarity) ? rarity : InventoryItemRarity.Normal;
     public ItemCategory Category => category;
     public EquipmentSlot Slot => equipmentSlot;
-    public IReadOnlyList<ItemStatModifier> StatModifiers => statModifiers;
-    public bool HasStatModifiers => statModifiers != null && statModifiers.Length > 0;
+    public IReadOnlyList<ItemStatModifier> StatModifiers => InventoryItemCatalog.Find(itemId)?.modifiers ?? statModifiers;
+    public bool HasStatModifiers => StatModifiers != null && StatModifiers.Count > 0;
 
     public int GetStatIncrease(PersonalStatType statType)
     {
-        if (statModifiers == null) return 0;
+        var modifiers = StatModifiers;
+        if (modifiers == null) return 0;
 
         int total = 0;
-        for (int i = 0; i < statModifiers.Length; i++)
+        for (int i = 0; i < modifiers.Count; i++)
         {
-            if (statModifiers[i].StatType == statType)
-                total += statModifiers[i].Increase;
+            if (modifiers[i].StatType == statType)
+                total += modifiers[i].Increase;
         }
 
         return total;

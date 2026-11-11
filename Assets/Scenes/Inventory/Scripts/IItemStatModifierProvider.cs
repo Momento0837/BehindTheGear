@@ -13,14 +13,14 @@ public interface IItemStatModifierProvider
 public struct ItemStatModifier
 {
     [SerializeField] private PersonalStatType statType;
-    [SerializeField, Min(0)] private int increase;
+    [SerializeField] private int increase;
 
     public PersonalStatType StatType => statType;
-    public int Increase => Mathf.Max(0, increase);
+    public int Increase => increase;
 
     public ItemStatModifier(PersonalStatType statType, int increase)
     {
         this.statType = statType;
-        this.increase = Mathf.Max(0, increase);
+        this.increase = increase;
     }
 }

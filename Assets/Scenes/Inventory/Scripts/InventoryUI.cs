@@ -16,7 +16,6 @@ public sealed class InventoryUI : MonoBehaviour
     [SerializeField] private PlayerStats stats;
     [SerializeField] private TMP_FontAsset font;
     [SerializeField] private TMP_FontAsset detailFont;
-    [SerializeField] private TextAsset displayTextJson;
     [Header("Scene UI references (created by the editor setup)")]
     [SerializeField] private Canvas canvas;
     [SerializeField] private GameObject window;
@@ -44,6 +43,11 @@ public sealed class InventoryUI : MonoBehaviour
     [SerializeField] private Image[] equipmentSlotIcons;
 
     private int dragSource = -1;
+    private int dragInventorySource = -1;
+    private InventoryItemDefinition draggedItem;
+    private Coroutine dragReturn;
+    private EquipmentSlotDropTarget[] equipmentDropTargets;
+    private int successfulEquipmentSlot = -1;
     private int hoveredDisplaySlot = -1;
     private PlayerControlLock inventoryControlLock;
     private bool holdsInventoryLock;
@@ -63,6 +67,18 @@ public sealed class InventoryUI : MonoBehaviour
     private bool usesDesignedCanvas;
     private Canvas legacyCanvas;
     private InventoryUITextCatalog textCatalog;
+    private readonly Button[] statMinusButtons = new Button[5];
+    private int itemCatalogRevision;
+    private float nextCatalogCheck;
+
+    public void BindStatMinus(int index, Button button)
+    {
+        statMinusButtons[index] = button;
+        button.onClick.AddListener(() =>
+        {
+            if (stats != null && stats.TryDowngrade(GetUiStatType(index), out string message)) SetStatMessage(message);
+        });
+    }
     private readonly System.Collections.Generic.Dictionary<TMP_Text, string> authoredText = new();
     private RectTransform authoredEquipmentGroup;
     private Vector3 authoredEquipmentPosition;
@@ -250,7 +266,7 @@ public sealed class InventoryUI : MonoBehaviour
         if (item == null) return;
         if (usesDesignedCanvas)
         {
-            detailText.text = GetItemDescription(item);
+            ShowAuthoredItemDetails(item);
             return;
         }
         ApplyDetailTextStyle();
@@ -273,7 +289,8 @@ public sealed class InventoryUI : MonoBehaviour
         if (stats == null) stats = inventory.Stats != null ? inventory.Stats : inventory.GetComponent<PlayerStats>();
         if (stats == null) stats = inventory.gameObject.AddComponent<PlayerStats>();
 
-        textCatalog = InventoryUITextCatalog.Load(displayTextJson);
+        textCatalog = InventoryUITextCatalog.Load(null);
+        itemCatalogRevision = InventoryItemCatalog.Revision;
         bool designedCanvasBound = InventoryCanvasAdapter.TryBind(this);
 
         if (canvas == null)
@@ -311,6 +328,15 @@ public sealed class InventoryUI : MonoBehaviour
         MatchSlotCount();
         for (int i = 0; i < slots.Length; i++) slots[i].Bind(this, i);
         AddButtonListeners();
+        equipmentDropTargets = new EquipmentSlotDropTarget[equipmentUnequipButtons.Length];
+        for (int i = 0; i < equipmentUnequipButtons.Length; i++)
+        {
+            if (equipmentUnequipButtons[i] == null) continue;
+            var target = equipmentUnequipButtons[i].GetComponent<EquipmentSlotDropTarget>();
+            if (target == null) target = equipmentUnequipButtons[i].gameObject.AddComponent<EquipmentSlotDropTarget>();
+            target.Bind(this, i);
+            equipmentDropTargets[i] = target;
+        }
         ready = true;
         Refresh();
         CloseInventory();
@@ -402,6 +428,16 @@ public sealed class InventoryUI : MonoBehaviour
     private void Update()
     {
         if (!ready) return;
+        if (Time.unscaledTime >= nextCatalogCheck)
+        {
+            nextCatalogCheck = Time.unscaledTime + .5f;
+            InventoryItemCatalog.ReloadIfChanged();
+            if (itemCatalogRevision != InventoryItemCatalog.Revision)
+            {
+                itemCatalogRevision = InventoryItemCatalog.Revision;
+                Refresh();
+            }
+        }
         UpdateEquipmentHint();
         SetInventoryModal(window != null && window.activeInHierarchy);
         if (Keyboard.current?.iKey.wasPressedThisFrame == true) ToggleInventory();
@@ -630,7 +666,21 @@ public sealed class InventoryUI : MonoBehaviour
             slots[i].ResetVisualState();
             slots[i].Refresh(unlocked ? GetDisplayedSlot(i) : null);
         }
-        if (usesDesignedCanvas) RefreshAuthoredNumbers(capacityText, used, inventory.Capacity);
+        if (usesDesignedCanvas)
+        {
+            int[] counts = new int[4];
+            for (int i = 0; i < inventory.Capacity; i++)
+            {
+                var entry = inventory.GetSlot(i);
+                if (!entry.IsEmpty) counts[(int)entry.Item.Rarity] += entry.Amount;
+            }
+            for (int i = 0; i < inventory.QuestCapacity; i++)
+            {
+                var entry = inventory.GetQuestSlot(i);
+                if (!entry.IsEmpty) counts[(int)entry.Item.Rarity] += entry.Amount;
+            }
+            RefreshAuthoredNumbers(capacityText, used, inventory.Capacity, counts[0], counts[1], counts[2], counts[3]);
+        }
         else capacityText.text = FormatUi(
             "capacityFormat",
             "가방 {0} / {1}     퀘스트 {2} / {3}     분류: {4}",
@@ -668,8 +718,7 @@ public sealed class InventoryUI : MonoBehaviour
         {
             // Equip_Desc is an authored description field, not a replacement inventory layout.
             PlayerInventory.Slot selected = GetDisplayedSlot(index);
-            if (detailText != null) detailText.text = selected == null || selected.IsEmpty
-                ? AuthoredText(detailText) : GetItemDescription(selected.Item);
+            if (selected != null && !selected.IsEmpty) ShowAuthoredItemDetails(selected.Item);
             return;
         }
         ApplyDetailTextStyle();
@@ -687,35 +736,106 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void BeginDrag(int index, PointerEventData data)
     {
+        if (dragReturn != null) return;
         if (currentFilter == Filter.Quest) return;
         PlayerInventory.Slot slot = GetDisplayedSlot(index);
         if (slot == null || slot.IsEmpty) return;
         dragSource = index;
+        if (usesDesignedCanvas) InventoryHoverReveal.HideAll(window);
+        dragInventorySource = GetInventorySlotIndexForDisplay(index);
+        draggedItem = slot.Item;
+        successfulEquipmentSlot = -1;
+        ResetEquipmentHint();
+        HighlightEquipment(draggedItem);
         dragIcon.sprite = slot.Item.Icon;
+        dragIcon.enabled = true;
+        dragIcon.raycastTarget = false;
+        dragIcon.transform.SetAsLastSibling();
         dragIcon.gameObject.SetActive(true);
+        slots[index].SetDragging(true);
         Drag(data);
     }
 
     public void Drag(PointerEventData data)
     {
         if (dragSource < 0) return;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)canvas.transform, data.position, null, out Vector2 position);
-        dragIcon.rectTransform.anchoredPosition = position;
+        RectTransformUtility.ScreenPointToWorldPointInRectangle((RectTransform)dragIcon.transform.parent,
+            data.position, canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, out Vector3 position);
+        dragIcon.rectTransform.position = position;
     }
 
     public void Drop(int target)
     {
         if (dragSource < 0 || currentFilter == Filter.Quest) return;
-        int sourceSlot = GetInventorySlotIndexForDisplay(dragSource);
+        int sourceSlot = dragInventorySource;
         int targetSlot = GetInventorySlotIndexForDisplay(target);
-        if (sourceSlot >= 0 && targetSlot >= 0) inventory.Move(sourceSlot, targetSlot);
+        if (!IsDragSourceValid() || targetSlot < 0 || !inventory.Move(sourceSlot, targetSlot)) return;
         CancelDrag();
         ResetSlotHighlights();
         ShowDetails(target);
     }
 
+    private bool IsDragSourceValid() => dragInventorySource >= 0 && draggedItem != null
+        && inventory.GetSlot(dragInventorySource)?.Item == draggedItem;
+
+    private void HighlightEquipment(InventoryItemDefinition item)
+    {
+        if (equipmentDropTargets == null) return;
+        for (int i = 0; i < equipmentDropTargets.Length; i++)
+            if (equipmentDropTargets[i] != null)
+                equipmentDropTargets[i].SetEmphasized(item != null && item.IsEquipment && item.Slot == GetEquipmentSlotForIndex(i));
+    }
+
+    public void DropEquipment(int index)
+    {
+        if (dragSource < 0 || !IsDragSourceValid() || !draggedItem.IsEquipment
+            || draggedItem.Slot != GetEquipmentSlotForIndex(index)) return;
+        var item = draggedItem;
+        if (!inventory.EquipFromSlot(dragInventorySource)) return;
+        CancelDrag();
+        ResetEquipmentHint();
+        successfulEquipmentSlot = (int)item.Slot;
+        HighlightEquipment(item);
+        Notify($"{GetItemName(item)} 장착 완료");
+    }
+
+    public void SetEquipmentHovered(int index, bool hovered)
+    {
+        if (dragSource >= 0 || dragReturn != null) return;
+        if (hovered)
+        {
+            var item = inventory.GetEquipped(GetEquipmentSlotForIndex(index));
+            if (item != null) { ResetEquipmentHint(); HighlightEquipment(item); }
+        }
+        else if (successfulEquipmentSlot < 0) HighlightEquipment(null);
+    }
+
+    public void EndDrag()
+    {
+        if (dragSource < 0 || dragReturn != null) return;
+        HighlightEquipment(null);
+        ResetEquipmentHint();
+        dragReturn = StartCoroutine(ReturnDragIcon());
+    }
+
+    private System.Collections.IEnumerator ReturnDragIcon()
+    {
+        var source = slots[dragSource];
+        Vector3 start = dragIcon.transform.position;
+        for (float time = 0f; time < .5f; time += Time.unscaledDeltaTime)
+        {
+            if (source == null || !source.gameObject.activeInHierarchy) break;
+            dragIcon.transform.position = Vector3.Lerp(start, source.IconWorldPosition,
+                Mathf.SmoothStep(0f, 1f, time / .5f));
+            yield return null;
+        }
+        dragReturn = null;
+        CancelDrag();
+    }
+
     public void DoubleClick(int index)
     {
+        if (dragSource >= 0 || dragReturn != null) return;
         if (currentFilter == Filter.Quest) return;
         PlayerInventory.Slot slot = GetDisplayedSlot(index);
         if (slot == null || slot.IsEmpty) return;
@@ -730,6 +850,9 @@ public sealed class InventoryUI : MonoBehaviour
         int equipmentSlotIndex = GetInventorySlotIndexForDisplay(index);
         if (item.IsEquipment && equipmentSlotIndex >= 0 && inventory.EquipFromSlot(equipmentSlotIndex))
         {
+            ResetEquipmentHint();
+            successfulEquipmentSlot = (int)item.Slot;
+            HighlightEquipment(item);
             Notify($"{GetItemName(item)} 장착 완료");
             return;
         }
@@ -739,7 +862,13 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void CancelDrag()
     {
+        if (dragReturn != null) { StopCoroutine(dragReturn); dragReturn = null; }
+        if (dragSource >= 0 && slots != null && dragSource < slots.Length) slots[dragSource].SetDragging(false);
         dragSource = -1;
+        dragInventorySource = -1;
+        draggedItem = null;
+        successfulEquipmentSlot = -1;
+        HighlightEquipment(null);
         if (dragIcon != null) dragIcon.gameObject.SetActive(false);
         ResetSlotHighlights();
     }
@@ -1305,6 +1434,14 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (hovered) hoveredDisplaySlot = index;
         else if (hoveredDisplaySlot == index) hoveredDisplaySlot = -1;
+        if (dragSource >= 0 || dragReturn != null) return;
+        if (hovered)
+        {
+            successfulEquipmentSlot = -1;
+            ResetEquipmentHint();
+            HighlightEquipment(GetDisplayedSlot(index)?.Item);
+        }
+        else if (successfulEquipmentSlot < 0) HighlightEquipment(null);
     }
 
     private void HandleQuickSlotKey(int index)
@@ -1421,6 +1558,8 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void RefreshStats()
     {
+        for (int i = 0; i < statMinusButtons.Length; i++)
+            if (statMinusButtons[i] != null) statMinusButtons[i].interactable = stats != null && stats.GetBaseValue(GetUiStatType(i)) > 0;
         if (usesDesignedCanvas)
         {
             if (stats == null || statRows == null) return;
@@ -1462,6 +1601,11 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void RefreshEquipment()
     {
+        if (successfulEquipmentSlot >= 0 && inventory.GetEquipped((InventoryItemDefinition.EquipmentSlot)successfulEquipmentSlot) == null)
+        {
+            successfulEquipmentSlot = -1;
+            HighlightEquipment(null);
+        }
         SetEquipmentRow(0, InventoryItemDefinition.EquipmentSlot.Weapon);
         SetEquipmentRow(1, InventoryItemDefinition.EquipmentSlot.Armor);
         SetEquipmentRow(2, InventoryItemDefinition.EquipmentSlot.Accessory);
@@ -1494,6 +1638,7 @@ public sealed class InventoryUI : MonoBehaviour
         {
             equipmentSlotIcons[index].enabled = item != null;
             equipmentSlotIcons[index].sprite = item != null ? item.Icon : null;
+            equipmentSlotIcons[index].rectTransform.localScale = Vector3.one * (item != null && item.ItemId == "Tattered_Cloak" ? 1.1f : 1f);
         }
     }
 
@@ -1750,6 +1895,36 @@ public sealed class InventoryUI : MonoBehaviour
         return textCatalog != null ? textCatalog.EquipmentSlotName(slot, fallback) : fallback;
     }
 
+    private void ShowAuthoredItemDetails(InventoryItemDefinition item)
+    {
+        if (detailText == null || item == null) return;
+        detailText.text = GetItemDescription(item);
+        var root = detailText.transform.parent;
+        var nameLabel = root.Find("Equip_Name")?.GetComponent<TMP_Text>();
+        if (nameLabel != null)
+        {
+            nameLabel.text = GetItemName(item);
+            nameLabel.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, detailText.rectTransform.rect.width);
+            nameLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            nameLabel.overflowMode = TextOverflowModes.Ellipsis;
+        }
+        string up = string.Empty, down = string.Empty;
+        var entry = InventoryItemCatalog.Find(item.ItemId);
+        foreach (PersonalStatType type in System.Enum.GetValues(typeof(PersonalStatType)))
+        {
+            int positive = entry?.stats != null ? entry.Increase(type) : Mathf.Max(0, item.GetStatIncrease(type));
+            int negative = entry?.stats != null ? entry.Decrease(type) : Mathf.Max(0, -item.GetStatIncrease(type));
+            string label = type switch { PersonalStatType.Evasion => "Eva", PersonalStatType.Stealth => "Ste",
+                PersonalStatType.Attack => "Atk", PersonalStatType.Defense => "Def", _ => "Pers" };
+            if (positive > 0) up += (up.Length > 0 ? "\n" : "") + label + " +" + positive;
+            if (negative > 0) down += (down.Length > 0 ? "\n" : "") + label + " -" + negative;
+        }
+        var upLabel = root.Find("Equip_Up")?.GetComponent<TMP_Text>();
+        var downLabel = root.Find("Equip_Down")?.GetComponent<TMP_Text>();
+        if (upLabel != null) upLabel.text = up;
+        if (downLabel != null) downLabel.text = down;
+    }
+
     private string GetItemName(InventoryItemDefinition item)
     {
         return textCatalog != null ? textCatalog.ItemName(item) : item != null ? item.DisplayName : string.Empty;
@@ -1774,11 +1949,11 @@ public sealed class InventoryUI : MonoBehaviour
         string result = string.Empty;
         foreach (ItemStatModifier modifier in item.StatModifiers)
         {
-            if (modifier.Increase <= 0) continue;
+            if (modifier.Increase == 0) continue;
             string statName = textCatalog != null
                 ? textCatalog.StatName(modifier.StatType, PlayerStats.GetDisplayName(modifier.StatType))
                 : PlayerStats.GetDisplayName(modifier.StatType);
-            result += "\n" + FormatUi("equipmentEffectFormat", "{0} +{1}", statName, modifier.Increase);
+            result += "\n" + statName + " " + modifier.Increase.ToString("+0;-0;0");
         }
         return result;
     }

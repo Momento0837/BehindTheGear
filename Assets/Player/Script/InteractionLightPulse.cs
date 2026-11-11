@@ -16,6 +16,6 @@ public sealed class InteractionLightPulse : MonoBehaviour
     {
         elapsed += Time.deltaTime;
         // Two seconds from minimum to maximum, then two seconds back.
-        targetLight.intensity = Mathf.Lerp(1f, 4f, .5f - .5f * Mathf.Cos(elapsed * Mathf.PI / 2f));
+        targetLight.intensity = Mathf.Lerp(1f, 7f, .5f - .5f * Mathf.Cos(elapsed * Mathf.PI / 2f));
     }
 }

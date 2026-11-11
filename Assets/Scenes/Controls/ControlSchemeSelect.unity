@@ -1694,6 +1694,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ControlSchemeSelectScene
   gameSceneName: Forest
   fadeDuration: 0.8
+  mainMenuPrefab: {fileID: 8113000000, guid: 61dcb3ae50988884a9ed266f7ed25f80, type: 3}
+  controlSelectionCanvas: {fileID: 685379722}
 --- !u!114 &8112000003
 MonoBehaviour:
   m_ObjectHideFlags: 0

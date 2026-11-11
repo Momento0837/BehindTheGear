@@ -1,11 +1,63 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>Handles the two buttons saved in the control selection scene.</summary>
 public sealed class ControlSchemeSelectScene : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "Forest";
     [SerializeField, Min(.01f)] private float fadeDuration = .8f;
+    [SerializeField] private MainMenuController mainMenuPrefab;
+    [SerializeField] private GameObject controlSelectionCanvas;
+    private MainMenuController mainMenu;
+    private bool showingMainMenu;
     private bool selecting;
+
+    private void Awake()
+    {
+        if (controlSelectionCanvas != null)
+            foreach (var image in controlSelectionCanvas.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+            {
+                Color color = image.color;
+                float value = Mathf.Max(color.r, color.g, color.b);
+                if (image.sprite == null || image.GetComponent<UnityEngine.UI.Button>() != null)
+                    image.color = new Color(value, value * .52f, value * .38f, color.a);
+            }
+        if (mainMenuPrefab == null || controlSelectionCanvas == null)
+        {
+            Debug.LogError("[Startup] Assign the main menu prefab and control selection canvas.", this);
+            return;
+        }
+
+        GetComponent<ManualSaveMenu>()?.SetVisible(false);
+        showingMainMenu = true;
+        controlSelectionCanvas.SetActive(false);
+        mainMenu = Instantiate(mainMenuPrefab);
+        mainMenu.StartRequested += ShowControls;
+    }
+
+    private void ShowControls() => StartCoroutine(ShowControlsRoutine());
+
+    private IEnumerator ShowControlsRoutine()
+    {
+        yield return SceneFadeTransition.FadeThrough(() =>
+        {
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+            mainMenu.gameObject.SetActive(false);
+            var saveMenu = GetComponent<ManualSaveMenu>();
+            if (saveMenu != null) saveMenu.SetVisible(true);
+            else controlSelectionCanvas.SetActive(true);
+        }, fadeDuration);
+        showingMainMenu = false;
+        Destroy(mainMenu.gameObject);
+    }
+
+    public void ShowControlsForNewGame()
+    {
+        showingMainMenu = false;
+        if (mainMenu != null) mainMenu.gameObject.SetActive(false);
+        controlSelectionCanvas.SetActive(true);
+    }
 
     public void SelectWasdMouseQe() => Select(PlayerControlScheme.WasdMouseQe);
 
@@ -13,7 +65,7 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
 
     private void Select(PlayerControlScheme scheme)
     {
-        if (selecting) return;
+        if (showingMainMenu || selecting || SceneFadeTransition.IsRunning) return;
         var menu = GetComponent<ManualSaveMenu>();
         if (menu != null && !menu.ChoosingControls) return;
         selecting = true;

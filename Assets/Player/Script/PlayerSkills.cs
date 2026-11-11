@@ -30,6 +30,7 @@ public sealed class PlayerSkills : MonoBehaviour
     private PlayerMovement2D movement;
     private PlayerMeleeAttack melee;
     private float stealthEndsAt, stealthReadyAt, shockwaveReadyAt;
+    private float nextStealthDrain, stealthDrainFraction;
     private bool stealthActive;
     private SpriteRenderer[] cloakedRenderers;
     private float[] originalAlphas;
@@ -37,13 +38,14 @@ public sealed class PlayerSkills : MonoBehaviour
     private readonly HashSet<MonsterFollowController> hitMonsters = new();
     private readonly HashSet<IMeleeDamageReceiver> hitReceivers = new();
 
-    public bool IsStealthed => isActiveAndEnabled && stealthActive && StealthRemaining > 0f;
+    public bool IsStealthed => isActiveAndEnabled && stealthActive;
     public float StealthRemaining => Mathf.Max(0f, stealthEndsAt - Time.time);
-    public float StealthCooldownRemaining => Mathf.Max(0f, stealthReadyAt - Time.time);
+    public float StealthCooldownRemaining => Mathf.Max(0f, (stealthActive ? stealthEndsAt : stealthReadyAt) - Time.unscaledTime);
     public float ShockwaveCooldownRemaining => Mathf.Max(0f, shockwaveReadyAt - Time.time);
-    public float StealthCooldown => stealthCooldown;
+    public float StealthCooldown => stealthActive ? .2f : 1.5f;
     public float ShockwaveCooldown => shockwaveCooldown;
-    public int StealthManaCost => stealthManaCost;
+    public float StealthDrainPercent => Mathf.Max(0, 10f - (GetComponent<PlayerStats>()?.Stealth ?? 0) * .5f);
+    public int StealthManaCost => Mathf.Max(1, Mathf.CeilToInt((mana != null ? mana.MaxMana : 100) * StealthDrainPercent / 100f));
     public int StealthAttackBonus => stealthAttackBonus;
     public int ShockwaveManaCost => shockwaveManaCost;
     public int ShockwaveDamage => Mathf.Max(1, Mathf.RoundToInt((melee != null ? melee.ResolvedDamage : 10) * shockwaveDamageMultiplier));
@@ -93,7 +95,21 @@ public sealed class PlayerSkills : MonoBehaviour
 
     private void Update()
     {
-        if (stealthActive && (StealthRemaining <= 0f || !CanUseSkills)) BreakStealth();
+        if (!stealthActive) return;
+        if (!CanUseSkills || mana.CurrentMana <= 0) { BreakStealth(); return; }
+        while (stealthActive && Time.unscaledTime >= nextStealthDrain)
+        {
+            nextStealthDrain += .5f;
+            stealthDrainFraction += mana.MaxMana * StealthDrainPercent / 100f;
+            int cost = Mathf.FloorToInt(stealthDrainFraction);
+            stealthDrainFraction -= cost;
+            if (cost > 0 && !mana.TrySpend(cost))
+            {
+                if (mana.CurrentMana > 0) mana.TrySpend(mana.CurrentMana);
+                BreakStealth();
+            }
+            if (mana.CurrentMana <= 0) BreakStealth();
+        }
     }
 
     private void LateUpdate()
@@ -110,11 +126,12 @@ public sealed class PlayerSkills : MonoBehaviour
 
     public bool TryUseStealth()
     {
-        if (!CanUseSkills || IsStealthed || StealthCooldownRemaining > 0f
-            || movement != null && movement.IsAttacking || !mana.TrySpend(stealthManaCost)) return false;
+        if (!CanUseSkills || StealthCooldownRemaining > 0f) return false;
+        if (IsStealthed) { BreakStealth(); return true; }
+        if (movement != null && movement.IsAttacking || mana.CurrentMana < StealthManaCost) return false;
         stealthActive = true;
-        stealthEndsAt = Time.time + stealthDuration;
-        stealthReadyAt = Time.time + stealthCooldown;
+        stealthEndsAt = Time.unscaledTime + .2f;
+        nextStealthDrain = Time.unscaledTime + .5f;
         cloakedRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         originalAlphas = new float[cloakedRenderers.Length];
         for (int i = 0; i < cloakedRenderers.Length; i++) originalAlphas[i] = cloakedRenderers[i].color.a;
@@ -127,6 +144,7 @@ public sealed class PlayerSkills : MonoBehaviour
     {
         if (!stealthActive) return;
         stealthActive = false;
+        stealthReadyAt = Time.unscaledTime + 1.5f;
         stealthEndsAt = 0f;
         if (cloakedRenderers != null)
             for (int i = 0; i < cloakedRenderers.Length; i++)

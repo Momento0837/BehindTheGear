@@ -70,6 +70,13 @@ namespace BehindTheGear.HideOut
                 appliedPrefab[pair.Key] = prefab;
                 appliedArtTier[pair.Key] = tier;
             }
+            foreach (var pair in visualRoots)
+                if (pair.Key != Facility.Bed)
+                {
+                    var cover = pair.Value.parent.GetComponent<HideOutFacilityLockCover>();
+                    if (cover == null) cover = pair.Value.parent.gameObject.AddComponent<HideOutFacilityLockCover>();
+                    cover.Refresh();
+                }
         }
 
         public void RefreshFacilityVisuals(int[] levels)

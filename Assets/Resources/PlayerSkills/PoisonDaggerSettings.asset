@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c39e8017d89d7d4e8364637ef463255, type: 3}
+  m_Name: PoisonDaggerSettings
+  m_EditorClassIdentifier: Assembly-CSharp::PoisonDaggerSettings
+  cooldown: 30
+  projectileSpeed: 12
+  spawnOffset: 0.6
+  centerLeadDistance: 0.4
+  sideOffset: 0.35
+  hitDamageMultiplier: 0.4
+  poisonDuration: 4
+  poisonTickInterval: 1
+  poisonDamageMultiplier: 0.1
+  cameraDespawnMargin: 3
+  maxLifetime: 5
+  projectilePrefab: {fileID: 2847044889415513816, guid: 3c918b2f8e6a5e347a93a35e074776b9, type: 3}
+  enemyLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 320
+  ignoreWalkableGround: 1
+  daggerSprite: {fileID: 1333231775, guid: c269cadd17452754bbe9b1034212e917, type: 3}
+  spriteForwardAngle: 45
+  daggerLength: 0.75
+  hitboxWidth: 0.12
+  showTrail: 1

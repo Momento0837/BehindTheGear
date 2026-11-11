@@ -10,6 +10,10 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private static SceneFadeTransition instance;
     [SerializeField] private Image fadeImage;
     private bool running;
+    private IDisposable worldPause;
+    private void FreezeWorld() { worldPause ??= GameplayTimePause.Acquire(); if (fadeImage != null) fadeImage.raycastTarget = true; }
+    private void RestoreWorld() { worldPause?.Dispose(); worldPause = null; if (fadeImage != null) fadeImage.raycastTarget = false; }
+    private void LateUpdate() { if (running) Time.timeScale = 0f; }
     public static bool IsRunning => instance != null && instance.running;
 
     private void Awake()
@@ -34,6 +38,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         {
             canvas.overrideSorting = true;
             canvas.sortingOrder = short.MaxValue;
+            if (canvas.GetComponent<GraphicRaycaster>() == null) canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
 
         SetAlpha(0f);
@@ -68,6 +73,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         while (instance.running) yield return null;
         var transition = instance;
         transition.running = true;
+        transition.FreezeWorld();
         try
         {
             yield return transition.Fade(0f, 1f, duration);
@@ -81,6 +87,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             {
                 transition.SetAlpha(0f);
                 transition.running = false;
+                transition.RestoreWorld();
             }
         }
     }
@@ -88,6 +95,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete)
     {
         running = true;
+        FreezeWorld();
         yield return Fade(0f, 1f, fadeDuration);
 
         var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
@@ -106,6 +114,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             Debug.LogError($"[Scene Fade] Could not load scene '{sceneName}'. Add it to Build Settings.");
             yield return Fade(1f, 0f, fadeDuration);
             running = false;
+            RestoreWorld();
             onComplete?.Invoke(false);
             yield break;
         }
@@ -116,6 +125,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
+        RestoreWorld();
         onComplete?.Invoke(true);
     }
 
@@ -169,6 +179,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (running) RestoreWorld();
         if (instance == this) instance = null;
     }
 }

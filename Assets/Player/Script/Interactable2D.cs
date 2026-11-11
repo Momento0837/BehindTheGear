@@ -9,7 +9,7 @@ public sealed class Interactable2D : MonoBehaviour
 
     public void Interact(GameObject interactor)
     {
-        if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled || SceneFadeTransition.IsRunning) return;
         StoryInteraction2D story = GetComponent<StoryInteraction2D>();
         if (story != null) { story.Interact(interactor); return; }
 

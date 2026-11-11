@@ -9,6 +9,8 @@ public sealed class InGameSkillHUD : MonoBehaviour
     private PlayerSkills skills;
     private PlayerMana mana;
     private PlayerGrenadeSkill grenades;
+    private PlayerAttackController actions;
+    private PlayerPoisonDaggerSkill daggers;
     private TMP_Text grenadeNotice;
     private readonly TMP_Text[] titles = new TMP_Text[2];
     private readonly TMP_Text[] timers = new TMP_Text[2];
@@ -81,11 +83,31 @@ public sealed class InGameSkillHUD : MonoBehaviour
             skills = target != null ? target.GetComponent<PlayerSkills>() : FindFirstObjectByType<PlayerSkills>();
             mana = skills != null ? skills.GetComponent<PlayerMana>() : null;
             grenades = skills != null ? skills.GetComponent<PlayerGrenadeSkill>() : null;
+            actions = skills != null ? skills.GetComponent<PlayerAttackController>() : null;
+            daggers = skills != null ? skills.GetComponent<PlayerPoisonDaggerSkill>() : null;
         }
         bool wasd = PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe;
-        RefreshSlot(0, wasd ? "Q 은신" : "C 은신", skills != null ? skills.StealthCooldownRemaining : 0f,
-            skills != null ? skills.StealthCooldown : 12f, skills != null ? skills.StealthManaCost : 15);
-        RefreshGrenadeSlot(wasd);
+        bool shockwave = actions != null && actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Shockwave;
+        RefreshSlot(0, (wasd ? "Q " : "C ") + (shockwave ? "충격파" : "은신"),
+            skills == null ? 0 : shockwave ? skills.ShockwaveCooldownRemaining : skills.StealthCooldownRemaining,
+            skills == null ? 12 : shockwave ? skills.ShockwaveCooldown : skills.StealthCooldown,
+            skills == null ? 15 : shockwave ? skills.ShockwaveManaCost : skills.StealthManaCost);
+        if (actions != null && actions.SelectedThrowSkill == PlayerAttackController.ThrowSkill.PoisonDaggers) RefreshDaggerSlot(wasd);
+        else RefreshGrenadeSlot(wasd);
+    }
+
+    private void RefreshDaggerSlot(bool wasd)
+    {
+        if (titles[1] != null)
+        {
+            float remaining = daggers != null ? daggers.CooldownRemaining : 0;
+            titles[1].text = wasd ? "E 단검 투척" : "E/V 단검 투척";
+            timers[1].fontSize = 19; timers[1].text = remaining > 0 ? $"{remaining:0.0}s" : "준비";
+            float duration = daggers != null && daggers.Settings != null ? daggers.Settings.poisonDuration : 4;
+            costs[1].text = "MP 10%"; costs[1].color = new Color(.55f, .9f, .6f);
+            cooldowns[1].fillAmount = daggers == null ? 0 : remaining / Mathf.Max(.01f, daggers.Cooldown);
+        }
+        if (grenadeNotice != null) grenadeNotice.gameObject.SetActive(false);
     }
 
     private void RefreshGrenadeSlot(bool wasd)
@@ -113,12 +135,17 @@ public sealed class InGameSkillHUD : MonoBehaviour
     {
         if (titles[index] == null) return;
         titles[index].text = title;
-        bool active = index == 0 && skills != null && skills.IsStealthed;
+        bool active = index == 0 && skills != null && skills.IsStealthed
+            && (actions == null || actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth);
         bool insufficient = mana != null && mana.CurrentMana < cost;
-        timers[index].text = active ? $"은신 {skills.StealthRemaining:0.0}" : remaining > 0f ? $"{remaining:0.0}s"
+        var slotIcon = cooldowns[index].transform.parent.GetComponent<Image>();
+        if (slotIcon != null) slotIcon.color = insufficient && !active ? new Color(.7f, .7f, .7f, 1) : Color.white;
+        timers[index].text = active ? "은신 중" : remaining > 0f ? $"{remaining:0.0}s"
             : skills == null || !skills.CanUseSkills ? "" : insufficient ? "MP 부족" : "준비";
         timers[index].color = active ? new Color(.8f, .67f, 1f) : Color.white;
         costs[index].text = $"MP {cost}";
+        if (index == 0 && skills != null && (actions == null || actions.SelectedPrimarySkill == PlayerAttackController.PrimarySkill.Stealth))
+            costs[index].text = $"MP {skills.StealthDrainPercent:0.#}% / 0.5초";
         costs[index].color = insufficient ? new Color(1f, .45f, .4f) : new Color(.65f, .85f, 1f);
         cooldowns[index].fillAmount = remaining / Mathf.Max(.01f, cooldown);
     }

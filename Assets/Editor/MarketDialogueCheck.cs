@@ -104,7 +104,12 @@ public static class MarketDialogueCheck
                     Next(stage == 3 ? 4 : 11);
                     break;
                 case 4:
-                    Require(QuestTracker.CurrentQuestName == string.Empty, "Conversation quest waits for greeting completion");
+                    Require(QuestTracker.CurrentQuestName == "???", "Market arrival shows an objective before the NPC greeting");
+                    QuestTracker.Complete(flow);
+                    foreach (var hud in UnityEngine.Object.FindObjectsByType<InGameQuestHUD>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                        if (hud.CanPresentOpening)
+                            Require(((GameObject)Read(hud, "questRoot")).activeSelf, "Quest icon root stays active without an objective");
+                    QuestTracker.Accept(flow, Resources.Load<TextAsset>("Quests/market_arrival"));
                     normalLens = Camera.main.orthographic ? Camera.main.orthographicSize : Camera.main.fieldOfView;
                     Require(bubble != null && !bubble.HasPresented, "Market entry does not greet before passing");
                     player.enabled = false;

@@ -6,11 +6,18 @@ public sealed class ScenePortal2D : MonoBehaviour
 {
     [SerializeField] private string destinationSceneName = "Main";
     [SerializeField] private string destinationSpawnPointId = "FromDemoRightPortal";
+    [SerializeField] private bool glowFacesRight = true;
+    public bool GlowFacesRight => glowFacesRight;
 
-    private void Awake() => GetComponent<Interactable2D>().AllowFromEitherSide = true;
-
-    public void SetArea(float left, float right, float bottom = -4.5f, float top = 1.5f)
+    private void Awake()
     {
+        GetComponent<Interactable2D>().AllowFromEitherSide = true;
+        if (GetComponent<PortalPresentation2D>() == null) gameObject.AddComponent<PortalPresentation2D>();
+    }
+
+    public void SetArea(float left, float right, float bottom = -4.5f, float top = 1.5f, bool lightFacesRight = true)
+    {
+        glowFacesRight = lightFacesRight;
         transform.position = new Vector3((left + right) * .5f, (bottom + top) * .5f, transform.position.z);
         var box = GetComponent<BoxCollider2D>();
         var sprite = GetComponent<SpriteRenderer>();

@@ -18,6 +18,12 @@ public sealed class LocationHUD : MonoBehaviour
     private float elapsed;
     private bool presenting;
     private readonly Queue<string> notices = new();
+    public void Dismiss()
+    {
+        notices.Clear(); presenting = false; elapsed = 0;
+        if (visibility != null) visibility.alpha = 0;
+    }
+    private void OnDisable() => Dismiss();
     private const float HeightInSeconds = .2f;
     private const float WidthInSeconds = .3f;
     private const float FadeInSeconds = HeightInSeconds + WidthInSeconds;
@@ -35,11 +41,12 @@ public sealed class LocationHUD : MonoBehaviour
     private void Initialize()
     {
         var images = FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        var background = images.FirstOrDefault(i => i.name == "Info" && i.GetComponentInParent<Canvas>() != null);
+        var background = images.FirstOrDefault(i => i.name == "Info" &&
+            i.GetComponentInParent<Canvas>() is { isActiveAndEnabled: true });
         if (background == null)
         {
-            var canvas = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                .FirstOrDefault(c => c.name == "InGame_Canvas");
+            var canvas = FindObjectsByType<Canvas>(FindObjectsSortMode.None)
+                .FirstOrDefault(c => c.name == "InGame_Canvas" && c.isActiveAndEnabled);
             if (canvas == null)
             {
                 canvas = gameObject.AddComponent<Canvas>();

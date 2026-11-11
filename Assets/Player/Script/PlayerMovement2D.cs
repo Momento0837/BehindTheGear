@@ -6,6 +6,18 @@ using UnityEngine;
 public sealed class PlayerMovement2D : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float moveSpeed = 7f;
+    [Header("Walk - hold Ctrl")]
+    [SerializeField, Min(0f)] private float walkSpeed = 5.25f;
+    [Header("Dash - press Shift")]
+    [SerializeField, Min(0f)] private float dashDistance = 3f;
+    [SerializeField, Min(0f)] private float dashCooldown = 1f;
+    [SerializeField, Min(.01f)] private float dashDuration = .25f;
+    [Header("Dash afterimages")]
+    [SerializeField] private bool dashAfterimages = false;
+    [SerializeField, Min(.01f)] private float afterimageInterval = .025f;
+    [SerializeField, Min(.01f)] private float afterimageLifetime = .22f;
+    [SerializeField] private Color afterimageTint = new(.3f, .85f, 1f, .45f);
+    [Header("Jump and crouch")]
     [SerializeField, Min(0f)] private float jumpVelocity = 12f;
     [SerializeField, Range(0f, 1f)] private float crouchSpeedMultiplier = .7f;
     [SerializeField] private LayerMask groundLayers = ~0;
@@ -31,6 +43,13 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private PlayerInputReader playerInput;
     private PlayerMeleeAttack meleeAttack;
     private PlayerHealth playerHealth;
+    private PlayerControlLock controlLock;
+    private PlayerSpriteFacing spriteFacing;
+    private SpriteRenderer spriteRenderer;
+    private float dashDirection, dashSpeed, dashTimeRemaining, dashReadyAt, nextAfterimageAt;
+    private CollisionDetectionMode2D collisionModeBeforeDash;
+    public bool IsDashing { get; private set; }
+    public float DashCooldownRemaining => Mathf.Max(0f, dashReadyAt - Time.time);
     private int lastKnownHealth;
     [SerializeField, Range(0f, 1f)] private float meleeImpactNormalizedTime = .48f;
     private float hitStopUntil;
@@ -50,6 +69,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void OnDisable()
     {
+        EndDash();
         if (hitStopped && animator != null) animator.speed = animatorSpeedBeforeHitStop;
         hitStopped = false;
         meleeAttack?.CancelComboSwing();
@@ -86,6 +106,10 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void Awake()
     {
+        // Also migrate already-loaded scene instances carrying the previous defaults.
+        if (Mathf.Approximately(dashDuration, .15f)) dashDuration = .25f;
+        if (Mathf.Approximately(walkSpeed, 3.5f)) walkSpeed = 5.25f;
+        dashAfterimages = false;
         body = GetComponent<Rigidbody2D>();
         // Match the rendered player position to the camera's per-frame follow updates.
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -121,22 +145,68 @@ public sealed class PlayerMovement2D : MonoBehaviour
         standingOffset = box.offset;
         body.freezeRotation = true;
         playerInput = GetComponent<PlayerInputReader>();
+        controlLock = GetComponent<PlayerControlLock>();
+        spriteFacing = GetComponent<PlayerSpriteFacing>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         meleeAttack = GetComponent<PlayerMeleeAttack>();
         playerInput.MoveChanged += value => horizontalInput = value;
         playerInput.CrouchChanged += value => crouchHeld = value;
         playerInput.JumpPressed += () => jumpRequested = true;
         playerInput.BasicAttackPressed += HandleAttackPressed;
+        playerInput.DashPressed += HandleDashPressed;
+    }
+
+    private void HandleDashPressed() => TryStartDash();
+
+    public bool TryStartDash()
+    {
+        if (!isActiveAndEnabled || playerInput == null || !playerInput.isActiveAndEnabled
+            || !body.simulated || IsDashing || DashCooldownRemaining > 0f || dashDistance <= 0f
+            || playerHealth != null && playerHealth.IsDead || controlLock != null && controlLock.IsLocked
+            || hitStopped || InventoryUI.GameplayInputSuppressedThisFrame || SceneFadeTransition.IsRunning || Time.timeScale <= 0f) return false;
+        dashDirection = spriteFacing != null ? spriteFacing.FacingDirection
+            : spriteRenderer != null ? (spriteRenderer.flipX ? -1f : 1f) : (horizontalInput < 0f ? -1f : 1f);
+        dashTimeRemaining = Mathf.Max(.01f, dashDuration);
+        dashSpeed = dashDistance / dashTimeRemaining;
+        dashReadyAt = Time.time + Mathf.Max(0f, dashCooldown);
+        collisionModeBeforeDash = body.collisionDetectionMode;
+        body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        IsDashing = true;
+        EmitAfterimage();
+        return true;
+    }
+
+    private void EndDash()
+    {
+        if (!IsDashing) return;
+        IsDashing = false;
+        dashTimeRemaining = 0f;
+        if (body != null)
+        {
+            body.collisionDetectionMode = collisionModeBeforeDash;
+            body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
+        }
+        spriteFacing?.RefreshFacingFromInput();
+    }
+
+    private void EmitAfterimage()
+    {
+        nextAfterimageAt = Time.time + Mathf.Max(.01f, afterimageInterval);
+        if (dashAfterimages && spriteRenderer != null && spriteRenderer.enabled && spriteRenderer.sprite != null)
+            PlayerDashAfterimage.Create(spriteRenderer, afterimageLifetime, afterimageTint);
     }
 
     private void FixedUpdate()
     {
         if (hitStopped && Time.unscaledTime < hitStopUntil)
         {
+            EndDash();
             body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
             return;
         }
         if (playerHealth != null && playerHealth.IsDead)
         {
+            EndDash();
             jumpRequested = false;
             horizontalInput = 0f;
             body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
@@ -144,8 +214,19 @@ public sealed class PlayerMovement2D : MonoBehaviour
             return;
         }
 
+        if (IsDashing && (dashTimeRemaining <= 0f || !playerInput.isActiveAndEnabled
+            || controlLock != null && controlLock.IsLocked || InventoryUI.GameplayInputSuppressedThisFrame
+            || SceneFadeTransition.IsRunning || Time.timeScale <= 0f)) EndDash();
         UpdateCrouch(crouchHeld && !dropping);
-        body.linearVelocity = new Vector2(horizontalInput * moveSpeed * (crouchHeld ? crouchSpeedMultiplier : 1f), body.linearVelocity.y);
+        float horizontalVelocity = horizontalInput * (playerInput.WalkHeld ? walkSpeed : moveSpeed) * (crouchHeld ? crouchSpeedMultiplier : 1f);
+        if (IsDashing)
+        {
+            float stepTime = Mathf.Min(Time.fixedDeltaTime, dashTimeRemaining);
+            // Cap the final partial physics step so distance stays correct for decimal durations.
+            horizontalVelocity = dashDirection * dashSpeed * (stepTime / Time.fixedDeltaTime);
+            dashTimeRemaining = Mathf.Max(0f, dashTimeRemaining - stepTime);
+        }
+        body.linearVelocity = new Vector2(horizontalVelocity, body.linearVelocity.y);
         bool grounded = IsGrounded();
         if (jumpRequested)
         {
@@ -173,12 +254,19 @@ public sealed class PlayerMovement2D : MonoBehaviour
             }
         }
         if (hasIsMovingParameter)
-            animator.SetBool(IsMovingParameterHash, !Mathf.Approximately(horizontalInput, 0f));
+            animator.SetBool(IsMovingParameterHash, IsDashing || !Mathf.Approximately(horizontalInput, 0f));
         if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, grounded);
     }
 
     private void LateUpdate()
     {
+        if (animator != null && !hitStopped && !attackAnimationPlaying && playerHealth != null && !playerHealth.IsDead)
+        {
+            var locomotion = animator.GetCurrentAnimatorStateInfo(0);
+            bool walkingAnimation = locomotion.IsName("Running") || locomotion.IsName("Run") || locomotion.IsName("Walk");
+            animator.speed = walkingAnimation && playerInput.WalkHeld && !IsDashing ? walkSpeed / Mathf.Max(.01f, moveSpeed) : 1f;
+        }
+        if (IsDashing && Time.time >= nextAfterimageAt) EmitAfterimage();
         if (hitStopped && Time.unscaledTime >= hitStopUntil)
         {
             if (animator != null) animator.speed = animatorSpeedBeforeHitStop;
@@ -232,6 +320,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     {
         if (playerHealth != null) playerHealth.HealthChanged -= HandleHealthChanged;
         if (playerInput != null) playerInput.BasicAttackPressed -= HandleAttackPressed;
+        if (playerInput != null) playerInput.DashPressed -= HandleDashPressed;
     }
 
     private void HandleHealthChanged(int currentHealth, int maxHealth)
@@ -310,6 +399,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     /// <summary>Persistent players keep their Animator when a death reloads the scene.</summary>
     internal void ResetAfterRevive()
     {
+        EndDash();
         horizontalInput = 0f;
         crouchHeld = false;
         jumpRequested = false;
@@ -333,6 +423,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     internal void RefreshAnimationWhileControlLocked()
     {
+        EndDash();
         meleeAttack?.CancelComboSwing();
         jumpRequested = false;
         bufferedNextAttack = false;

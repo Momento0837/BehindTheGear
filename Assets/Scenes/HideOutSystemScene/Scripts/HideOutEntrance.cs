@@ -12,6 +12,10 @@ namespace BehindTheGear.HideOut
         public HideOutSettings settings;
         public Transform returnPoint;
         private bool entering;
+        private void Awake()
+        {
+            if (gameObject.scene.name == "Forest") gameObject.SetActive(false);
+        }
         public void Enter()
         {
             if (entering || settings == null) return;
@@ -139,9 +143,16 @@ namespace BehindTheGear.HideOut
             if (travelling) { finished(); yield break; }
             travelling = true;
             origin = from; returnPosition = position;
+            foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None)) hud.Dismiss();
+            var travelLock = bridge.GetComponent<PlayerControlLock>();
+            travelLock?.Acquire();
             // Suspend before loading so the HideOut creates its own input/camera context.
             foreach (var root in origin.GetRootGameObjects())
-                if (root.activeSelf && root != bridge.transform.root.gameObject) { suspended.Add(root); root.SetActive(false); }
+                if (root.activeSelf && root != bridge.transform.root.gameObject)
+                {
+                    suspended.Add(root);
+                    if (root.GetComponentInChildren<Camera>() == null) root.SetActive(false);
+                }
             AsyncOperation operation = null;
             try
             {
@@ -156,11 +167,16 @@ namespace BehindTheGear.HideOut
             if (operation == null)
             {
                 foreach (var root in suspended) if (root != null) root.SetActive(true);
-                suspended.Clear(); origin = default; travelling = false; finished(); yield break;
+                suspended.Clear(); origin = default; travelling = false; travelLock?.Release(); finished(); yield break;
             }
             while (!operation.isDone) yield return null;
             Scene hideout = SceneManager.GetSceneByPath(bridge.Settings.scenePath);
             SceneManager.SetActiveScene(hideout);
+            yield return null;
+            foreach (var root in suspended) if (root != null) root.SetActive(false);
+            travelLock?.Release();
+            var baseView = UnityEngine.Object.FindFirstObjectByType<HideOutScene>();
+            if (baseView != null) { baseView.ReleasePlayer(); baseView.SuspendPlayer(); }
             RoomDropCache.Clear();
             travelling = false; finished();
         }
@@ -180,6 +196,7 @@ namespace BehindTheGear.HideOut
             var body = bridge.GetComponent<Rigidbody2D>();
             if (body != null) { body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
             foreach (var root in suspended) if (root != null) root.SetActive(true);
+            foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None)) hud.Dismiss();
             suspended.Clear();
             var operation = SceneManager.UnloadSceneAsync(hideout);
             while (operation != null && !operation.isDone) yield return null;

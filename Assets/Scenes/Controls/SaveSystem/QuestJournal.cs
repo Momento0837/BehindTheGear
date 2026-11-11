@@ -75,6 +75,7 @@ public static class QuestJournal
         var ids = new HashSet<string>();
         foreach (var record in values)
         {
+            if (record != null && record.questId == "market_quest") continue;
             var definition = record != null ? Definition(record.questId) : null;
             if (definition?.objectives == null || !ids.Add(record.questId) || record.stage < 1 || record.stage > 3
                 || record.amounts == null || record.amounts.Length != definition.objectives.Length
@@ -87,7 +88,7 @@ public static class QuestJournal
                     throw new InvalidDataException("잘못된 퀘스트 진행량입니다.");
         }
     }
-    public static void Restore(List<QuestProgress> values) { Validate(values); records = values.Select(r => new QuestProgress
+    public static void Restore(List<QuestProgress> values) { Validate(values); records = values.Where(r => r.questId != "market_quest").Select(r => new QuestProgress
         { questId = r.questId, stage = r.stage, rewardClaimed = r.rewardClaimed, amounts = (int[])r.amounts.Clone() }).ToList(); Publish(); }
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     public static void Clear() { records = new(); Publish(); }
