@@ -9,6 +9,8 @@ public sealed class ManualSaveMenu : MonoBehaviour
 {
     public HideOutSettings settings;
     public GameObject continuePlayerPrefab;
+    [SerializeField] private Sprite titleSprite;
+    [SerializeField] private MenuSoftEffects titleStyle;
     private GameObject panel, confirmation;
     private TMP_Text status, question;
     private Button continueButton, deleteButton;
@@ -32,7 +34,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         panel = new GameObject("Slot 1", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(root.transform, false);
         var rect = (RectTransform)panel.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
         panel.GetComponent<Image>().color = new Color(.09f, .045f, .035f, 1);
-        Label(panel.transform, "BEHIND THE GEAR", 110, 46);
+        CreateTitle(panel.transform);
         status = Label(panel.transform, "", 230, 24);
         continueButton = Button(panel.transform, "이어하기", 440, Continue);
         Button(panel.transform, "새 게임", 350, NewGame);
@@ -47,6 +49,28 @@ public sealed class ManualSaveMenu : MonoBehaviour
         confirmation.SetActive(false); Refresh();
         panel.SetActive(visible);
     }
+    private void CreateTitle(Transform parent)
+    {
+        if (titleSprite == null)
+        {
+            Debug.LogError("[Save Menu] Assign the title artwork.", this);
+            return;
+        }
+        var title = new GameObject("Save Title", typeof(RectTransform), typeof(Image));
+        title.transform.SetParent(parent, false);
+        var image = title.GetComponent<Image>();
+        image.sprite = titleSprite;
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        var rect = image.rectTransform;
+        rect.anchorMin = rect.anchorMax = new Vector2(.5f, 1);
+        rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition = new Vector2(0, -160);
+        float width = 640f;
+        rect.sizeDelta = new Vector2(width, width * titleSprite.rect.height / titleSprite.rect.width);
+        titleStyle?.ApplyTitleEffect(image);
+    }
+
     public void Refresh()
     {
         bool exists = ManualSaveStore.Exists;
@@ -78,7 +102,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         if (ManualSaveStore.Exists) Ask("기존 슬롯으로 새 게임을 시작할까요?\n처음 침대 저장이 성공할 때 기존 저장을 덮어씁니다.", Begin);
         else Begin();
     }
-    private void Begin() { SaveGameSession.BeginNewGame(); ChoosingControls = true; panel.SetActive(false); GetComponent<ControlSchemeSelectScene>()?.ShowControlsForNewGame(); }
+    private void Begin() { SaveGameSession.BeginNewGame(); ChoosingControls = true; panel.SetActive(false); GetComponent<ControlSchemeSelectScene>()?.StartNewGame(); }
     public void Delete() => Ask("슬롯 1과 백업을 삭제할까요?", () =>
     {
         try { ManualSaveStore.DeleteSlot(); Refresh(); }

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-/// <summary>Reads only the selected control layout and publishes movement and action input.</summary>
+/// <summary>Reads the WASD, mouse and Q/E controls.</summary>
 public sealed class PlayerInputReader : MonoBehaviour
 {
     public event Action<float> MoveChanged;
@@ -18,11 +18,6 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action SkillOnePressed;
     public event Action SkillTwoPressed;
     public event Action SkillTwoReleased;
-    // Kept for callers that still use the original button-specific events.
-    public event Action AttackZPressed;
-    public event Action AttackXPressed;
-    public event Action AttackCPressed;
-    public event Action AttackVPressed;
     public event Action PrimaryClickPressed;
     public event Action SecondaryClickPressed;
     public event Action InteractPressed;
@@ -69,27 +64,21 @@ public sealed class PlayerInputReader : MonoBehaviour
 
         WalkHeld = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
 
-        bool wasdScheme = PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe;
-        float nextHorizontal = wasdScheme
-            ? (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f)
-            : (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);
+        float nextHorizontal = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
         SetHorizontal(nextHorizontal);
-        float verticalAim = wasdScheme
-            ? (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f)
-            : (keyboard.upArrowKey.isPressed ? 1f : 0f) - (keyboard.downArrowKey.isPressed ? 1f : 0f);
+        float verticalAim = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
         var aim = new Vector2(nextHorizontal, verticalAim);
         if (aim.sqrMagnitude > 0) AimDirection = aim.normalized;
 
-        bool nextCrouching = wasdScheme ? keyboard.sKey.isPressed : keyboard.downArrowKey.isPressed;
+        bool nextCrouching = keyboard.sKey.isPressed;
         SetCrouching(nextCrouching);
 
         if (dashPressed) DashPressed?.Invoke();
 
-        bool jumpPressed = (wasdScheme ? keyboard.wKey : keyboard.upArrowKey).wasPressedThisFrame
+        bool jumpPressed = keyboard.wKey.wasPressedThisFrame
             || keyboard.spaceKey.wasPressedThisFrame;
         if (jumpPressed) JumpPressed?.Invoke();
 
-        if (wasdScheme)
         {
             bool primaryClick = Mouse.current?.leftButton.wasPressedThisFrame == true;
             bool secondaryClick = Mouse.current?.rightButton.wasPressedThisFrame == true;
@@ -109,27 +98,7 @@ public sealed class PlayerInputReader : MonoBehaviour
 
             if (keyboard.qKey.wasPressedThisFrame) SkillOnePressed?.Invoke();
         }
-        else
-        {
-            if (keyboard.zKey.wasPressedThisFrame)
-            {
-                BasicAttackPressed?.Invoke();
-                AttackZPressed?.Invoke();
-            }
-            if (keyboard.xKey.wasPressedThisFrame)
-            {
-                SecondaryAttackPressed?.Invoke();
-                AttackXPressed?.Invoke();
-            }
-            if (keyboard.cKey.wasPressedThisFrame)
-            {
-                SkillOnePressed?.Invoke();
-                AttackCPressed?.Invoke();
-            }
-            if (keyboard.vKey.wasPressedThisFrame) AttackVPressed?.Invoke();
-        }
-
-        bool throwHeld = keyboard.eKey.isPressed || !wasdScheme && keyboard.vKey.isPressed;
+        bool throwHeld = keyboard.eKey.isPressed;
         if (throwHeld && !throwWasHeld) SkillTwoPressed?.Invoke();
         if (!throwHeld && throwWasHeld) SkillTwoReleased?.Invoke();
         throwWasHeld = throwHeld;
@@ -148,8 +117,7 @@ public sealed class PlayerInputReader : MonoBehaviour
     }
 
     private bool throwWasHeld;
-    private static bool IsThrowHeld(Keyboard keyboard) => keyboard != null && (keyboard.eKey.isPressed
-        || PlayerControlSchemeSettings.Current == PlayerControlScheme.ArrowKeys && keyboard.vKey.isPressed);
+    private static bool IsThrowHeld(Keyboard keyboard) => keyboard != null && keyboard.eKey.isPressed;
 
     private void SetHorizontal(float value)
     {

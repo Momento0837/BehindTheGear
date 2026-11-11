@@ -16,6 +16,7 @@ public static class CutsceneInputRecoveryCheck
     static int stage;
     static CutsceneVideoSequence clip;
     static PlayerSkills skills;
+    static bool resumedDuringQuest;
     static CutsceneInputRecoveryCheck() => EditorApplication.update += Tick;
     static void Check(bool value, string message)
     {
@@ -30,7 +31,7 @@ public static class CutsceneInputRecoveryCheck
             File.Delete(Request);
             if (Application.unityVersion != "6000.3.23f1") return;
             File.WriteAllText(Output, "Unity " + Application.unityVersion + "\n");
-            SessionState.SetBool(Key, true); stage=0; started=since=0;
+            SessionState.SetBool(Key, true); stage=0; started=since=0; resumedDuringQuest=false;
             EditorApplication.isPlaying=true;
             return;
         }
@@ -58,8 +59,15 @@ public static class CutsceneInputRecoveryCheck
                 Check(clip.EndingTransition!=null,"Actual opening quest transition connected");
                 clip.GetType().GetMethod("OnVideoFinished",Flags).Invoke(clip,new object[]{null}); Next();
             }
+            else if(stage==3 && clip.IsPlaying && !resumedDuringQuest
+                && !((GameObject)clip.GetType().GetField("videoRoot",Flags).GetValue(clip)).activeSelf)
+            {
+                Check(Time.timeScale==1,"World time resumes while opening quest animation is still running");
+                resumedDuringQuest=true;
+            }
             else if(stage==3 && !clip.IsPlaying)
             {
+                Check(resumedDuringQuest,"Opening quest did not hold the cinematic pause");
                 Check(Time.timeScale==1,"Natural end plus opening quest restores world time");
                 skills=UnityEngine.Object.FindFirstObjectByType<PlayerSkills>();
                 Check(skills!=null && skills.CanUseSkills && !skills.GetComponent<PlayerControlLock>().IsLocked,

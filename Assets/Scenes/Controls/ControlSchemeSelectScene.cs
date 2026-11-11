@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-/// <summary>Handles the two buttons saved in the control selection scene.</summary>
+/// <summary>Entry menu and direct new-game transition; controls are fixed to WASD/mouse.</summary>
 public sealed class ControlSchemeSelectScene : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "Forest";
@@ -16,22 +16,18 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
     private void Awake()
     {
         if (controlSelectionCanvas != null)
-            foreach (var image in controlSelectionCanvas.GetComponentsInChildren<UnityEngine.UI.Image>(true))
-            {
-                Color color = image.color;
-                float value = Mathf.Max(color.r, color.g, color.b);
-                if (image.sprite == null || image.GetComponent<UnityEngine.UI.Button>() != null)
-                    image.color = new Color(value, value * .52f, value * .38f, color.a);
-            }
-        if (mainMenuPrefab == null || controlSelectionCanvas == null)
         {
-            Debug.LogError("[Startup] Assign the main menu prefab and control selection canvas.", this);
+            controlSelectionCanvas.SetActive(false);
+            Destroy(controlSelectionCanvas);
+        }
+        if (mainMenuPrefab == null)
+        {
+            Debug.LogError("[Startup] Assign the main menu prefab.", this);
             return;
         }
 
         GetComponent<ManualSaveMenu>()?.SetVisible(false);
         showingMainMenu = true;
-        controlSelectionCanvas.SetActive(false);
         mainMenu = Instantiate(mainMenuPrefab);
         mainMenu.StartRequested += ShowControls;
     }
@@ -46,30 +42,25 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
             mainMenu.gameObject.SetActive(false);
             var saveMenu = GetComponent<ManualSaveMenu>();
             if (saveMenu != null) saveMenu.SetVisible(true);
-            else controlSelectionCanvas.SetActive(true);
         }, fadeDuration);
         showingMainMenu = false;
         Destroy(mainMenu.gameObject);
+        if (GetComponent<ManualSaveMenu>() == null) StartNewGame();
     }
 
-    public void ShowControlsForNewGame()
-    {
-        showingMainMenu = false;
-        if (mainMenu != null) mainMenu.gameObject.SetActive(false);
-        controlSelectionCanvas.SetActive(true);
-    }
+    public void ShowControlsForNewGame() => StartNewGame();
 
-    public void SelectWasdMouseQe() => Select(PlayerControlScheme.WasdMouseQe);
+    public void SelectWasdMouseQe() => StartNewGame();
 
-    public void SelectArrowKeys() => Select(PlayerControlScheme.ArrowKeys);
+    // Old editor automation entry point; it cannot select an alternate layout.
+    public void SelectArrowKeys() => StartNewGame();
 
-    private void Select(PlayerControlScheme scheme)
+    public void StartNewGame()
     {
         if (showingMainMenu || selecting || SceneFadeTransition.IsRunning) return;
         var menu = GetComponent<ManualSaveMenu>();
         if (menu != null && !menu.ChoosingControls) return;
         selecting = true;
-        PlayerControlSchemeSettings.Select(scheme);
         SceneFadeTransition.LoadScene(gameSceneName, fadeDuration, success =>
         {
             if (!success) selecting = false;

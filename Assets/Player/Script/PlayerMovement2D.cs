@@ -314,6 +314,9 @@ public sealed class PlayerMovement2D : MonoBehaviour
             bufferedNextAttack = false;
             StartAttack(comboAttackIndex % AttackStateHashes.Length + 1);
         }
+        // Holding the same movement key does not emit another MoveChanged event.
+        // Restore its direction after the swing; a buffered combo keeps its attack facing.
+        spriteFacing?.RefreshFacingFromInput();
     }
 
     private void OnDestroy()
@@ -383,6 +386,30 @@ public sealed class PlayerMovement2D : MonoBehaviour
     {
         box.size = shouldCrouch ? new Vector2(standingSize.x, standingSize.y * .5f) : standingSize;
         box.offset = shouldCrouch ? standingOffset + Vector2.down * (standingSize.y * .25f) : standingOffset;
+    }
+
+    public bool SettleOnGround(float maxDistance = 10f)
+    {
+        Physics2D.SyncTransforms();
+        ContactFilter2D filter = new();
+        int mask = groundLayers.value;
+        int monsterLayer = LayerMask.NameToLayer("Monster");
+        if (monsterLayer >= 0) mask &= ~(1 << monsterLayer);
+        filter.SetLayerMask(mask);
+        filter.useTriggers = false;
+        var hits = new RaycastHit2D[16];
+        int count = box.Cast(Vector2.down, filter, hits, maxDistance);
+        float distance = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
+            if (hits[i].normal.y > .5f) distance = Mathf.Min(distance, hits[i].distance);
+        if (float.IsPositiveInfinity(distance)) return false;
+        Vector3 position = transform.position + Vector3.down * Mathf.Max(0, distance - .01f);
+        transform.position = position;
+        body.position = position;
+        body.linearVelocity = Vector2.zero;
+        Physics2D.SyncTransforms();
+        RefreshAnimationWhileControlLocked();
+        return true;
     }
 
     private bool IsGrounded()

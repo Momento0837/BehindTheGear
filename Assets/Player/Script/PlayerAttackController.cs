@@ -58,10 +58,10 @@ public sealed class PlayerAttackController : MonoBehaviour
     }
 
     public void BasicAttack() => InvokeSharedOrLegacy(onBasicAttack,
-        PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onPrimaryClick : onAttackZ);
+        onPrimaryClick);
 
     public void SecondaryAttack() => InvokeSharedOrLegacy(onSecondaryAttack,
-        PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSecondaryClick : onAttackX);
+        onSecondaryClick);
 
     public void SkillOne()
     {
@@ -69,7 +69,7 @@ public sealed class PlayerAttackController : MonoBehaviour
         bool used = selectedPrimarySkill == PrimarySkill.Stealth ? skills.TryUseStealth() : skills.TryUseShockwave();
         if (!used) return;
         InvokeSharedOrLegacy(onSkillOne,
-            PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillQ : onAttackC);
+            onSkillQ);
     }
 
     public void SkillTwo()
@@ -88,7 +88,7 @@ public sealed class PlayerAttackController : MonoBehaviour
     private void NotifyThrow()
     {
         InvokeSharedOrLegacy(onSkillTwo,
-            PlayerControlSchemeSettings.Current == PlayerControlScheme.WasdMouseQe ? onSkillE : onAttackV);
+            onSkillE);
     }
 
     public void SelectThrowSkill(ThrowSkill choice) { grenades.CancelAim(); selectedThrowSkill = choice; }

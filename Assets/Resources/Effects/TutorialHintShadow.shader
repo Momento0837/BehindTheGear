@@ -1,0 +1,101 @@
+Shader "BehindTheGear/UI/TutorialHintShadow"
+{
+    Properties
+    {
+        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
+        _UVRect ("Sprite UV bounds", Vector) = (0,0,1,1)
+        _UVStep ("UV per canvas unit", Vector) = (0.001,0.001,0,0)
+        _BlurRadius ("Background blur", Float) = 0
+        _GlowRadius ("Shadow spread", Float) = 0
+        _GlowOpacity ("Shadow opacity", Range(0,1)) = 0
+        _StencilComp ("Stencil Comparison", Float) = 8
+        _Stencil ("Stencil ID", Float) = 0
+        _StencilOp ("Stencil Operation", Float) = 0
+        _StencilWriteMask ("Stencil Write Mask", Float) = 255
+        _StencilReadMask ("Stencil Read Mask", Float) = 255
+        _ColorMask ("Color Mask", Float) = 15
+        [Toggle(UNITY_UI_ALPHACLIP)] _UseUIAlphaClip ("Use Alpha Clip", Float) = 0
+    }
+    SubShader
+    {
+        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" "CanUseSpriteAtlas"="True" }
+        Stencil { Ref [_Stencil] Comp [_StencilComp] Pass [_StencilOp] ReadMask [_StencilReadMask] WriteMask [_StencilWriteMask] }
+        Cull Off
+        ZWrite Off
+        ZTest [unity_GUIZTestMode]
+        Blend SrcAlpha OneMinusSrcAlpha
+        ColorMask [_ColorMask]
+        Pass
+        {
+            CGPROGRAM
+            #pragma target 3.0
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
+            #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
+            #include "UnityCG.cginc"
+            #include "UnityUI.cginc"
+            struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
+            struct v2f { float4 vertex:SV_POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; float4 local:TEXCOORD1; };
+            sampler2D _MainTex;
+            float4 _MainTex_TexelSize, _UVRect, _UVStep, _ClipRect;
+            float _BlurRadius, _GlowRadius, _GlowOpacity;
+            v2f vert(appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.local = v.vertex; o.uv = v.uv; o.color = v.color;
+                return o;
+            }
+            float4 Sample(float2 uv)
+            {
+                float inside = step(_UVRect.x, uv.x) * step(_UVRect.y, uv.y) * step(uv.x, _UVRect.z) * step(uv.y, _UVRect.w);
+                float2 inset = _MainTex_TexelSize.xy * .5;
+                float4 c = tex2D(_MainTex, clamp(uv, _UVRect.xy + inset, _UVRect.zw - inset));
+                c.a *= inside;
+                c.rgb *= c.a;
+                return c;
+            }
+            float4 frag(v2f i):SV_Target
+            {
+                float4 source = Sample(i.uv);
+                if (_BlurRadius > 0)
+                {
+                    float2 d = _UVStep.xy * _BlurRadius;
+                    // Gaussian-weighted 3x3 kernel; alpha is premultiplied to avoid dark sprite fringes.
+                    source *= 4;
+                    source += 2 * (Sample(i.uv + float2(d.x,0)) + Sample(i.uv - float2(d.x,0)) + Sample(i.uv + float2(0,d.y)) + Sample(i.uv - float2(0,d.y)));
+                    source += Sample(i.uv+d) + Sample(i.uv-d) + Sample(i.uv+float2(d.x,-d.y)) + Sample(i.uv+float2(-d.x,d.y));
+                    source /= 16;
+                }
+                float glow = 0;
+                if (_GlowOpacity > 0)
+                {
+                    // Three soft rings around the sprite alpha, fading to the 30-unit outer edge.
+                    [unroll] for (int ring = 1; ring <= 3; ring++)
+                    {
+                        float weight = ring == 1 ? .55 : (ring == 2 ? .3 : .15);
+                        [unroll] for (int tap = 0; tap < 12; tap++)
+                        {
+                            float angle = tap * 0.523598776;
+                            float2 delta = float2(cos(angle), sin(angle)) * (_GlowRadius * ring / 3.0) * _UVStep.xy;
+                            glow += Sample(i.uv + delta).a * weight / 12;
+                        }
+                    }
+                    glow *= _GlowOpacity;
+                }
+                float alpha = source.a + glow * (1-source.a);
+                float3 rgb = (source.rgb * i.color.rgb) / max(alpha, .0001);
+                alpha *= i.color.a;
+                #ifdef UNITY_UI_CLIP_RECT
+                alpha *= UnityGet2DClipping(i.local.xy, _ClipRect);
+                #endif
+                #ifdef UNITY_UI_ALPHACLIP
+                clip(alpha - .001);
+                #endif
+                return float4(rgb, alpha);
+            }
+            ENDCG
+        }
+    }
+}

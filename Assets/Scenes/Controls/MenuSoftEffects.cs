@@ -12,6 +12,13 @@ public sealed class MenuSoftEffects : MonoBehaviour
     [SerializeField, Range(0f, 30f)] private float buttonTextGlowRadius = 15f;
     [SerializeField, Range(0f, 1f)] private float buttonTextGlowOpacity = .15f;
 
+    public void ApplyTitleEffect(Image image)
+    {
+        if (effectShader == null || image == null) return;
+        var effect = image.GetComponent<MenuImageSoftEffect>() ?? image.gameObject.AddComponent<MenuImageSoftEffect>();
+        effect.Configure(effectShader, 0f, titleGlowRadius, titleGlowOpacity);
+    }
+
     private void Awake()
     {
         foreach (var label in GetComponentsInChildren<TextMeshProUGUI>(true))

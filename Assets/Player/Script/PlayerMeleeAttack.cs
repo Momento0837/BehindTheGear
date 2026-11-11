@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public interface IMeleeDamageModifier { int MeleeDamageBonus { get; } }
 public interface IMeleeDamageReceiver { void ReceiveMeleeDamage(int damage); }
@@ -70,11 +71,13 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         if (Time.time < nextAttackTime) return;
         nextAttackTime = Time.time + attackCooldown;
 
+        AimSwingAtMouse();
         ResolveHit(facingDirection);
     }
 
     public void BeginComboSwing()
     {
+        AimSwingAtMouse();
         comboHitPending = true;
         swingStealthBonus = GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0;
     }
@@ -157,7 +160,19 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
 
     private void UpdateFacing(float direction)
     {
+        if (comboHitPending || movement != null && movement.IsAttacking) return;
         if (direction != 0f) facingDirection = Mathf.Sign(direction);
+    }
+
+    private void AimSwingAtMouse()
+    {
+        var camera = Camera.main;
+        if (Mouse.current != null && camera != null)
+        {
+            float offset = Mouse.current.position.ReadValue().x - camera.WorldToScreenPoint(transform.position).x;
+            if (Mathf.Abs(offset) > .01f) facingDirection = Mathf.Sign(offset);
+        }
+        GetComponent<PlayerSpriteFacing>()?.FaceAttack(facingDirection);
     }
 
     private Vector2 GetAttackCenter()
