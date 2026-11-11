@@ -26,10 +26,16 @@ public sealed class PlayerSpriteFacing : MonoBehaviour
 
     internal void RefreshFacingFromInput()
     {
-        if (latestInput == 0f || movement != null && movement.IsDashing) return;
+        if (latestInput == 0f || movement != null && (movement.IsDashing || movement.IsAttacking)) return;
         FacingDirection = Mathf.Sign(latestInput);
         spriteRenderer.flipX = FacingDirection < 0f;
     }
 
     private void OnDestroy() { if (input != null) input.MoveChanged -= HandleMove; }
+
+    public void FaceAttack(float direction)
+    {
+        FacingDirection = direction < 0f ? -1f : 1f;
+        spriteRenderer.flipX = FacingDirection < 0f;
+    }
 }

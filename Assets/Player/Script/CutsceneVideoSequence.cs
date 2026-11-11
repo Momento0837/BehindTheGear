@@ -149,6 +149,10 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
         {
             HideVideoPresentation();
             RestoreUiAfterVideo();
+            // The movie has ended: let world animation run behind the quest reveal.
+            // Other pause owners (such as a scene fade) keep their own leases.
+            worldPause?.Dispose();
+            worldPause = null;
         });
         EndingTransition = null;
         CompleteFinish(true);

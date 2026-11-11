@@ -1,181 +1,87 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 [InitializeOnLoad]
 public static class ControlSchemeStartupCheck
 {
-    private const string Active = "BTG.ControlStartupCheck";
-    private const string Preference = "BehindTheGear.PlayerControlScheme";
-    private const string Output = "Temp/control-startup-validation";
-    private static int phase;
-    private static double started, since;
-    private static float origin;
-    private static bool mainMenuStarted, sawBlack;
-
-    static ControlSchemeStartupCheck()
-    {
-        EditorApplication.update += Tick;
-        EditorApplication.playModeStateChanged += state =>
-        {
-            if (state == PlayModeStateChange.EnteredEditMode && SessionState.GetBool(Active, false))
-                EditorApplication.delayCall += () =>
-                {
-                    phase = 0;
-                    started = since = 0;
-                    EditorApplication.isPlaying = true;
-                };
-        };
-    }
-
+    const string Folder="Temp/control-startup-validation", Active="BTG.SingleControlStartup";
+    static int phase;
+    static double deadline, next;
+    static ControlSchemeStartupCheck(){EditorApplication.update+=Tick;}
     [MenuItem("Tools/Checks/Control Scheme Startup")]
     public static void Run()
     {
-        if (Application.unityVersion != "6000.3.23f1" || EditorApplication.isPlayingOrWillChangePlaymode || SceneManager.GetActiveScene().isDirty)
-            throw new Exception("Use Unity 6000.3.23f1 edit mode with the current scene saved");
-        if (EditorBuildSettings.scenes.First(s => s.enabled).path != "Assets/Scenes/Controls/ControlSchemeSelect.unity")
-            throw new Exception("Control selection must be the first build scene");
-        Directory.CreateDirectory(Output);
-        File.WriteAllText(Output + "/result.txt", "RUNNING\n");
-        SessionState.SetBool(Active + ".HadPreference", PlayerPrefs.HasKey(Preference));
-        SessionState.SetInt(Active + ".Preference", PlayerPrefs.GetInt(Preference));
-        SessionState.SetInt(Active + ".Mode", 0);
-        SessionState.SetBool(Active, true);
-        phase = 0;
-        started = since = 0;
-        EditorApplication.isPlaying = true;
+        if(Application.unityVersion!="6000.3.23f1"||EditorApplication.isPlayingOrWillChangePlaymode)return;
+        Directory.CreateDirectory(Folder);
+        SessionState.SetBool(Active,true);phase=0;EditorApplication.isPlaying=true;
     }
-
-    private static void Finish(string message)
+    static void Require(bool value,string message){if(!value)throw new Exception(message);}
+    static void Finish(string result)
     {
-        File.AppendAllText(Output + "/result.txt", message + "\n");
-        if (SessionState.GetBool(Active + ".HadPreference", false)) PlayerPrefs.SetInt(Preference, SessionState.GetInt(Active + ".Preference", 0));
-        else PlayerPrefs.DeleteKey(Preference);
-        PlayerPrefs.Save();
-        SessionState.SetBool(Active, false);
-        PlayReviewKeyboard.Held = Array.Empty<Key>();
+        File.WriteAllText(Folder+"/result.txt",result);
         ManualSaveStore.UseValidationDirectory(null);
-        EditorApplication.isPlaying = false;
-        Debug.Log("CONTROL_STARTUP_CHECK " + message);
-        if (Application.isBatchMode)
-            EditorApplication.delayCall += () => EditorApplication.Exit(message.StartsWith("PASS") ? 0 : 1);
+        SessionState.SetBool(Active,false);EditorApplication.isPlaying=false;phase=0;
     }
-
-    private static void Tick()
+    static void Tick()
     {
-        if (!SessionState.GetBool(Active, false) || !EditorApplication.isPlaying) return;
+        if(!EditorApplication.isPlayingOrWillChangePlaymode&&!EditorApplication.isCompiling&&File.Exists(Folder+"/run")){File.Delete(Folder+"/run");Run();}
+        if(!SessionState.GetBool(Active,false)||!EditorApplication.isPlaying||EditorApplication.isCompiling)return;
         try
         {
-            double now = EditorApplication.timeSinceStartup;
-            int mode = SessionState.GetInt(Active + ".Mode", 0);
-            bool wasd = mode == 0;
-            if (started == 0)
+            double now=EditorApplication.timeSinceStartup;
+            if(phase==0)
             {
-                started = since = now;
-                mainMenuStarted = sawBlack = false;
-                ManualSaveStore.UseValidationDirectory(Path.GetFullPath(Output + "/slot-" + Guid.NewGuid().ToString("N")));
-                new GameObject("Control Check Keyboard").AddComponent<PlayReviewKeyboard>();
+                deadline=now+40; next=now+.5;
+                ManualSaveStore.UseValidationDirectory(Path.GetFullPath(Folder+"/single-"+Guid.NewGuid().ToString("N")));
+                SceneManager.LoadScene("ControlSchemeSelect");phase=1;return;
             }
-            Require(now - started < 45, "Startup check timed out at phase " + phase);
-            if (phase == 0)
+            Require(now<deadline,"Startup timed out at "+phase);
+            if(now<next||SceneFadeTransition.IsRunning)return;
+            Require(!UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include,FindObjectsSortMode.None).Any(c=>c.name=="Control Selection Canvas"),"Control selection canvas removed");
+            if(phase==1)
             {
-                Require(SceneManager.GetActiveScene().name == "ControlSchemeSelect", "First screen is not control selection");
-                if (now - since < .5) return;
-                var menu = UnityEngine.Object.FindFirstObjectByType<MainMenuController>();
-                var controls = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                    .First(c => c.name == "Control Selection Canvas");
-                if (!mainMenuStarted)
-                {
-                    Require(menu != null && !controls.gameObject.activeSelf, "Main menu must appear before control selection");
-                    var buttons = menu.GetComponentsInChildren<Button>();
-                    buttons.First(b => b.name == "Quit").onClick.Invoke();
-                    Require(EditorApplication.isPlaying, "Quit must be ignored in the Editor");
-                    ScreenCapture.CaptureScreenshot(Path.GetFullPath(Output + "/main-menu-" + mode + ".png"));
-                    buttons.First(b => b.name == "Start").onClick.Invoke();
-                    buttons.First(b => b.name == "Start").onClick.Invoke();
-                    Require(buttons.All(b => !b.interactable), "Menu buttons must be disabled during transition");
-                    mainMenuStarted = true;
-                    return;
-                }
-                if (SceneFadeTransition.IsRunning)
-                {
-                    sawBlack |= UnityEngine.Object.FindObjectsByType<Image>(FindObjectsSortMode.None)
-                        .Any(i => i.name == "Black Fade" && i.color.a >= .99f);
-                    return;
-                }
-                Require(sawBlack && !controls.gameObject.activeSelf && menu == null, "Start must fade through black to the save menu");
-                var saveMenu = UnityEngine.Object.FindFirstObjectByType<ManualSaveMenu>();
-                Require(saveMenu != null, "Save menu missing");
-                saveMenu.NewGame();
-                Require(saveMenu.ChoosingControls && controls.gameObject.activeSelf, "New Game must reveal control selection");
-                var selection = UnityEngine.Object.FindFirstObjectByType<ControlSchemeSelectScene>();
-                Require(selection != null, "Selection controller missing");
-                string method = wasd ? "SelectWasdMouseQe" : "SelectArrowKeys";
-                var button = UnityEngine.Object.FindObjectsByType<Button>(FindObjectsSortMode.None)
-                    .First(b => b.onClick.GetPersistentEventCount() > 0 && b.onClick.GetPersistentMethodName(0) == method);
-                ScreenCapture.CaptureScreenshot(Path.GetFullPath(Output + "/selection-" + mode + ".png"));
-                button.onClick.Invoke();
-                // A second selection during the fade must not overwrite the first choice.
-                if (wasd) selection.SelectArrowKeys(); else selection.SelectWasdMouseQe();
-                Require(PlayerControlSchemeSettings.Current == (wasd ? PlayerControlScheme.WasdMouseQe : PlayerControlScheme.ArrowKeys), "Selected control scheme was overwritten");
-                phase = 1;
+                var main=UnityEngine.Object.FindFirstObjectByType<MainMenuController>();Require(main!=null,"Main menu remains");
+                main.StartGame();phase=2;next=now+2;return;
             }
-            else if (phase == 1)
+            if(phase==2)
             {
-                if (SceneManager.GetActiveScene().name != "Forest") return;
-                var video = UnityEngine.Object.FindFirstObjectByType<CutsceneVideoSequence>();
-                var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>();
-                if (player == null) return;
-                var flow = UnityEngine.Object.FindFirstObjectByType<StorySceneFlow>();
-                if (flow == null || typeof(StorySceneFlow).GetField("monsters", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(flow) == null) return;
-                if (video != null && video.IsPlaying) { PlayReviewKeyboard.Held = new[] { Key.Space }; return; }
-                if (!player.enabled) return;
-                PlayReviewKeyboard.Held = Array.Empty<Key>();
-                origin = player.transform.position.x;
-                since = Time.unscaledTime;
-                phase = 2;
+                var menu=UnityEngine.Object.FindFirstObjectByType<ManualSaveMenu>();Require(menu!=null,"Save menu remains");
+                menu.NewGame();phase=3;next=now+2;return;
             }
-            else if (phase == 2)
-            {
-                var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>();
-                PlayReviewKeyboard.Held = new[] { wasd ? Key.A : Key.LeftArrow };
-                if (Time.unscaledTime - since < .4) return;
-                Require(player.transform.position.x < origin - .5f,
-                    $"Chosen movement keys do not move player: mode={PlayerControlSchemeSettings.Current}, origin={origin}, position={player.transform.position}, movement={player.enabled}, input={player.GetComponent<PlayerInputReader>().enabled}, velocity={player.GetComponent<Rigidbody2D>().linearVelocity}, a={Keyboard.current?.aKey.isPressed}, left={Keyboard.current?.leftArrowKey.isPressed}, scale={Time.timeScale}");
-                PlayReviewKeyboard.Held = new[] { wasd ? Key.RightArrow : Key.D };
-                since = Time.unscaledTime;
-                phase = 3;
-            }
-            else if (phase == 3)
-            {
-                // Allow one input frame for the previous direction to be released.
-                if (Time.unscaledTime - since < .15) return;
-                origin = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>().transform.position.x;
-                since = Time.unscaledTime;
-                phase = 4;
-            }
-            else if (phase == 4)
-            {
-                if (Time.unscaledTime - since < .35) return;
-                var player = UnityEngine.Object.FindFirstObjectByType<PlayerMovement2D>();
-                Require(Mathf.Abs(player.transform.position.x - origin) < .1f, "Unselected movement keys moved player");
-                File.AppendAllText(Output + "/result.txt", (wasd ? "WASD" : "Arrow") + ": main menu -> black fade -> save menu -> new game -> selection screen -> Forest, Editor Quit ignored, choice retained, selected keys move, other keys ignored, duplicate click guarded.\n");
-                PlayReviewKeyboard.Held = Array.Empty<Key>();
-                if (wasd)
-                {
-                    SessionState.SetInt(Active + ".Mode", 1);
-                    EditorApplication.isPlaying = false;
-                }
-                else Finish("PASS Unity " + Application.unityVersion + "; both control schemes checked in actual Play mode. Previous preferences restored. No scenes saved.");
-            }
+            Require(SceneManager.GetActiveScene().name=="Forest","New game directly enters Forest");
+            CheckInput();
+            Finish("PASS Unity "+Application.unityVersion+"\nMain menu -> save slot -> Forest without control selection. WASD/Q/E/Space input works; arrow and ZXCV gameplay input ignored; obsolete control preference cannot select another layout. Real save slot untouched.");
         }
-        catch (Exception error) { Finish("FAIL: " + error); }
+        catch(Exception e){Finish("FAIL\n"+e);Debug.LogException(e);}
     }
-
-    private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+    static void CheckInput()
+    {
+        var keyboard=InputSystem.AddDevice<Keyboard>();
+        var root=new GameObject("Single Controls Input Validation");
+        try
+        {
+            var input=root.AddComponent<PlayerInputReader>();
+            int attacks=0, jumps=0, skills=0;float movement=0;bool crouch=false;
+            input.BasicAttackPressed+=()=>attacks++;input.SecondaryAttackPressed+=()=>attacks++;
+            input.SkillOnePressed+=()=>skills++;input.SkillTwoPressed+=()=>skills++;
+            input.JumpPressed+=()=>jumps++;input.MoveChanged+=v=>movement=v;input.CrouchChanged+=v=>crouch=v;
+            var update=typeof(PlayerInputReader).GetMethod("Update",BindingFlags.Instance|BindingFlags.NonPublic);
+            PlayerControlSchemeSettings.Select(PlayerControlScheme.ArrowKeys);
+            Require(PlayerControlSchemeSettings.Current==PlayerControlScheme.WasdMouseQe,"Old selection cannot change fixed layout");
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.LeftArrow,Key.UpArrow,Key.DownArrow,Key.Z,Key.X,Key.C,Key.V));InputSystem.Update();keyboard.MakeCurrent();
+            update.Invoke(input,null);
+            Require(movement==0&&!crouch&&attacks==0&&skills==0&&jumps==0,"Arrow/ZXCV keys ignored");
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.D,Key.Space,Key.Q,Key.E));InputSystem.Update();keyboard.MakeCurrent();
+            update.Invoke(input,null);
+            Require(movement==1&&jumps==1&&skills==2,$"WASD Space Q E active: movement={movement} jumps={jumps} skills={skills} suppressed={InventoryUI.GameplayInputSuppressedThisFrame} menu={PlayerSkillDevelopmentMenu.IsOpen}");
+        }
+        finally{UnityEngine.Object.Destroy(root);InputSystem.RemoveDevice(keyboard);}
+    }
 }

@@ -24,6 +24,7 @@ public sealed class StorySceneFlow : MonoBehaviour
     public static bool RestartAtCombat { get; set; }
     private PlayerHealth tutorialHealth;
     private InventoryItemDefinition[] sceneLoot;
+    private ControlTutorialUI controlTutorial;
 
     private void UnlockTutorialMonsters()
     {
@@ -227,6 +228,8 @@ public sealed class StorySceneFlow : MonoBehaviour
             finally { controls?.Release(); }
         }
         else yield return PlayVideo();
+        controlTutorial = gameObject.AddComponent<ControlTutorialUI>();
+        controlTutorial.Begin(player);
         if (tutorialHealth != null) tutorialHealth.Damaged += UnlockTutorialMonsters;
         foreach (var monster in monsters) if (monster != null) monster.enabled = true;
         if (monsters.Length == 0)
@@ -238,6 +241,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         ready = true;
         portal.SetActive(true);
         AdvanceGuide("forest_exit");
+        controlTutorial.ArmPortal(portal);
     }
 
     private IEnumerator Garbage()
@@ -266,9 +270,13 @@ public sealed class StorySceneFlow : MonoBehaviour
         if (trigger == null) trigger = searchPoint.gameObject.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(2f, 3f);
+        foreach (var pulse in searchPoint.GetComponentsInChildren<InteractionLightPulse>(true))
+            pulse.BindProximity(player.transform, trigger);
         var interactable = searchPoint.GetComponent<Interactable2D>();
         if (interactable == null) interactable = searchPoint.gameObject.AddComponent<Interactable2D>();
         interactable.AllowFromEitherSide = true;
+        if (searchPoint.GetComponent<WorldInteractionHint>() == null)
+            searchPoint.gameObject.AddComponent<WorldInteractionHint>();
         var action = searchPoint.GetComponent<StoryInteraction2D>();
         if (action == null) action = searchPoint.gameObject.AddComponent<StoryInteraction2D>();
         action.Activated = user =>
@@ -307,6 +315,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         busy = true;
         if (gameObject.scene.name == "Forest")
         {
+            controlTutorial?.CompletePortal();
+            portal.GetComponent<WorldInteractionHint>()?.Dismiss();
             // Arrival is owned by the Market flow, so no cross-scene marker is required.
             SceneFadeTransition.LoadScene("Market", .8f, success => { if (!success) busy = false; });
         }
@@ -425,6 +435,9 @@ public sealed class StorySceneFlow : MonoBehaviour
         player.transform.position = position;
         var body = player.GetComponent<Rigidbody2D>();
         if (body != null) { body.position = position; body.linearVelocity = Vector2.zero; }
+        // The opening cinematic pauses physics before gravity can settle the spawn.
+        if (gameObject.scene.name == "Forest" && !player.SettleOnGround())
+            Debug.LogWarning("[Story] No floor below the Forest spawn.", player);
         Vector2 mapBounds = marketMap ? new Vector2(44.92f, 97.28f) : new Vector2(-26.18f, 26.18f);
         if (!marketMap && gameObject.scene.name == "Market") mapBounds.x = GarbagePortalLeft;
         var movementBounds = player.GetComponent<PlayerMapBounds2D>();
