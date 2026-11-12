@@ -46,6 +46,7 @@ public static class SaveSnapshotValidation
             if (s.levels[i] < 0 || s.levels[i] > (definition?.upgrades?.Length ?? 0)) throw new InvalidDataException("잘못된 시설 단계입니다.");
         }
         QuestJournal.Validate(s.quests);
+        s.fieldReturn?.Validate(); // Older slots do not contain a field return record.
         if (string.IsNullOrWhiteSpace(s.inventoryConfiguration) || string.IsNullOrWhiteSpace(s.playerStats)
             || string.IsNullOrWhiteSpace(s.healthConfiguration)) throw new InvalidDataException("플레이어 설정이 누락되었습니다.");
         var config = JsonUtility.FromJson<InventoryConfig>(s.inventoryConfiguration);

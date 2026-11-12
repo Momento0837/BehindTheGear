@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 
 /// <summary>Prototype story wiring, limited to the two main story scenes.</summary>
-public sealed class StorySceneFlow : MonoBehaviour
+public sealed partial class StorySceneFlow : MonoBehaviour
 {
     private const float GarbagePortalLeft = -8f;
 
@@ -22,27 +22,15 @@ public sealed class StorySceneFlow : MonoBehaviour
     private MarketNpcBubble marketBubble;
     private bool marketNpcSpoken;
     public static bool RestartAtCombat { get; set; }
-    private PlayerHealth tutorialHealth;
     private InventoryItemDefinition[] sceneLoot;
     private ControlTutorialUI controlTutorial;
-
-    private void UnlockTutorialMonsters()
-    {
-        foreach (var monster in monsters)
-            if (monster != null) monster.SetTutorialProtection(false);
-        if (tutorialHealth != null) tutorialHealth.Damaged -= UnlockTutorialMonsters;
-        tutorialHealth = null;
-    }
-
-    private void OnDestroy()
-    {
-        if (tutorialHealth != null) tutorialHealth.Damaged -= UnlockTutorialMonsters;
-    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Register()
     {
         RestartAtCombat = false;
+        pendingArrival = StoryArrival.None;
+        travellingSelena = null;
         SceneManager.sceneLoaded -= Attach;
         SceneManager.sceneLoaded += Attach;
     }
@@ -69,7 +57,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         yield return null;
         player = FindFirstObjectByType<PlayerMovement2D>();
         if (player == null) yield break;
-        if (SaveGameSession.Expedition)
+        var fieldReturn = SaveGameSession.TakeFieldReturn(gameObject.scene.path);
+        if (SaveGameSession.Expedition && pendingArrival == StoryArrival.None && fieldReturn == null)
         {
             player.GetComponent<PlayerHealth>()?.ReviveAfterSceneRestart();
             yield return FreeRoam(); yield break;
@@ -131,6 +120,18 @@ public sealed class StorySceneFlow : MonoBehaviour
         portal.AddComponent<StoryInteraction2D>().Activated = UsePortal;
         monsters = InScene<MonsterFollowController>();
         foreach (var monster in monsters) monster.BindPlayer(player.transform);
+        if (fieldReturn != null)
+        {
+            yield return RestoreFieldState(fieldReturn);
+            yield break;
+        }
+        if (pendingArrival != StoryArrival.None)
+        {
+            var arrival = pendingArrival;
+            pendingArrival = StoryArrival.None;
+            yield return EnterLaterChapter(arrival);
+            yield break;
+        }
         if (gameObject.scene.name == "Forest") yield return Forest();
         else yield return Garbage();
     }
@@ -212,9 +213,8 @@ public sealed class StorySceneFlow : MonoBehaviour
         foreach (var monster in monsters)
         {
             monster.ConfigureLoot(sceneLoot);
-            monster.SetTutorialProtection(true);
+            monster.ConfigureOpeningHealth(player.GetComponent<PlayerMeleeAttack>().ResolvedDamage);
         }
-        tutorialHealth = player.GetComponent<PlayerHealth>();
         if (RestartAtCombat)
         {
             RestartAtCombat = false;
@@ -230,21 +230,20 @@ public sealed class StorySceneFlow : MonoBehaviour
         else yield return PlayVideo();
         controlTutorial = gameObject.AddComponent<ControlTutorialUI>();
         controlTutorial.Begin(player);
-        if (tutorialHealth != null) tutorialHealth.Damaged += UnlockTutorialMonsters;
         foreach (var monster in monsters) if (monster != null) monster.enabled = true;
         if (monsters.Length == 0)
         {
             Debug.LogError("[Story] Forest has no encounter monsters; portal remains locked.", this);
             yield break;
         }
-        while (monsters.Any(m => m != null && m.CurrentHealth > 0)) yield return null;
+        while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || monsters.Any(m => m != null && m.CurrentHealth > 0)) yield return null;
         ready = true;
         portal.SetActive(true);
         AdvanceGuide("forest_exit");
         controlTutorial.ArmPortal(portal);
     }
 
-    private IEnumerator Garbage()
+    private IEnumerator Garbage(bool resumeCollected = false, bool restoring = false)
     {
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
@@ -264,7 +263,8 @@ public sealed class StorySceneFlow : MonoBehaviour
             Debug.LogError("[Story] Missing Garbage Interaction or TutorialGear.", this);
             yield break;
         }
-        bool collected = false;
+        bool collected = resumeCollected;
+        garbageCollected = collected;
         searchPoint.gameObject.layer = LayerMask.NameToLayer("Interactable");
         var trigger = searchPoint.GetComponent<BoxCollider2D>();
         if (trigger == null) trigger = searchPoint.gameObject.AddComponent<BoxCollider2D>();
@@ -284,6 +284,7 @@ public sealed class StorySceneFlow : MonoBehaviour
             if (collected || user != player.gameObject || SceneFadeTransition.IsRunning) return;
             if (inventory.Add(tutorialGear, 1) != 1) return;
             collected = true;
+            garbageCollected = true;
             interactable.enabled = false;
             trigger.enabled = false;
             searchPoint.gameObject.SetActive(false);
@@ -291,16 +292,23 @@ public sealed class StorySceneFlow : MonoBehaviour
             AdvanceGuide("equipment_tutorial");
             player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
         };
+        if (collected)
+        {
+            interactable.enabled = false;
+            trigger.enabled = false;
+            searchPoint.gameObject.SetActive(false);
+            if (!ready) player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
+        }
         // Reveal the objective only after the incoming black screen has cleared.
         while (SceneFadeTransition.IsRunning) yield return null;
-        ShowGuide("garbage_search");
-        while (!collected) yield return null;
-        while (inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
+        if (!restoring) ShowGuide("garbage_search");
+        while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || !collected) yield return null;
+        while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
             yield return null;
         player.GetComponent<InventoryUI>()?.EndEquipmentHint();
         ready = true;
         portal.SetActive(true);
-        AdvanceGuide("garbage_exit");
+        if (currentGuide != "garbage_exit") AdvanceGuide("garbage_exit");
     }
 
     private void UsePortal(GameObject interactor)
@@ -353,11 +361,19 @@ public sealed class StorySceneFlow : MonoBehaviour
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
         marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
-        marketBubble.Finished += () => { if (!marketNpcSpoken) ShowGuide("market_talk"); };
+        marketBubble.Finished += () =>
+        {
+            if (!marketNpcSpoken) ShowGuide("market_talk");
+            var hint = dialogue.GetComponent<WorldInteractionHint>();
+            if (hint == null) hint = dialogue.gameObject.AddComponent<WorldInteractionHint>();
+            hint.ShowUntilDismissed = true;
+        };
         portal.GetComponent<ScenePortal2D>().SetArea(91f, 97.6f, lightFacesRight: false);
         portal.SetActive(true);
         var npcCollider = dialogue.GetComponents<Collider2D>();
         foreach (var collider in npcCollider) collider.enabled = true;
+        dialogue.GetComponent<Interactable2D>().enabled = true;
+        dialogue.GetComponent<Interactable2D>().AllowFromEitherSide = true;
         var interaction = dialogue.gameObject.AddComponent<StoryInteraction2D>();
         interaction.Activated = _ => { if (!busy && !ready && !marketBubble.IsPresenting) StartCoroutine(TalkToMarketNpc()); };
     }
@@ -373,6 +389,14 @@ public sealed class StorySceneFlow : MonoBehaviour
     {
         busy = true;
         int startLine = 3;
+        if (marketBubble == null || !marketBubble.HasPresented)
+        {
+            dialogue.PlayFromLine(Resources.Load<TextAsset>("Dialogue/quest_offer"), startLine);
+            while (dialogue.IsPlaying) yield return null;
+            busy = false;
+            yield break;
+        }
+        dialogue.GetComponent<WorldInteractionHint>()?.Dismiss();
         if (!marketNpcSpoken) ShowGuide("market_talk");
         marketNpcSpoken = true;
         if (marketBubble != null) marketBubble.Dismiss();
@@ -407,7 +431,7 @@ public sealed class StorySceneFlow : MonoBehaviour
         ready = false;
         portal.SetActive(false);
         yield return PlayVideo();
-        busy = false;
+        TravelToChapter("Forest", StoryArrival.ForestFour);
     }
 
     private IEnumerator PlayVideo()
@@ -453,9 +477,15 @@ public sealed class StorySceneFlow : MonoBehaviour
         gameObject.scene.name == "Forest" ? "포레스트" : marketMap ? "마켓" : "가베지");
 
     // Story/tutorial objectives are assigned automatically; NPC requests still require acceptance.
-    private void ShowGuide(string definition) =>
+    private void ShowGuide(string definition)
+    {
+        currentGuide = definition;
         QuestTracker.Accept(this, Resources.Load<TextAsset>("Quests/" + definition));
+    }
 
-    private void AdvanceGuide(string definition) =>
+    private void AdvanceGuide(string definition)
+    {
+        currentGuide = definition;
         QuestTracker.Advance(this, Resources.Load<TextAsset>("Quests/" + definition));
+    }
 }

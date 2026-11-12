@@ -28,7 +28,7 @@ Shader "BehindTheGear/UI/MenuSoftImage"
         Pass
         {
             CGPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -37,7 +37,10 @@ Shader "BehindTheGear/UI/MenuSoftImage"
             #include "UnityUI.cginc"
             struct appdata { float4 vertex:POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; };
             struct v2f { float4 vertex:SV_POSITION; float4 color:COLOR; float2 uv:TEXCOORD0; float4 local:TEXCOORD1; };
-            sampler2D _MainTex;
+            Texture2D _MainTex;
+            SamplerState sampler_MainTex;
+            // Only the halo uses linear filtering; artwork keeps its imported filter.
+            SamplerState menu_linear_clamp_sampler;
             float4 _MainTex_TexelSize, _UVRect, _UVStep, _ClipRect;
             float _BlurRadius, _GlowRadius, _GlowOpacity;
             v2f vert(appdata v)
@@ -51,10 +54,17 @@ Shader "BehindTheGear/UI/MenuSoftImage"
             {
                 float inside = step(_UVRect.x, uv.x) * step(_UVRect.y, uv.y) * step(uv.x, _UVRect.z) * step(uv.y, _UVRect.w);
                 float2 inset = _MainTex_TexelSize.xy * .5;
-                float4 c = tex2D(_MainTex, clamp(uv, _UVRect.xy + inset, _UVRect.zw - inset));
+                float4 c = _MainTex.Sample(sampler_MainTex, clamp(uv, _UVRect.xy + inset, _UVRect.zw - inset));
                 c.a *= inside;
                 c.rgb *= c.a;
                 return c;
+            }
+            float SampleGlowAlpha(float2 uv)
+            {
+                float inside = step(_UVRect.x, uv.x) * step(_UVRect.y, uv.y) * step(uv.x, _UVRect.z) * step(uv.y, _UVRect.w);
+                float2 inset = _MainTex_TexelSize.xy * .5;
+                return _MainTex.Sample(menu_linear_clamp_sampler,
+                    clamp(uv, _UVRect.xy + inset, _UVRect.zw - inset)).a * inside;
             }
             float4 frag(v2f i):SV_Target
             {
@@ -71,18 +81,22 @@ Shader "BehindTheGear/UI/MenuSoftImage"
                 float glow = 0;
                 if (_GlowOpacity > 0)
                 {
-                    // Three soft rings around the sprite alpha, fading to the 30-unit outer edge.
-                    [unroll] for (int ring = 1; ring <= 3; ring++)
+                    // Dense, staggered Gaussian rings avoid visible copies of thin lettering.
+                    float totalWeight = 0;
+                    [loop] for (int ring = 1; ring <= 8; ring++)
                     {
-                        float weight = ring == 1 ? .55 : (ring == 2 ? .3 : .15);
-                        [unroll] for (int tap = 0; tap < 12; tap++)
+                        float radius = (ring - .5) / 8.0;
+                        // Include annulus area when integrating the Gaussian disk.
+                        float weight = radius * exp(-4.5 * radius * radius);
+                        [loop] for (int tap = 0; tap < 24; tap++)
                         {
-                            float angle = tap * 0.523598776;
-                            float2 delta = float2(cos(angle), sin(angle)) * (_GlowRadius * ring / 3.0) * _UVStep.xy;
-                            glow += Sample(i.uv + delta).a * weight / 12;
+                            float angle = (tap + ring * .381966) * 0.261799388;
+                            float2 delta = float2(cos(angle), sin(angle)) * (_GlowRadius * radius) * _UVStep.xy;
+                            glow += SampleGlowAlpha(i.uv + delta) * weight;
                         }
+                        totalWeight += 24 * weight;
                     }
-                    glow *= _GlowOpacity;
+                    glow *= _GlowOpacity / totalWeight;
                 }
                 float alpha = source.a + glow * (1-source.a);
                 float3 rgb = (source.rgb * i.color.rgb + glow * (1-source.a)) / max(alpha, .0001);

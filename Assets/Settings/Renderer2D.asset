@@ -26,7 +26,8 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
   - {fileID: 11400001}
-  m_RendererFeatureMap: 41f3ad0000000000
+  - {fileID: 11400002}
+  m_RendererFeatureMap: 41f3ad000000000042f3ad0000000000
   m_UseNativeRenderPass: 0
   m_LayerMask:
     serializedVersion: 2
@@ -69,5 +70,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86a2c360932a41b7942766bf624384d6, type: 3}
   m_Name: World Unsharp Mask
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   passMaterial: {fileID: 2100000, guid: 225cccd1d543410ea745e3ce1daefbb5, type: 2}
+--- !u!114 &11400002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90bab6ee0cb749928a6735a2e51ca362, type: 3}
+  m_Name: World Chromatic Motion
+  m_EditorClassIdentifier: Assembly-CSharp::WorldMotionEffectsFeature
+  m_Active: 1
+  passMaterial: {fileID: 2100000, guid: dc98695f07344de3a573a6c0b55bba35, type: 2}
+  fullEffectSpeed: 30
+  minimumSeparationPixels: 2
+  maximumSeparationPixels: 5

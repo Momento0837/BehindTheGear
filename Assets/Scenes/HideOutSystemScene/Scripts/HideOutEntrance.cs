@@ -23,10 +23,11 @@ namespace BehindTheGear.HideOut
             if (player == null) { Debug.LogWarning("[HideOut] PersistentPlayer2D가 있는 플레이어가 필요합니다.", this); return; }
             if (player.GetComponent<PlayerInventory>() == null || player.GetComponent<PlayerHealth>() == null)
             { Debug.LogWarning("[HideOut] 기존 플레이어에 PlayerInventory / PlayerHealth를 연결하세요.", this); return; }
-            var bridge = player.GetComponent<HideOutPlayerBridge>() ?? player.gameObject.AddComponent<HideOutPlayerBridge>();
+            var bridge = player.GetComponent<HideOutPlayerBridge>();
+            if (bridge == null) bridge = player.gameObject.AddComponent<HideOutPlayerBridge>();
             try { bridge.Initialize(settings, false); }
             catch (Exception e) { Debug.LogError(e.Message, this); return; }
-            var position = returnPoint != null ? returnPoint.position : player.transform.position;
+            var position = player.transform.position;
             Scene origin = gameObject.scene;
             entering = true;
             // Player hosts the coroutine because this entrance's scene roots are suspended.
@@ -47,6 +48,7 @@ namespace BehindTheGear.HideOut
         private static Vector3 trainingReturnPosition;
         private static readonly List<GameObject> trainingSuspended = new();
         public static bool CanReturn => origin.IsValid() && origin.isLoaded;
+        public static bool IsVisiting => CanReturn;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset() => ClearSession();
         public static void ClearSession()
@@ -143,6 +145,8 @@ namespace BehindTheGear.HideOut
             if (travelling) { finished(); yield break; }
             travelling = true;
             origin = from; returnPosition = position;
+            bridge.State.fieldReturn = FieldReturnState.Capture(bridge.gameObject, from);
+            bridge.State.fieldReturn.position = position;
             foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None)) hud.Dismiss();
             var travelLock = bridge.GetComponent<PlayerControlLock>();
             travelLock?.Acquire();
@@ -150,6 +154,8 @@ namespace BehindTheGear.HideOut
             foreach (var root in origin.GetRootGameObjects())
                 if (root.activeSelf && root != bridge.transform.root.gameObject)
                 {
+                    // Disabling the flow's GameObject would permanently stop its quest coroutines.
+                    if (root.GetComponent<StorySceneFlow>() != null) continue;
                     suspended.Add(root);
                     if (root.GetComponentInChildren<Camera>() == null) root.SetActive(false);
                 }
@@ -194,8 +200,14 @@ namespace BehindTheGear.HideOut
             SceneManager.SetActiveScene(origin);
             bridge.transform.position = returnPosition;
             var body = bridge.GetComponent<Rigidbody2D>();
-            if (body != null) { body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
+            if (body != null) { body.position = returnPosition; body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
             foreach (var root in suspended) if (root != null) root.SetActive(true);
+            if (bridge.State.fieldReturn != null)
+            {
+                bridge.State.fieldReturn.RestorePlacement(bridge.gameObject, origin);
+                var flow = Array.Find(UnityEngine.Object.FindObjectsByType<StorySceneFlow>(FindObjectsSortMode.None), f => f.gameObject.scene == origin);
+                bridge.State.fieldReturn.RestoreQuest(flow != null ? (object)flow : typeof(HideOutTravel));
+            }
             foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None)) hud.Dismiss();
             suspended.Clear();
             var operation = SceneManager.UnloadSceneAsync(hideout);

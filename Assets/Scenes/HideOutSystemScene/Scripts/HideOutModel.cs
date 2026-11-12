@@ -62,6 +62,7 @@ namespace BehindTheGear.HideOut
         public int version = 2;
         public List<FacilityProgress> facilities = new();
         public List<QuestProgress> quests = new();
+        public FieldReturnState fieldReturn;
         public int[] levels = new int[8];
         public List<ItemStack> storage = new();
         public List<ItemStack> inventory = new();

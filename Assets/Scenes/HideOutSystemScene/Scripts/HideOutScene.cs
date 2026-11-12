@@ -1142,9 +1142,14 @@ namespace BehindTheGear.HideOut
         private void ExitHideOut()
         {
             if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
-            // Temporary exit destination for every hideout entry path, including direct scene play.
-            HideOutTravel.ClearSession();
-            SaveGameSession.StartExpedition("Market");
+            if (HideOutTravel.CanReturn)
+            {
+                player.StartCoroutine(HideOutTravel.Exit(player, gameObject.scene));
+                return;
+            }
+            ReleasePlayer();
+            if (player.State.fieldReturn != null) SaveGameSession.ReturnToField(player.State.fieldReturn);
+            else SaveGameSession.StartExpedition("Market"); // Older slots/direct scene play have no entry record.
         }
 
         private void OpenStoragePanel()

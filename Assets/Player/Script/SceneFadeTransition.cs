@@ -13,7 +13,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private IDisposable worldPause;
     private void FreezeWorld() { worldPause ??= GameplayTimePause.Acquire(); if (fadeImage != null) fadeImage.raycastTarget = true; }
     private void RestoreWorld() { worldPause?.Dispose(); worldPause = null; if (fadeImage != null) fadeImage.raycastTarget = false; }
-    private void LateUpdate() { if (running) Time.timeScale = 0f; }
+    private void LateUpdate() { if (running && worldPause != null) Time.timeScale = 0f; }
     public static bool IsRunning => instance != null && instance.running;
 
     private void Awake()
@@ -44,7 +44,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         SetAlpha(0f);
     }
 
-    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null)
+    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true)
     {
         if (instance == null) CreateRuntimeInstance();
 
@@ -54,7 +54,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             return;
         }
 
-        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete));
+        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay));
     }
 
     public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
@@ -92,10 +92,11 @@ public sealed class SceneFadeTransition : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete)
+    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay)
     {
         running = true;
-        FreezeWorld();
+        if (freezeGameplay) FreezeWorld();
+        else if (fadeImage != null) fadeImage.raycastTarget = true;
         yield return Fade(0f, 1f, fadeDuration);
 
         var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));

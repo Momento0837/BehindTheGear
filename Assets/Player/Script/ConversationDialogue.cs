@@ -58,9 +58,11 @@ public sealed class ConversationDialogue : MonoBehaviour
     private Action<bool> choiceCallback;
     private string finalFirstChoice;
     private string finalSecondChoice;
-    private Button continueButton;
-    private TMP_Text continueButtonLabel;
+    private RectTransform nextTriangle;
+    private int selectedChoice;
+    public bool IsChoosing => choiceRoot != null;
     private bool advanceRequested;
+    private int openedFrame;
     private PlayerCameraFollow2D dialogueCamera;
     private TMP_FontAsset mysterySpeakerFont;
     private TMP_FontAsset ethanSpeakerFont;
@@ -134,7 +136,12 @@ public sealed class ConversationDialogue : MonoBehaviour
         UpdatePortraitFrame();
     }
 
-    private void LateUpdate() => UpdatePortraitFrame();
+    private void LateUpdate()
+    {
+        UpdatePortraitFrame();
+        if (nextTriangle != null && nextTriangle.gameObject.activeSelf)
+            nextTriangle.anchoredPosition = new Vector2(520f, 75f + Mathf.Sin(Time.unscaledTime * 3f) * 5f);
+    }
 
     private void UpdatePortraitFrame()
     {
@@ -191,7 +198,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         if (speakerText != null) { originalSpeakerFont = speakerText.font; originalSpeakerMaterial = speakerText.fontSharedMaterial; }
         if (playerControlLock == null)
             playerControlLock = FindFirstObjectByType<PlayerControlLock>();
-        CreateContinueButton();
+        CreateContinueIndicator();
         SetVisible(false);
         LoadJson();
     }
@@ -200,8 +207,18 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         if (!IsPlaying) return;
 
-        if (Keyboard.current != null &&
-            (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame))
+        var keyboard = Keyboard.current;
+        if (choiceRoot != null && keyboard != null)
+        {
+            if (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame) selectedChoice = 0;
+            if (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame) selectedChoice = 1;
+            if (keyboard.tabKey.wasPressedThisFrame) selectedChoice = 1 - selectedChoice;
+            HighlightChoice();
+            if (keyboard.spaceKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+            { SelectChoice(selectedChoice == 0); return; }
+        }
+        else if (keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame
+            || (keyboard.fKey.wasPressedThisFrame && Time.frameCount > openedFrame)))
             advanceRequested = true;
 
         if (Mouse.current?.leftButton.wasPressedThisFrame != true) return;
@@ -209,7 +226,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         Vector2 pointerPosition = Mouse.current.position.ReadValue();
         Button[] buttons = choiceRoot != null
             ? choiceRoot.GetComponentsInChildren<Button>(true)
-            : continueButton != null ? new[] { continueButton } : Array.Empty<Button>();
+            : Array.Empty<Button>();
         foreach (Button button in buttons)
         {
             if (button == null || !button.isActiveAndEnabled || !button.interactable) continue;
@@ -231,41 +248,34 @@ public sealed class ConversationDialogue : MonoBehaviour
         if (choiceRoot == null) advanceRequested = true;
     }
 
-    private void CreateContinueButton()
+    private void CreateContinueIndicator()
     {
         if (dialogueCanvasRoot == null || bodyText == null) return;
+        if (continueIndicator != null) continueIndicator.SetActive(false);
+        var style = Resources.Load<DialogueVisualStyle>("Dialogue/VisualStyle");
+        var marker = new GameObject("Dialogue Next Triangle", typeof(RectTransform), typeof(Image));
+        nextTriangle = marker.GetComponent<RectTransform>();
+        nextTriangle.SetParent(dialogueCanvasRoot.transform, false);
+        nextTriangle.anchorMin = nextTriangle.anchorMax = new Vector2(.5f, 0f);
+        nextTriangle.pivot = new Vector2(.5f, .5f);
+        nextTriangle.anchoredPosition = new Vector2(520f, 75f);
+        nextTriangle.sizeDelta = new Vector2(28f, 28f);
+        var image = marker.GetComponent<Image>();
+        image.sprite = style != null ? style.triangle : null;
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        if (style != null && style.glowShader != null)
+            marker.AddComponent<MenuImageSoftEffect>().Configure(style.glowShader, 0f, 15f, .3f);
+        continueIndicator = marker;
+        marker.SetActive(false);
+    }
 
-        GameObject buttonObject = new GameObject("Dialogue Next Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        RectTransform rect = buttonObject.GetComponent<RectTransform>();
-        rect.SetParent(dialogueCanvasRoot.transform, false);
-        rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
-        rect.pivot = new Vector2(.5f, .5f);
-        rect.anchoredPosition = new Vector2(520f, 75f);
-        rect.sizeDelta = new Vector2(160f, 56f);
-
-        Image background = buttonObject.GetComponent<Image>();
-        background.color = new Color(.35f, .22f, .14f, 1f);
-        continueButton = buttonObject.GetComponent<Button>();
-        continueButton.targetGraphic = background;
-        continueButton.navigation = new Navigation { mode = Navigation.Mode.None };
-        continueButton.onClick.AddListener(RequestAdvance);
-
-        GameObject textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.SetParent(rect, false);
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(8f, 4f);
-        textRect.offsetMax = new Vector2(-8f, -4f);
-
-        continueButtonLabel = textObject.GetComponent<TextMeshProUGUI>();
-        UIFontTheme.Apply(continueButtonLabel, UIFontTheme.Bold);
-        continueButtonLabel.fontSize = 24f;
-        continueButtonLabel.color = Color.white;
-        continueButtonLabel.alignment = TextAlignmentOptions.Center;
-        continueButtonLabel.raycastTarget = false;
-        continueButtonLabel.text = "다음";
-        buttonObject.SetActive(false);
+    private void HighlightChoice()
+    {
+        var buttons = choiceRoot.GetComponentsInChildren<Button>();
+        for (int i = 0; i < buttons.Length; i++)
+            buttons[i].GetComponent<Image>().color = i == selectedChoice
+                ? new Color(.65f, .45f, .25f, 1f) : new Color(.35f, .22f, .14f, 1f);
     }
 
     private void RequestAdvance()
@@ -283,6 +293,9 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         PlayDialogue(dialogueOverride, null, null, null);
     }
+
+    public void PlayFromLine(TextAsset content, int startLine) =>
+        PlayDialogue(content, null, null, null, startLine);
 
     /// <summary>Shows choices on the final line without closing or revealing that line again.</summary>
     public void PlayWithChoices(TextAsset dialogueOverride, string firstChoice, string secondChoice, Action<bool> onChoice, int startLine = 0)
@@ -332,6 +345,8 @@ public sealed class ConversationDialogue : MonoBehaviour
         }
 
         IsPlaying = true;
+        openedFrame = Time.frameCount;
+        DialoguePresentation.Set(this, true);
         choiceCallback = onChoice;
         advanceRequested = false;
         playerControlLock?.Acquire();
@@ -340,7 +355,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         if (speakerText != null) speakerText.text = speaker ?? string.Empty;
         bodyText.text = string.Empty;
         if (continueIndicator != null) continueIndicator.SetActive(false);
-        if (continueButton != null) continueButton.gameObject.SetActive(false);
+
         SetVisible(true);
         routine = StartCoroutine(ShowChoicesRoutine(speaker, prompt, firstChoice, secondChoice));
     }
@@ -371,6 +386,8 @@ public sealed class ConversationDialogue : MonoBehaviour
 
         CreateChoiceButton(choiceRoot, "Accept", firstChoice, new Vector2(-125f, 0f), true);
         CreateChoiceButton(choiceRoot, "Reject", secondChoice, new Vector2(125f, 0f), false);
+        selectedChoice = 0;
+        HighlightChoice();
     }
 
     private void CreateChoiceButton(RectTransform parent, string objectName, string label, Vector2 position, bool accepted)
@@ -422,6 +439,7 @@ public sealed class ConversationDialogue : MonoBehaviour
 
         SetVisible(false);
         IsPlaying = false;
+        DialoguePresentation.Set(this, false);
         advanceRequested = false;
         playerControlLock?.Release();
         EndCameraFocus();
@@ -448,6 +466,8 @@ public sealed class ConversationDialogue : MonoBehaviour
     private IEnumerator PlayRoutine()
     {
         IsPlaying = true;
+        openedFrame = Time.frameCount;
+        DialoguePresentation.Set(this, true);
         SetVisible(true);
 
         for (int i = startingLine; i < lines.Length; i++)
@@ -455,7 +475,7 @@ public sealed class ConversationDialogue : MonoBehaviour
             DialogueLine line = lines[i];
             CurrentLineNpcLaugh = line.npcLaugh && line.speaker?.Trim() == "???";
             SetSpeaker(line.speaker);
-            if (continueButton != null) continueButton.gameObject.SetActive(false);
+
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
             SetPortrait(line.speaker ?? string.Empty, line.portrait);
             if (bodyText != null) bodyText.text = string.Empty;
@@ -471,9 +491,7 @@ public sealed class ConversationDialogue : MonoBehaviour
                 yield break;
             }
             if (continueIndicator != null) continueIndicator.SetActive(true);
-            if (continueButtonLabel != null)
-                continueButtonLabel.text = i == lines.Length - 1 ? "닫기" : "다음";
-            if (continueButton != null) continueButton.gameObject.SetActive(true);
+
 
             while (!AdvancePressed()) yield return null;
 
@@ -529,9 +547,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         bool pressed = advanceRequested;
         advanceRequested = false;
 
-        bool keyboardAdvance = Keyboard.current != null &&
-            (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame);
-        return pressed || keyboardAdvance;
+        return pressed;
     }
 
     private void FinishDialogue()
@@ -545,9 +561,10 @@ public sealed class ConversationDialogue : MonoBehaviour
         choiceCallback = null;
         finalFirstChoice = finalSecondChoice = null;
         advanceRequested = false;
-        if (continueButton != null) continueButton.gameObject.SetActive(false);
+
         SetVisible(false);
         IsPlaying = false;
+        DialoguePresentation.Set(this, false);
         routine = null;
         playerControlLock?.Release();
         EndCameraFocus();
@@ -581,7 +598,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         if (visible) Canvas.ForceUpdateCanvases();
         else
         {
-            if (continueButton != null) continueButton.gameObject.SetActive(false);
+
             if (dialogueCanvasRoot != null)
                 dialogueCanvasRoot.SetActive(false);
         }

@@ -12,7 +12,10 @@ public sealed class ControlHintAnimation
     private readonly Sprite[] frames;
     private readonly float[] ends;
     private readonly float duration;
+    private const float PlaybackSpeed = 1.32f;
+    private float TrimStart => Mathf.Min(.5f, Mathf.Max(0f, duration - .01f));
     public Vector2 Size { get; }
+    public float Duration => (duration - TrimStart) / PlaybackSpeed;
     private ControlHintAnimation(string name)
     {
         var data = JsonUtility.FromJson<Data>(Resources.Load<TextAsset>("ControlHints/" + name).text.TrimStart('\uFEFF'));
@@ -36,13 +39,14 @@ public sealed class ControlHintAnimation
     }
     public static ControlHintAnimation Load(string name)
     {
-        if (!clips.TryGetValue(name, out var clip) || clip.frames[0] == null || clip.frames[0].texture == null)
+        if (!clips.TryGetValue(name, out var clip) || Array.Exists(clip.frames, frame => frame == null || frame.texture == null))
             clips[name] = clip = new ControlHintAnimation(name);
         return clip;
     }
     public Sprite Frame(float time)
     {
-        float phase = Mathf.Repeat(time, duration);
+        // Skip the original first half-second on every loop, not just on first appearance.
+        float phase = TrimStart + Mathf.Repeat(time * PlaybackSpeed, duration - TrimStart);
         for (int i = 0; i < ends.Length; i++) if (phase < ends[i]) return frames[i];
         return frames[0];
     }

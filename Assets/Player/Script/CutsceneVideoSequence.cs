@@ -18,6 +18,13 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     [SerializeField] private Color countdownTextColor = Color.white;
 
     public bool IsPlaying => playing;
+    private static readonly System.Collections.Generic.HashSet<CutsceneVideoSequence> visibleSequences = new();
+    public static bool IsAnyVisible
+    {
+        get { visibleSequences.RemoveWhere(sequence => sequence == null); return visibleSequences.Count > 0; }
+    }
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetVisibility() => visibleSequences.Clear();
     public System.Func<System.Action, IEnumerator> EndingTransition { get; set; }
     public void BindPlayer(PlayerControlLock value) => playerControlLock = value;
     private bool playing;
@@ -67,6 +74,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
     private IEnumerator PlayRoutine()
     {
         playing = true;
+        visibleSequences.Add(this);
         worldPause = GameplayTimePause.Acquire();
         videoPlayer.timeUpdateMode = VideoTimeUpdateMode.UnscaledGameTime;
         heldSeconds = 0f;
@@ -160,6 +168,7 @@ public sealed class CutsceneVideoSequence : MonoBehaviour
 
     private void HideVideoPresentation()
     {
+        visibleSequences.Remove(this);
         if (videoPlayer != null) { videoPlayer.Stop(); videoPlayer.enabled = false; }
         if (videoRoot != null) videoRoot.SetActive(false);
         ReleaseVideoTexture();

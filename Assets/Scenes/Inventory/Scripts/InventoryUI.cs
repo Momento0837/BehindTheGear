@@ -120,6 +120,9 @@ public sealed class InventoryUI : MonoBehaviour
     public Canvas SceneCanvas => canvas;
     public GameObject Window => window;
     public Button ShortcutButton => shortcutButton;
+    public bool IsOpen => IsAnyWindowOpen();
+    public void OpenInventory() { if (ready && window != null && !window.activeSelf) ToggleInventoryFromButton(); }
+    private InventoryOpeningHint openingHint;
     public GameObject EquipmentStatsPanel => equipmentWindow;
     public TMP_FontAsset UiFont => font;
 
@@ -134,6 +137,11 @@ public sealed class InventoryUI : MonoBehaviour
     public void BeginEquipmentHint(InventoryItemDefinition item)
     {
         ResetEquipmentHint();
+        if (item != null && !IsOpen)
+        {
+            if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
+            openingHint.Begin(this);
+        }
         if (item == null || equipmentUnequipButtons == null) return;
         for (int i = 0; i < equipmentUnequipButtons.Length; i++)
         {
@@ -148,6 +156,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void EndEquipmentHint()
     {
+        openingHint?.Dismiss();
         if (hintedSlot == null || hintReturning) return;
         hintReturning = true;
         hintReturnElapsed = 0f;
@@ -201,6 +210,9 @@ public sealed class InventoryUI : MonoBehaviour
 
         legacyCanvas = canvas != designedCanvas ? canvas : null;
         canvas = designedCanvas;
+        // Authored inventory canvases default to zero, like the HUD. Reserve modal priority.
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = Mathf.Max(canvas.sortingOrder, 50);
         window = designedWindow;
         shortcutButton = null;
         closeButton = primaryCloseButton;
@@ -479,6 +491,7 @@ public sealed class InventoryUI : MonoBehaviour
 
         Refresh();
         window.SetActive(true);
+        openingHint?.Dismiss();
         SetInventoryModal(true);
         if (usesDesignedCanvas)
         {

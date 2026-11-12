@@ -460,8 +460,17 @@ public sealed class PlayerMovement2D : MonoBehaviour
         attackAnimationEndedAt = float.NegativeInfinity;
         if (animator == null) return;
         if (hasAttackTriggerParameter) animator.ResetTrigger(AttackTriggerHash);
-        if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, false);
+        if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, cinematicWalking);
         if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, IsGrounded());
+    }
+
+    private bool cinematicWalking;
+    public void SetCinematicWalking(bool value)
+    {
+        cinematicWalking = value;
+        if (value) GetComponent<PlayerSpriteFacing>()?.FaceAttack(1f);
+        if (animator != null) animator.speed = value ? 2.5f / Mathf.Max(.01f, moveSpeed) : 1f;
+        RefreshAnimationWhileControlLocked();
     }
 
     private IEnumerator DropThroughOneWayPlatform()
