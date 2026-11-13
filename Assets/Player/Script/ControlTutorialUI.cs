@@ -14,12 +14,15 @@ public sealed class ControlTutorialUI : MonoBehaviour
     private bool portalUsed;
     private float started;
     public bool IsPortalHintVisible { get; private set; }
+    public GameObject PresentationRoot { get; private set; }
     private readonly Key[] movementKeys = { Key.W, Key.A, Key.S, Key.D, Key.Space };
 
-    public void Begin(PlayerMovement2D target)
+    public bool HandlesPortal(GameObject target) => portal == target && !portalUsed;
+    public void Begin(PlayerMovement2D target, bool portalOnly = false)
     {
         player = target;
         var root = new GameObject("Control Tutorial", typeof(Canvas), typeof(CanvasScaler));
+        PresentationRoot = root;
         root.transform.SetParent(transform, false);
         root.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
         root.GetComponent<Canvas>().sortingOrder = 32000;
@@ -43,7 +46,7 @@ public sealed class ControlTutorialUI : MonoBehaviour
         rect.anchorMin = rect.anchorMax = new Vector2(0f, .5f);
         rect.pivot = new Vector2(0f, .5f);
         image.enabled = false;
-        StartCoroutine(Run());
+        StartCoroutine(portalOnly ? RunPortal() : Run());
     }
     public void ArmPortal(GameObject target) => portal = target;
     public void CompletePortal() => portalUsed = true;
@@ -123,11 +126,15 @@ public sealed class ControlTutorialUI : MonoBehaviour
         while (!CanReadInput || Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) yield return null;
         yield return FinishVisibleCycle();
         yield return Slide(false);
+        yield return RunPortal();
+    }
+    private IEnumerator RunPortal()
+    {
         while (!portalUsed && (portal == null || !portal.activeInHierarchy || player == null
             || Mathf.Abs(player.transform.position.x - portal.GetComponent<Collider2D>().bounds.ClosestPoint(player.transform.position).x) > 2.5f)) yield return null;
         if (portalUsed) yield break;
         IsPortalHintVisible = true;
-        Show("F"); entry = StartCoroutine(Slide(true));
+        Show("F"); var entry = StartCoroutine(Slide(true));
         while (!portalUsed) yield return null;
         yield return entry;
         yield return FinishVisibleCycle();

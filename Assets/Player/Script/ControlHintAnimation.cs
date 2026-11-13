@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,20 @@ public sealed class ControlHintAnimation
 {
     [Serializable] private sealed class Data { public int width, height, columns; public float[] durations; }
     private static readonly Dictionary<string, ControlHintAnimation> clips = new();
+    private static readonly string[] tutorialNames = { "WASDSpace", "MouseL", "F" };
+    private static bool IsLoaded(string name) => clips.TryGetValue(name, out var clip)
+        && !Array.Exists(clip.frames, frame => frame == null || frame.texture == null);
+    public static bool TutorialsLoaded => Array.TrueForAll(tutorialNames, IsLoaded);
+    public static IEnumerator PreloadTutorials()
+    {
+        foreach (var name in tutorialNames)
+        {
+            if (IsLoaded(name)) continue;
+            // Render the opaque loading cover before doing PNG decode/GPU upload.
+            yield return null;
+            Load(name);
+        }
+    }
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetCache() => clips.Clear();
     private readonly Sprite[] frames;
@@ -32,7 +47,9 @@ public sealed class ControlHintAnimation
         {
             var rect = new Rect(i % data.columns * data.width,
                 texture.height - (i / data.columns + 1) * data.height, data.width, data.height);
-            frames[i] = Sprite.Create(texture, rect, new Vector2(.5f, .5f), 100);
+            // UI frames are rectangular; avoid generating an alpha-traced tight mesh
+            // for every large GIF frame during the initial load.
+            frames[i] = Sprite.Create(texture, rect, new Vector2(.5f, .5f), 100, 0, SpriteMeshType.FullRect);
             total += data.durations[i]; ends[i] = total;
         }
         duration = total;

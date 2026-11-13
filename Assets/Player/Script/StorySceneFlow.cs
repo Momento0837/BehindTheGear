@@ -42,6 +42,11 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         var root = new GameObject("Story Scene Flow");
         SceneManager.MoveGameObjectToScene(root, scene);
         var flow = root.AddComponent<StorySceneFlow>();
+        // Authored portal lights stay hidden even when the portal starts inactive (no Awake yet).
+        foreach (var candidate in scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<Transform>(true)))
+            if (candidate.name == "Portal" && candidate.GetComponent<ScenePortal2D>() == null
+                && candidate.GetComponentInChildren<UnityEngine.Rendering.Universal.Light2D>(true) != null)
+                candidate.gameObject.SetActive(false);
         var placedItems = scene.GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<WorldItemPickup>(true)).ToArray();
         flow.sceneLoot = placedItems.Select(pickup => pickup.Definition).Where(item => item != null).Distinct().ToArray();
         foreach (var pickup in placedItems) pickup.gameObject.SetActive(false);
@@ -228,6 +233,9 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             finally { controls?.Release(); }
         }
         else yield return PlayVideo();
+        // Also cover direct scene starts without the authored opening HUD/video.
+        if (!ControlHintAnimation.TutorialsLoaded)
+            yield return SceneFadeTransition.FadeThrough(ControlHintAnimation.PreloadTutorials());
         controlTutorial = gameObject.AddComponent<ControlTutorialUI>();
         controlTutorial.Begin(player);
         foreach (var monster in monsters) if (monster != null) monster.enabled = true;
@@ -320,6 +328,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             return;
         }
         if (!ready) return;
+        portal.GetComponent<ScenePortal2D>()?.CompleteHint();
         busy = true;
         if (gameObject.scene.name == "Forest")
         {
@@ -430,8 +439,32 @@ public sealed partial class StorySceneFlow : MonoBehaviour
     {
         ready = false;
         portal.SetActive(false);
-        yield return PlayVideo();
-        TravelToChapter("Forest", StoryArrival.ForestFour);
+        if (cutscene == null)
+        {
+            TravelToChapter("Forest", StoryArrival.ForestFour);
+            yield break;
+        }
+        // Natural completion and skip both hold the video frame while this transition runs.
+        cutscene.EndingTransition = LeaveFinalCutscene;
+        cutscene.PlayFromInteraction();
+        while (cutscene.IsPlaying) yield return null;
+    }
+
+    private IEnumerator LeaveFinalCutscene(System.Action revealGameplay)
+    {
+        pendingArrival = StoryArrival.ForestFour;
+        bool finished = false;
+        SceneFadeTransition.LoadScene("Forest", .8f, success =>
+        {
+            finished = true;
+            if (!success)
+            {
+                pendingArrival = StoryArrival.None;
+                if (this != null) { busy = false; ready = true; portal.SetActive(true); }
+            }
+        }, whenBlack: revealGameplay);
+        // The persistent fade owns loading; unloading this scene may stop this coroutine safely.
+        while (!finished) yield return null;
     }
 
     private IEnumerator PlayVideo()

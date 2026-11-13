@@ -236,6 +236,9 @@ public sealed class InGameQuestHUD : MonoBehaviour
                 yield return null;
             }
             image.color = Color.black;
+            // Decode all tutorial atlases while the opening remains fully covered,
+            // before the quest reveal releases the world and controls.
+            yield return ControlHintAnimation.PreloadTutorials();
             revealGameplay();
             // OnEnable can run when the cutscene restores the HUD; initialize after it.
             requestedContent = CurrentContent();
