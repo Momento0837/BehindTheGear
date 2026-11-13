@@ -24,13 +24,13 @@ public sealed class PlayerHealth : MonoBehaviour
     private void Awake()
     {
         playerControlLock = GetComponent<PlayerControlLock>();
-        CurrentHealth = Mathf.CeilToInt(MaxHealth * .5f);
+        CurrentHealth = Mathf.CeilToInt(MaxHealth * .6f);
     }
 
     public void ReviveAfterSceneRestart()
     {
         if (!IsDead) return;
-        CurrentHealth = Mathf.CeilToInt(MaxHealth * .5f);
+        CurrentHealth = Mathf.CeilToInt(MaxHealth * .6f);
         invincibilityEndTime = 0f;
         GetComponent<PlayerMovement2D>()?.ResetAfterRevive();
         playerControlLock.Release();

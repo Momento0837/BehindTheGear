@@ -10,6 +10,7 @@ public sealed class WorldInteractionHint : MonoBehaviour
     private Vector3 lastAnchor = Vector3.positiveInfinity;
     private float fixedY, alpha;
     private bool dismissed;
+    public bool ShowUntilDismissed { get; set; }
     public void Dismiss() => dismissed = true;
     private void Awake()
     {
@@ -42,7 +43,7 @@ public sealed class WorldInteractionHint : MonoBehaviour
         }
         float distance = Mathf.Abs(player.transform.position.x - bounds.ClosestPoint(player.transform.position).x);
         var interaction = GetComponent<Interactable2D>();
-        float target = !dismissed && interaction != null && interaction.enabled && distance < 2.5f ? 1 : 0;
+        float target = !dismissed && interaction != null && interaction.enabled && (ShowUntilDismissed || distance < 2.5f) ? 1 : 0;
         alpha = Mathf.MoveTowards(alpha, target, Time.unscaledDeltaTime * 3);
         visual.sprite = clip.Frame(Time.unscaledTime);
         visual.color = new Color(1, 1, 1, alpha);

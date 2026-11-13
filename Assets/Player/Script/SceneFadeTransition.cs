@@ -13,7 +13,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private IDisposable worldPause;
     private void FreezeWorld() { worldPause ??= GameplayTimePause.Acquire(); if (fadeImage != null) fadeImage.raycastTarget = true; }
     private void RestoreWorld() { worldPause?.Dispose(); worldPause = null; if (fadeImage != null) fadeImage.raycastTarget = false; }
-    private void LateUpdate() { if (running) Time.timeScale = 0f; }
+    private void LateUpdate() { if (running && worldPause != null) Time.timeScale = 0f; }
     public static bool IsRunning => instance != null && instance.running;
 
     private void Awake()
@@ -33,18 +33,48 @@ public sealed class SceneFadeTransition : MonoBehaviour
             return;
         }
 
+        PrepareOverlay();
+        SetAlpha(0f);
+    }
+
+    private void PrepareOverlay()
+    {
         Canvas canvas = GetComponent<Canvas>();
         if (canvas != null)
         {
+            canvas.enabled = true;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.transform.localScale = Vector3.one;
             canvas.overrideSorting = true;
             canvas.sortingOrder = short.MaxValue;
             if (canvas.GetComponent<GraphicRaycaster>() == null) canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
-
-        SetAlpha(0f);
+        if (fadeImage == null) return;
+        fadeImage.gameObject.SetActive(true);
+        fadeImage.enabled = true;
+        fadeImage.sprite = null;
+        fadeImage.material = null;
+        fadeImage.type = Image.Type.Simple;
+        fadeImage.maskable = false;
+        fadeImage.canvasRenderer.SetAlpha(1f);
+        var rect = fadeImage.rectTransform;
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+        rect.SetAsLastSibling();
     }
 
-    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null)
+    private IEnumerator HoldOpaqueFrame()
+    {
+        SetAlpha(1f);
+        Canvas.ForceUpdateCanvases();
+        // Keep a fully opaque rendered frame between fading and changing scene content.
+        yield return null;
+    }
+
+    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true, Action whenBlack = null)
     {
         if (instance == null) CreateRuntimeInstance();
 
@@ -54,7 +84,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             return;
         }
 
-        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete));
+        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay, whenBlack));
     }
 
     public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
@@ -73,12 +103,14 @@ public sealed class SceneFadeTransition : MonoBehaviour
         while (instance.running) yield return null;
         var transition = instance;
         transition.running = true;
+        transition.PrepareOverlay();
         transition.FreezeWorld();
         try
         {
             yield return transition.Fade(0f, 1f, duration);
+            yield return transition.HoldOpaqueFrame();
             if (whileBlack != null) yield return whileBlack;
-            yield return null;
+            yield return transition.HoldOpaqueFrame();
             yield return transition.Fade(1f, 0f, duration);
         }
         finally
@@ -92,17 +124,23 @@ public sealed class SceneFadeTransition : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete)
+    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay, Action whenBlack)
     {
         running = true;
-        FreezeWorld();
+        PrepareOverlay();
+        if (freezeGameplay) FreezeWorld();
+        else if (fadeImage != null) fadeImage.raycastTarget = true;
         yield return Fade(0f, 1f, fadeDuration);
+        yield return HoldOpaqueFrame();
 
+        // Keep outgoing video/UI visible until a completely black frame has been presented.
+        whenBlack?.Invoke();
         var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
         AsyncOperation load = null;
         try
         {
             load = SceneManager.LoadSceneAsync(sceneName);
+            if (load != null) load.allowSceneActivation = false;
         }
         catch (Exception exception)
         {
@@ -119,10 +157,15 @@ public sealed class SceneFadeTransition : MonoBehaviour
             yield break;
         }
 
+        while (load.progress < .9f) yield return null;
+        yield return HoldOpaqueFrame();
+        load.allowSceneActivation = true;
         while (!load.isDone) yield return null;
         // Let scene startup finish before replacing authored room drops.
         yield return null; yield return null;
         if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
+        PrepareOverlay();
+        yield return HoldOpaqueFrame();
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
         RestoreWorld();
@@ -172,9 +215,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private void SetAlpha(float alpha)
     {
         if (fadeImage == null) return;
-        Color color = fadeImage.color;
-        color.a = alpha;
-        fadeImage.color = color;
+        fadeImage.color = new Color(0f, 0f, 0f, Mathf.Clamp01(alpha));
     }
 
     private void OnDestroy()

@@ -60,11 +60,14 @@ public static class ControlHintsCheck
             else
             {
                 Require(Mathf.Abs(hint.transform.Find("Animated F Hint").position.y-fixedY)<.001f,"Hint stays at fixed world height after jump");
-                var image=tutorial.GetComponentInChildren<Image>();
+                var image=tutorial.GetComponentsInChildren<Image>().First(i=>i.name=="Animated Keys");
+                var background=tutorial.GetComponentsInChildren<Image>().First(i=>i.name=="Tutorial Background");
+                Require(background.enabled && background.color==new Color(1,1,1,.1f) && background.rectTransform.sizeDelta==image.rectTransform.sizeDelta,"10 percent white background follows GIF size");
+                Require(tutorial.GetComponentInChildren<CanvasScaler>().screenMatchMode==CanvasScaler.ScreenMatchMode.Expand,"Responsive tutorial canvas");
                 Require(image.enabled&&!image.raycastTarget,"Tutorial shown without blocking input");
-                Require(image.rectTransform.sizeDelta==new Vector2(132,132),"Scaled WASD dimensions");
+                Require(image.rectTransform.sizeDelta==new Vector2(158.4f,158.4f),"Scaled WASD dimensions");
                 Require(Mathf.Abs(image.rectTransform.anchoredPosition.y+24)<.01f,"Slide enters top centre");
-                Finish("PASS Unity "+Application.unityVersion+"\nAll GIF clips animate with coloured pixels; destroyed cached sprites rebuilt; Garbage F created; fixed world height; nonblocking 132px WASD entrance. Input sequence and full Forest story require manual playthrough.");
+                Finish("PASS Unity "+Application.unityVersion+"\nAll GIF clips animate with coloured pixels; destroyed cached sprites rebuilt; Garbage F created; fixed world height; nonblocking 158.4px WASD entrance. Input sequence and full Forest story require manual playthrough.");
             }
         }
         catch(Exception e){Finish("FAIL\n"+e);Debug.LogException(e);}
