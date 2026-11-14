@@ -16,6 +16,12 @@ namespace BehindTheGear.HideOut
         private const float ReferenceWidth = 1600f;
         private const float ReferenceHeight = 900f;
         private const int StorageRowsPerPage = 10;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [NonSerialized] private bool testFacilitiesUnlocked;
+        private bool recruitmentBeforeTestUnlock;
+        private TMP_Text testFacilityToggleLabel;
+        private int lastTestFacilityToggleFrame = -1;
+#endif
 
         private sealed class StorageSlotView
         {
@@ -283,6 +289,10 @@ namespace BehindTheGear.HideOut
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame)
+                ToggleFacilityLocksForTesting();
+#endif
             if (cameraController != null && Keyboard.current != null && Keyboard.current.homeKey.wasPressedThisFrame)
                 ReturnToOverview();
             if (dummyDamagePopup != null && dummyDamagePopup.gameObject.activeSelf
@@ -979,6 +989,10 @@ namespace BehindTheGear.HideOut
             tooltip.SetActive(false);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var unlock = Button(parent, "Unlock All Test Facilities", 1160, 200, 194, 42,
+                ToggleFacilityLocksForTesting, PanelSoft, 14);
+            testFacilityToggleLabel = unlock.GetComponentInChildren<TMP_Text>();
+            testFacilityToggleLabel.text = "TEST  전체 해금 [F8]";
             if (player.Sandbox)
             {
                 var developmentRoot = new GameObject("Development Only Controls", typeof(RectTransform));
@@ -1617,8 +1631,52 @@ namespace BehindTheGear.HideOut
             if (tooltip != null) tooltip.SetActive(false);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // The scene override is temporary; relocking restores the recruitment state from before the test.
+        public void ToggleFacilityLocksForTesting()
+        {
+            if (!Application.isPlaying || editorPreview || trainingPanelOnly || player == null || !player.Initialized)
+                return;
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning
+                || lastTestFacilityToggleFrame == Time.frameCount) return;
+
+            bool unlock = !testFacilitiesUnlocked;
+            bool previousRecruitment = player.State.selenaRecruited;
+            if (!player.Change(state =>
+                {
+                    state.selenaRecruited = unlock || recruitmentBeforeTestUnlock;
+                    return unlock
+                        ? "테스트 전체 해금 [F8] · 다시 누르면 잠금 · 식당/작업실은 둘러보기 전용"
+                        : "테스트 잠금 복원 [F8] · 다시 누르면 전체 해금";
+                })) return;
+
+            lastTestFacilityToggleFrame = Time.frameCount;
+            if (unlock) recruitmentBeforeTestUnlock = previousRecruitment;
+            testFacilitiesUnlocked = unlock;
+            if (!unlock)
+            {
+                dummyTesting = false;
+                exhibitionPanel.SetActive(false);
+                HideStoragePanelSilently();
+                HideDummyPanelSilently();
+                upgradeOverlay.SetActive(false);
+                hasSelection = false;
+                selectedInventorySlot = selectedStorageSlot = -1;
+                roomNameText.text = "전체 하이드아웃";
+                if (cameraController != null) cameraController.SnapToOverview();
+            }
+            foreach (var cover in isometricEnvironment.GetComponentsInChildren<HideOutFacilityLockCover>(true))
+                cover.SetLocked(!unlock);
+            HideTooltip();
+            Refresh();
+        }
+#endif
+
         private bool IsLocked(Facility facility)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (testFacilitiesUnlocked) return false;
+#endif
             if (facility != Facility.Bed) return true;
             var presentation = settings.FindPresentation(facility);
             return presentation != null && presentation.prototypeLocked || HideOutModel.Locked(player.State, facility);
@@ -1720,6 +1778,10 @@ namespace BehindTheGear.HideOut
 
         private void RefreshFacilityInput()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (testFacilityToggleLabel != null)
+                testFacilityToggleLabel.text = testFacilitiesUnlocked ? "TEST  다시 잠금 [F8]" : "TEST  전체 해금 [F8]";
+#endif
             bool moving = trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
             foreach (var pair in facilityButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));
             foreach (var pair in shortcutButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));

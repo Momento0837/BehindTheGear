@@ -21,6 +21,9 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action PrimaryClickPressed;
     public event Action SecondaryClickPressed;
     public event Action InteractPressed;
+    // Development scene travel consumes input on the transition frame.
+    private int gameplaySuppressedFrame = -1;
+    public void SuppressGameplayForCurrentFrame() => gameplaySuppressedFrame = Time.frameCount;
 
     private float horizontal;
     private bool crouching;
@@ -45,7 +48,7 @@ public sealed class PlayerInputReader : MonoBehaviour
         bool dashPressed = shiftHeld && !dashHeld;
         // Consume the edge even while UI suppresses gameplay; never queue a dash.
         dashHeld = shiftHeld;
-        if (SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
+        if (gameplaySuppressedFrame == Time.frameCount || SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
         {
             throwWasHeld = IsThrowHeld(keyboard);
             WalkHeld = false;

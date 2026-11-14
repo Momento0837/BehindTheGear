@@ -447,7 +447,11 @@ public sealed class InventoryUI : MonoBehaviour
             CloseAllWindows();
         }
         var keyboard = Keyboard.current;
-        if (keyboard != null)
+        bool sceneShortcut = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        sceneShortcut = DevelopmentSceneShortcuts.IsShortcutChord(keyboard);
+#endif
+        if (keyboard != null && !sceneShortcut)
         {
             if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) HandleQuickSlotKey(0);
             if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) HandleQuickSlotKey(1);
@@ -526,6 +530,10 @@ public sealed class InventoryUI : MonoBehaviour
         if (equipmentWindow != null) equipmentWindow.SetActive(false);
         RestoreEquipmentSoloLayout();
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public void CloseForDevelopmentSceneTravel() => CloseAllWindows();
+#endif
 
     private void CloseAllWindows()
     {

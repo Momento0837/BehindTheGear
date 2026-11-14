@@ -47,6 +47,7 @@ namespace BehindTheGear.HideOut
         private static Vector3 trainingReturnPosition;
         private static readonly List<GameObject> trainingSuspended = new();
         public static bool CanReturn => origin.IsValid() && origin.isLoaded;
+        public static bool IsTravelling => travelling;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset() => ClearSession();
         public static void ClearSession()

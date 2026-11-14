@@ -573,6 +573,8 @@ MonoBehaviour:
   continuePlayerPrefab: {fileID: 482447334495655640, guid: 00f4c36b06926154cbb549c1a6bae419, type: 3}
   titleSprite: {fileID: 21300000, guid: 7726ff5246814b2ba06f43ef05116b19, type: 3}
   titleStyle: {fileID: 8113000002, guid: 61dcb3ae50988884a9ed266f7ed25f80, type: 3}
+  buttonPlateSprite: {fileID: 21300000, guid: 062caaefd3bc1d64f9878649d54148d3, type: 3}
+  buttonGear: {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
