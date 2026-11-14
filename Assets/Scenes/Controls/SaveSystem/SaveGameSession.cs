@@ -11,17 +11,19 @@ public static class SaveGameSession
     public static string MenuMessage { get; private set; }
     private static HideOutSave pending;
     private static GameObject pendingPlayer;
+    private static FieldReturnState pendingFieldReturn;
     public static bool IsContinuing => pending != null;
     public static void Configure(HideOutSettings settings) => Settings = settings;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void Reset()
     {
-        Settings = null; pending = null; pendingPlayer = null; Expedition = false; MenuMessage = null;
+        Settings = null; pending = null; pendingPlayer = null; pendingFieldReturn = null; Expedition = false; MenuMessage = null;
         SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneLoaded += SceneLoaded;
     }
     public static void BeginNewGame()
     {
         StorySceneFlow.RestartAtCombat = false;
+        pendingFieldReturn = null;
         MenuMessage = null; DisposePlayer(); pending = null; pendingPlayer = null; Expedition = false;
         HideOutTravel.ClearSession(); RoomDropCache.Clear(); QuestTracker.Reset(); QuestJournal.Clear();
     }
@@ -65,9 +67,26 @@ public static class SaveGameSession
         Expedition = true; RoomDropCache.Clear();
         SceneFadeTransition.LoadScene(sceneName, .4f);
     }
+    public static void ReturnToField(FieldReturnState state)
+    {
+        if (SceneFadeTransition.IsRunning || state == null) return;
+        state.Validate();
+        pendingFieldReturn = state;
+        SceneFadeTransition.LoadScene(state.scenePath, .4f, success =>
+        {
+            if (!success) pendingFieldReturn = null;
+        });
+    }
+    public static FieldReturnState TakeFieldReturn(string scenePath)
+    {
+        if (pendingFieldReturn == null || pendingFieldReturn.scenePath != scenePath) return null;
+        var state = pendingFieldReturn; pendingFieldReturn = null;
+        return state;
+    }
     public static void ReturnToMenu()
     {
         if (SceneFadeTransition.IsRunning) return;
+        pendingFieldReturn = null;
         RoomDropCache.Clear(); HideOutTravel.ClearSession(); pending = null; pendingPlayer = null;
         DisposePlayer(); QuestTracker.Reset(); QuestJournal.Clear(); Expedition = false;
         SceneFadeTransition.LoadScene("ControlSchemeSelect", .4f);

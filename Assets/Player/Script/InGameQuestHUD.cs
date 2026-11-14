@@ -76,6 +76,9 @@ public static class QuestTracker
         SetQuest(source, questName, objective, false);
     }
 
+    public static void Restore(object source, string questName, string objective, bool showObjective) =>
+        SetQuest(source, questName, objective, false, showObjective);
+
     private static void SetQuest(object source, string questName, string objective, bool completed, bool showObjective = false)
     {
         owner = source;
@@ -233,6 +236,9 @@ public sealed class InGameQuestHUD : MonoBehaviour
                 yield return null;
             }
             image.color = Color.black;
+            // Decode all tutorial atlases while the opening remains fully covered,
+            // before the quest reveal releases the world and controls.
+            yield return ControlHintAnimation.PreloadTutorials();
             revealGameplay();
             // OnEnable can run when the cutscene restores the HUD; initialize after it.
             requestedContent = CurrentContent();
@@ -447,11 +453,9 @@ public sealed class InGameQuestHUD : MonoBehaviour
             originalSortingLayer = questForegroundCanvas.sortingLayerID;
             raisedQuestSorting = true;
         }
-        int order = rootCanvas.sortingOrder;
-        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
-            if (canvas.isRootCanvas && canvas.sortingLayerID == rootCanvas.sortingLayerID)
-                order = Mathf.Max(order, canvas.sortingOrder);
-        order = Mathf.Min(order, 32765);
+        // Quest effects belong to the HUD layer, below modal inventory windows.
+        // Never compete with the highest canvas (inventory, cursor, or scene fade).
+        int order = Mathf.Min(rootCanvas.sortingOrder, 32765);
         var dimCanvas = backgroundDim.GetComponent<Canvas>();
         dimCanvas.overrideSorting = true;
         dimCanvas.sortingLayerID = rootCanvas.sortingLayerID;

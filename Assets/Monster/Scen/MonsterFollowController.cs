@@ -71,6 +71,20 @@ public sealed class MonsterFollowController : MonoBehaviour
         if (CurrentHealth > 0) CurrentHealth = value ? 999 : 1;
     }
 
+    public void ConfigureOpeningHealth(int playerDamage)
+    {
+        tutorialProtected = false;
+        maxHealth = Mathf.Max(1, playerDamage) * 2;
+        CurrentHealth = maxHealth;
+    }
+
+    public void RestoreEncounterHealth(int health)
+    {
+        tutorialProtected = false;
+        CurrentHealth = Mathf.Max(1, health);
+        maxHealth = Mathf.Max(maxHealth, CurrentHealth);
+    }
+
     public void BindPlayer(Transform target)
     {
         player = target;
@@ -140,7 +154,9 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (CurrentHealth > 0 && PlayerSkills.IsHiddenFromMonsters(playerHealth))
+        if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
+        bool targetHidden = PlayerSkills.IsHiddenFromMonsters(playerHealth);
+        if (CurrentHealth > 0 && targetHidden)
         {
             attackPending = false;
             if (IsAttacking)
@@ -162,6 +178,15 @@ public sealed class MonsterFollowController : MonoBehaviour
         if (CurrentHealth > 0 && Time.time < knockbackUntil)
         {
             body.linearVelocity = new Vector2(knockbackDirection * knockbackSpeed, body.linearVelocity.y);
+            return;
+        }
+        if (CurrentHealth > 0 && targetHidden)
+        {
+            // Do not patrol toward the invisible player by coincidence. Check visibility every tick.
+            wasChasing = false;
+            patrolStartX = body.position.x;
+            Stop();
+            if (Time.time >= actionUntil) PlayAnimation("Idle");
             return;
         }
         if (CurrentHealth <= 0 || Time.time < actionUntil)

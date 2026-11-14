@@ -36,20 +36,26 @@ public sealed class GameMouseCursor : MonoBehaviour
     private void LateUpdate()
     {
         if (icon == null) return;
-        // Keep the cursor during dialogue/control locks, but not in scenes without a player.
+        // Speech and movies hide both pointers; choice prompts use the native Windows cursor.
         if (player == null || !player.gameObject.activeInHierarchy)
             player = FindFirstObjectByType<PlayerMovement2D>();
         bool hasPlayer = player != null && player.gameObject.activeInHierarchy;
+        bool inventoryOpen = hasPlayer && player.GetComponent<InventoryUI>() != null && player.GetComponent<InventoryUI>().IsOpen;
         Vector2 pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-        bool visible = hasPlayer && Application.isFocused && Mouse.current != null && pointer.x >= 0f && pointer.y >= 0f
+        bool pointerInGame = Application.isFocused && Mouse.current != null && pointer.x >= 0f && pointer.y >= 0f
             && pointer.x < Screen.width && pointer.y < Screen.height;
 #if UNITY_EDITOR
         // Input System can retain the last in-game position after leaving the Game view.
         var hoveredWindow = UnityEditor.EditorWindow.mouseOverWindow;
-        visible &= hoveredWindow != null && hoveredWindow.GetType().Name == "GameView";
+        pointerInGame &= hoveredWindow != null && hoveredWindow.GetType().Name == "GameView";
 #endif
+        bool cutsceneVisible = CutsceneVideoSequence.IsAnyVisible;
+        bool dialogueVisible = DialoguePresentation.IsActive || cutsceneVisible;
+        bool choicesVisible = !cutsceneVisible && DialoguePresentation.HasChoices;
+        bool visible = hasPlayer && !inventoryOpen && !dialogueVisible && pointerInGame;
         icon.enabled = visible;
-        SetSystemCursorHidden(visible);
+        SetSystemCursorHidden(pointerInGame && !choicesVisible && (visible || dialogueVisible));
+        if (choicesVisible || (inventoryOpen && !dialogueVisible)) Cursor.visible = true;
         if (visible) icon.rectTransform.position = pointer;
     }
     private void SetSystemCursorHidden(bool hidden)

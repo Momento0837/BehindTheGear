@@ -38,6 +38,11 @@ public sealed class MarketNpcBubble : MonoBehaviour
     public event System.Action Finished;
     public bool IsPresenting => holdsControls;
     public bool HasPresented { get; private set; }
+    public void RestoreCompletedGreeting()
+    {
+        HasPresented = true;
+        Dismiss();
+    }
 
     public void Configure(ConversationDialogue dialogue, Transform playerTransform, TextAsset offer)
     {
@@ -110,6 +115,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
             controls = player.GetComponent<PlayerControlLock>();
             controls?.Acquire();
             holdsControls = true;
+            DialoguePresentation.Set(this, true);
             focusCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
             focusCamera?.BeginDialogueFocus(conversation, player);
             BeginLine(0);
@@ -120,7 +126,9 @@ public sealed class MarketNpcBubble : MonoBehaviour
             return;
         }
         if (IsPresenting && (Mouse.current?.leftButton.wasPressedThisFrame == true ||
-            Keyboard.current?.spaceKey.wasPressedThisFrame == true)) Advance();
+            Keyboard.current?.fKey.wasPressedThisFrame == true ||
+            Keyboard.current?.spaceKey.wasPressedThisFrame == true ||
+            Keyboard.current?.enterKey.wasPressedThisFrame == true || Keyboard.current?.numpadEnterKey.wasPressedThisFrame == true)) Advance();
     }
 
     private void BeginLine(int index)
@@ -302,6 +310,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
         if (holdsControls)
         {
             holdsControls = false;
+            DialoguePresentation.Set(this, false);
             controls?.Release();
             focusCamera?.EndDialogueFocus(conversation);
         }
