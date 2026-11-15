@@ -198,6 +198,7 @@ namespace BehindTheGear.HideOut
 
             SuspendPlayer();
             BuildUI();
+            gameObject.AddComponent<BaseArrivalTutorial>();
             QuestJournal.Publish();
             player.Changed += Refresh;
             player.UpgradeSucceeded += OnFacilityUpgraded;
@@ -1624,6 +1625,7 @@ namespace BehindTheGear.HideOut
 
         private bool IsLocked(Facility facility)
         {
+            if (facility == Facility.Clinic && player.State.baseTutorialComplete) return false;
             if (facility != Facility.Bed) return true;
             var presentation = settings.FindPresentation(facility);
             return presentation != null && presentation.prototypeLocked || HideOutModel.Locked(player.State, facility);

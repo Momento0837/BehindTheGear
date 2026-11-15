@@ -120,7 +120,7 @@ public sealed class DialogueTextEffects : MonoBehaviour
 
     private void HandleCharacterRevealed(char character)
     {
-        if (!char.IsWhiteSpace(character))
+        if (conversation.CurrentSpeaker.Trim() == "???" && !char.IsWhiteSpace(character))
             EmitDustForLastCharacter();
     }
 

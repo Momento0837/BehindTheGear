@@ -197,6 +197,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
 
     private IEnumerator Forest()
     {
+        player.GetComponent<InventoryUI>()?.SetTutorialInventoryUnlocked(false);
         PlacePlayer(new Vector3(-4.44f, -.36f, 0));
         ShowGuide("forest_combat");
         portal.GetComponent<ScenePortal2D>().SetArea(-26.5f, -20.5f);
@@ -271,6 +272,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             Debug.LogError("[Story] Missing Garbage Interaction or TutorialGear.", this);
             yield break;
         }
+        player.GetComponent<InventoryUI>()?.SetTutorialInventoryUnlocked(resumeCollected);
         bool collected = resumeCollected;
         garbageCollected = collected;
         searchPoint.gameObject.layer = LayerMask.NameToLayer("Interactable");
@@ -290,7 +292,10 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         action.Activated = user =>
         {
             if (collected || user != player.gameObject || SceneFadeTransition.IsRunning) return;
+            var pen = Resources.Load<InventoryItemDefinition>("Story/OldBallpointPen");
+            if (pen == null || !inventory.CanAddAny(pen) || !inventory.CanAddAny(tutorialGear)) return;
             if (inventory.Add(tutorialGear, 1) != 1) return;
+            inventory.Add(pen, 1);
             collected = true;
             garbageCollected = true;
             interactable.enabled = false;
@@ -307,8 +312,12 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             searchPoint.gameObject.SetActive(false);
             if (!ready) player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
         }
+        if (!collected) searchPoint.gameObject.SetActive(false);
+        if (!restoring) yield return GarbageArrival();
         // Reveal the objective only after the incoming black screen has cleared.
         while (SceneFadeTransition.IsRunning) yield return null;
+        // Begin immediately after the monologue, independent of movement or distance to the pickup.
+        if (!collected) StartCoroutine(RevealGarbagePoint(searchPoint));
         if (!restoring) ShowGuide("garbage_search");
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || !collected) yield return null;
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
@@ -437,6 +446,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
 
     private IEnumerator FinalCutscene()
     {
+        yield return Say("market_monologue");
         ready = false;
         portal.SetActive(false);
         if (cutscene == null)

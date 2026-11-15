@@ -119,6 +119,22 @@
           "Persuasion": 0
         }
       }
+    },
+    {
+      "id": "old_ballpoint_pen",
+      "display": {
+        "name": "낡은 볼펜",
+        "description": "망토와 함께 발견한 낡은 볼펜. 누군가에게는 중요한 물건일지도 모릅니다."
+      },
+      "rarity": "Legendary"
+    },
+    {
+      "id": "tutorial_recovery_potion",
+      "display": {
+        "name": "회복 물약",
+        "description": "최대 HP의 30% 회복. 사용 후 90초 동안 이동속도 80%. 효과 중 재사용 불가."
+      },
+      "rarity": "Normal"
     }
   ]
 }

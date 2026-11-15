@@ -45,6 +45,8 @@ public sealed class WorldInteractionHint : MonoBehaviour
         var interaction = GetComponent<Interactable2D>();
         float target = !dismissed && interaction != null && interaction.enabled && (ShowUntilDismissed || distance < 2.5f) ? 1 : 0;
         alpha = Mathf.MoveTowards(alpha, target, Time.unscaledDeltaTime * 3);
+        // Plain C# animation data is not retained when scripts reload during play.
+        clip ??= ControlHintAnimation.Load("F");
         visual.sprite = clip.Frame(Time.unscaledTime);
         visual.color = new Color(1, 1, 1, alpha);
         visual.transform.position = new Vector3(bounds.center.x, fixedY, transform.position.z);

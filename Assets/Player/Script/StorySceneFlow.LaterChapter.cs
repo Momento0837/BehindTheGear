@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public sealed partial class StorySceneFlow
 {
+    private const float SelenaFollowDistance = 2.4f;
     private enum StoryArrival { None, ForestFour, NeighborhoodFive }
     private static StoryArrival pendingArrival;
     private static Transform travellingSelena;
@@ -58,19 +59,38 @@ public sealed partial class StorySceneFlow
         foreach (var camera in InScene<PlayerCameraFollow2D>()) camera.SetStoryBounds(bounds);
         RoomDropCache.SetCurrent(gameObject.scene.path + "#" + mapName);
         QuestTracker.Complete(this);
-        if (forest) ConfigureSelena();
+        if (forest)
+        {
+            ConfigureSelena();
+            if (selena != null)
+            {
+                float gap = 50f / player.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit;
+                Vector3 near = player.transform.position; near.x = selena.position.x - gap;
+                player.transform.position = near; body.position = near;
+                // Preserve the spawn point; place the camera around it instead of treating it as a screen edge.
+                float visibleLeft = bounds.x;
+                foreach (var camera in InScene<PlayerCameraFollow2D>())
+                {
+                    camera.SetStoryBounds(bounds);
+                    float left = camera.CenterStoryEntrance(near.x);
+                    if (camera.isActiveAndEnabled) visibleLeft = left;
+                }
+                movementBounds.SetHorizontalBounds(new Vector2(visibleLeft, bounds.y));
+            }
+        }
         else if (travellingSelena != null)
         {
             selena = travellingSelena;
             travellingSelena = null;
             SceneManager.MoveGameObjectToScene(selena.gameObject, gameObject.scene);
-            selena.position = new Vector3(player.transform.position.x - 1.2f, selena.position.y, 0f);
+            selena.position = new Vector3(player.transform.position.x - SelenaFollowDistance, selena.position.y, 0f);
             selena.GetComponent<Animator>().SetBool("IsMoving", false);
             selena.GetComponent<Interactable2D>().enabled = false;
             selena.GetComponent<StoryInteraction2D>().Activated = null;
         }
         while (!restoring && SceneFadeTransition.IsRunning) yield return null;
         locationHud?.SetLocation(forest ? "포레스트" : "거주구역");
+        if (!forest && !restoring) yield return WalkToHideout();
     }
 
     private void EnsureChapterFloor(Transform map, Vector2 bounds)
@@ -155,8 +175,8 @@ public sealed partial class StorySceneFlow
             bool following = false;
             for (float t = 0f; !following || followingTime < .7f; t += Time.deltaTime)
             {
-                body.linearVelocity = new Vector2(2.5f * Mathf.SmoothStep(0f, 1f, t / .25f), body.linearVelocity.y);
-                if (!following && t >= .45f && player.transform.position.x >= selena.position.x + .9f)
+                body.linearVelocity = new Vector2(player.RunningSpeed, body.linearVelocity.y);
+                if (!following && t >= .45f && player.transform.position.x >= selena.position.x + SelenaFollowDistance)
                 {
                     following = true;
                     npcAnimator.SetBool("IsMoving", true);
@@ -164,7 +184,7 @@ public sealed partial class StorySceneFlow
                 if (following)
                 {
                     followingTime += Time.deltaTime;
-                    selena.position += Vector3.right * (2.5f * Mathf.SmoothStep(0f, 1f, followingTime / .3f) * Time.deltaTime);
+                    selena.position += Vector3.right * (player.RunningSpeed * Time.deltaTime);
                 }
                 yield return null;
             }
@@ -186,8 +206,8 @@ public sealed partial class StorySceneFlow
             // Keep the input lock until this scene is replaced (or a load fails).
             while (SceneFadeTransition.IsRunning)
             {
-                body.linearVelocity = new Vector2(2.5f, body.linearVelocity.y);
-                selena.position += Vector3.right * (2.5f * Time.deltaTime);
+                body.linearVelocity = new Vector2(player.RunningSpeed, body.linearVelocity.y);
+                selena.position += Vector3.right * (player.RunningSpeed * Time.deltaTime);
                 yield return null;
             }
         }

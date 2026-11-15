@@ -34,6 +34,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private bool jumpRequested;
     private bool dropping;
     private bool attackAnimationPlaying;
+    public bool IsGroundedForStory => IsGrounded();
     public bool IsAttacking => attackAnimationPlaying;
     private bool attackStateObserved;
     private bool bufferedNextAttack;
@@ -226,6 +227,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
             horizontalVelocity = dashDirection * dashSpeed * (stepTime / Time.fixedDeltaTime);
             dashTimeRemaining = Mathf.Max(0f, dashTimeRemaining - stepTime);
         }
+        horizontalVelocity *= GetComponent<RecoveryPotionPenalty>()?.Multiplier ?? 1f;
         body.linearVelocity = new Vector2(horizontalVelocity, body.linearVelocity.y);
         bool grounded = IsGrounded();
         if (jumpRequested)
@@ -465,11 +467,12 @@ public sealed class PlayerMovement2D : MonoBehaviour
     }
 
     private bool cinematicWalking;
+    public float RunningSpeed => moveSpeed * (GetComponent<RecoveryPotionPenalty>()?.Multiplier ?? 1f);
     public void SetCinematicWalking(bool value)
     {
         cinematicWalking = value;
         if (value) GetComponent<PlayerSpriteFacing>()?.FaceAttack(1f);
-        if (animator != null) animator.speed = value ? 2.5f / Mathf.Max(.01f, moveSpeed) : 1f;
+        if (animator != null) animator.speed = 1f;
         RefreshAnimationWhileControlLocked();
     }
 

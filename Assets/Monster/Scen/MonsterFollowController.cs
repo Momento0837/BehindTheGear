@@ -482,7 +482,9 @@ public sealed class MonsterFollowController : MonoBehaviour
         int roll = Random.Range(0, 100);
         if (roll >= 40) return;
         bool equipment = roll == 0;
-        var pool = loot.Where(item => item != null && (equipment ? item.IsEquipment : item.IsConsumable)).ToArray();
+        var pool = loot.Where(item => item != null && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealth
+            && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealthAndMana
+            && (equipment ? item.IsEquipment : item.IsConsumable)).ToArray();
         if (pool.Length == 0) return;
         int count = equipment ? 1 : Random.Range(1, 3);
         for (int i = 0; i < count; i++)

@@ -62,6 +62,13 @@ public sealed class InventoryItemDefinition : ScriptableObject, IItemStatModifie
         var health = user.GetComponent<PlayerHealth>();
         var mana = user.GetComponent<PlayerMana>();
         string targetName = user != null ? user.name : "Unknown";
+        if (itemId == "tutorial_recovery_potion")
+        {
+            if (health == null || health.IsDead) return false;
+            var penalty = user.GetComponent<RecoveryPotionPenalty>() ?? user.AddComponent<RecoveryPotionPenalty>();
+            if (penalty.Active) return false;
+            health.RestoreHealth(Mathf.CeilToInt(health.MaxHealth * .30f)); penalty.Apply(); return true;
+        }
         switch (consumableEffect)
         {
             case ConsumableEffect.RestoreHealth:

@@ -27,6 +27,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     [SerializeField] private CanvasGroup dialogueGroup;
     [SerializeField] private Image portraitImage;
     private Sprite ethanPortrait;
+    private Sprite selenaPortrait;
     private Image animatedPortrait;
     private SpriteRenderer portraitSource;
     [Tooltip("Separate UI text for the speaker name.")]
@@ -39,6 +40,26 @@ public sealed class ConversationDialogue : MonoBehaviour
     [SerializeField] private GameObject[] dialogueUiObjects;
 
     public void BindPlayer(PlayerControlLock value) => playerControlLock = value;
+    public ConversationDialogue CreateTutorialPresentation(Transform parent)
+    {
+        var host = new GameObject("Base Tutorial Dialogue"); host.SetActive(false); host.transform.SetParent(parent, false);
+        var ui = Instantiate(dialogueCanvasRoot, host.transform);
+        T Map<T>(T original) where T : Component
+        {
+            if (original == null) return null;
+            int index = Array.IndexOf(dialogueCanvasRoot.GetComponentsInChildren<T>(true), original);
+            return index < 0 ? null : ui.GetComponentsInChildren<T>(true)[index];
+        }
+        var copy = host.AddComponent<ConversationDialogue>();
+        copy.dialogueCanvasRoot = ui; copy.dialogueGroup = Map(dialogueGroup); copy.portraitImage = Map(portraitImage);
+        copy.bodyText = Map(bodyText); copy.speakerText = Map(speakerText); copy.continueIndicator = null;
+        copy.dialogueUiObjects = new GameObject[dialogueUiObjects.Length];
+        for (int i = 0; i < dialogueUiObjects.Length; i++) copy.dialogueUiObjects[i] = dialogueUiObjects[i] != null ? Map(dialogueUiObjects[i].transform)?.gameObject : null;
+        foreach (var canvas in ui.GetComponentsInChildren<Canvas>(true))
+        { canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 32050; }
+        host.SetActive(true); copy.BindPlayer(null);
+        return copy;
+    }
 
     public event Action Finished;
     public event Action LineRevealStarted;
@@ -71,6 +92,30 @@ public sealed class ConversationDialogue : MonoBehaviour
     private Material originalBodyMaterial;
     private Material originalSpeakerMaterial;
     private int startingLine;
+    private RectTransform acceptRect, acceptFill;
+    private float acceptHeld;
+    private int holdSource;
+    private void UpdateHoldChoice()
+    {
+        var keyboard = Keyboard.current;
+        var mouse = Mouse.current;
+        if (keyboard?.escapeKey.wasPressedThisFrame == true) { SelectChoice(false); return; }
+        if (holdSource == 0 && keyboard?.fKey.isPressed == true) { holdSource = 1; acceptHeld = 0; }
+        bool overAccept = false;
+        if (acceptRect != null && mouse != null)
+        {
+            var canvas = acceptRect.GetComponentInParent<Canvas>();
+            overAccept = RectTransformUtility.RectangleContainsScreenPoint(acceptRect, mouse.position.ReadValue(),
+                canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera);
+        }
+        if (mouse?.leftButton.wasPressedThisFrame == true && overAccept) { holdSource = 2; acceptHeld = 0; }
+        bool held = holdSource == 1 ? keyboard?.fKey.isPressed == true : holdSource == 2 && overAccept && mouse?.leftButton.isPressed == true;
+        if (!held) { acceptHeld = 0; holdSource = 0; }
+        else acceptHeld += Time.unscaledDeltaTime;
+        float progress = Mathf.Clamp01(acceptHeld / (holdSource == 2 ? .5f : 1f));
+        if (acceptFill != null) acceptFill.anchorMax = new Vector2(progress, 1);
+        if (progress >= 1) SelectChoice(true);
+    }
 
     public static string GetOpeningText(TextAsset source)
     {
@@ -113,7 +158,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         if (ethanPortrait == null)
         {
             var portraits = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
-            if (portraits != null) ethanPortrait = portraits.ethan;
+            if (portraits != null) { ethanPortrait = portraits.ethan; selenaPortrait = portraits.selena; }
         }
         if (animatedPortrait == null)
         {
@@ -130,7 +175,8 @@ public sealed class ConversationDialogue : MonoBehaviour
         bool mystery = speaker.Trim() == "???" && overrideSprite == null;
         animatedPortrait.gameObject.SetActive(mystery);
         portraitImage.sprite = overrideSprite != null ? overrideSprite
-            : string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) ? ethanPortrait : null;
+            : string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) ? ethanPortrait
+            : string.Equals(speaker.Trim(), "Selena", StringComparison.OrdinalIgnoreCase) || speaker.Trim() == "셀레나" ? selenaPortrait : null;
         portraitImage.preserveAspect = true;
         portraitImage.enabled = portraitImage.sprite != null;
         UpdatePortraitFrame();
@@ -206,6 +252,8 @@ public sealed class ConversationDialogue : MonoBehaviour
     private void Update()
     {
         if (!IsPlaying) return;
+
+        if (choiceRoot != null) { UpdateHoldChoice(); return; }
 
         var keyboard = Keyboard.current;
         if (choiceRoot != null && keyboard != null)
@@ -405,7 +453,15 @@ public sealed class ConversationDialogue : MonoBehaviour
         Button button = buttonObject.GetComponent<Button>();
         button.targetGraphic = background;
         button.navigation = new Navigation { mode = Navigation.Mode.None };
-        button.onClick.AddListener(() => SelectChoice(accepted));
+        if (!accepted) button.onClick.AddListener(() => SelectChoice(false));
+        else
+        {
+            acceptRect = rect; acceptHeld = 0; holdSource = 0;
+            var fill = new GameObject("Accept Hold Progress", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            fill.transform.SetParent(rect, false); fill.color = new Color(1f, .8f, .45f, .4f); fill.raycastTarget = false;
+            acceptFill = fill.rectTransform; acceptFill.anchorMin = Vector2.zero; acceptFill.anchorMax = new Vector2(0, 1);
+            acceptFill.offsetMin = acceptFill.offsetMax = Vector2.zero;
+        }
 
         GameObject textObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         RectTransform textRect = textObject.GetComponent<RectTransform>();

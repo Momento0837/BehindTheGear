@@ -37,6 +37,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private readonly List<Bounds> mapArtwork = new();
     private ConversationDialogue dialogueOwner;
     private Transform dialoguePlayer;
+    private Bounds dialogueSubjects;
+    private float? storyMinimumCameraX;
     private bool hasDialogueLens;
     private float normalOrthographicSize;
     private float normalFieldOfView;
@@ -112,6 +114,9 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         }
         dialogueOwner = owner;
         dialoguePlayer = player;
+        // Animated sprite bounds vary between frames; keep a steady composition for this conversation.
+        dialogueSubjects = SubjectBounds(player != null ? player : target);
+        dialogueSubjects.Encapsulate(SubjectBounds(owner.transform));
     }
 
     public void EndDialogueFocus(ConversationDialogue owner)
@@ -159,8 +164,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         Transform player = dialoguePlayer != null ? dialoguePlayer : target;
         if (dialogueOwner != null && player != null)
         {
-            Bounds subjects = SubjectBounds(player);
-            subjects.Encapsulate(SubjectBounds(dialogueOwner.transform));
+            Bounds subjects = dialogueSubjects;
             float distance = Mathf.Max(.01f, Mathf.Abs(subjects.center.z - cameraZ));
             float normalHalfHeight = attachedCamera.orthographic ? normalOrthographicSize
                 : distance * Mathf.Tan(normalFieldOfView * .5f * Mathf.Deg2Rad);
@@ -184,6 +188,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
     public void SetStoryBounds(Vector2 bounds)
     {
+        storyMinimumCameraX = null;
         horizontalWorldBounds = bounds;
         clampToHorizontalBounds = true;
         mapArtwork.Clear();
@@ -199,6 +204,18 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         }
         target = null;
         if (TryFindTarget()) SnapToTarget();
+    }
+
+    // Keep the entrance player centered, then allow walking to the visible left edge.
+    // Camera-center limits and player/world-edge limits are different coordinate ranges.
+    public float CenterStoryEntrance(float playerX)
+    {
+        storyMinimumCameraX = playerX;
+        if (TryFindTarget()) SnapToTarget();
+        if (attachedCamera == null) return playerX;
+        var plane = new Plane(Vector3.forward, Vector3.zero);
+        Ray ray = attachedCamera.ViewportPointToRay(new Vector3(0, .5f, 0));
+        return plane.Raycast(ray, out float distance) ? ray.GetPoint(distance).x : playerX;
     }
 
     private void Awake()
@@ -338,6 +355,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         LimitForPlane(horizontalWorldBounds.x, horizontalWorldBounds.y, 0f, ref minCameraX, ref maxCameraX);
         foreach (Bounds art in mapArtwork)
             LimitForPlane(art.min.x + .03f, art.max.x - .03f, art.center.z, ref minCameraX, ref maxCameraX);
+        if (storyMinimumCameraX.HasValue) minCameraX = storyMinimumCameraX.Value;
         if (minCameraX > maxCameraX)
             return (minCameraX + maxCameraX) * .5f;
 

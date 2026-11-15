@@ -24,11 +24,14 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
             var body = player.GetComponent<Rigidbody2D>();
             if (body != null) velocity = body.linearVelocity;
         }
-        float separation = Mathf.Lerp(minimumSeparationPixels, maximumSeparationPixels,
+        Vector4 healthEffect = Application.isPlaying ? PrototypeScreenEffects.CurrentHealthEffect : Vector4.zero;
+        float maximum = Mathf.Lerp(minimumSeparationPixels, maximumSeparationPixels,
             Mathf.Clamp01(velocity.magnitude / Mathf.Max(.01f, fullEffectSpeed)));
+        float separation = PrototypeScreenEffects.Separation(maximum, Time.unscaledTime, healthEffect.x);
         pass.material = passMaterial;
         pass.pixelSize = new Vector2(1f / Mathf.Max(1, camera.pixelWidth), 1f / Mathf.Max(1, camera.pixelHeight));
         pass.separation = separation;
+        pass.healthTint = new Vector3(healthEffect.y, healthEffect.z, healthEffect.w);
         renderer.EnqueuePass(pass);
     }
     private sealed class MotionPass : ScriptableRenderPass
@@ -36,6 +39,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         public Material material;
         public Vector2 pixelSize;
         public float separation;
+        public Vector3 healthTint;
         public MotionPass()
         {
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -54,6 +58,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
             var properties = new MaterialPropertyBlock();
             properties.SetVector("_OutputPixelSize", new Vector4(pixelSize.x, pixelSize.y, 0, 0));
             properties.SetFloat("_SeparationPixels", separation);
+            properties.SetVector("_HealthTint", new Vector4(healthTint.x, healthTint.y, healthTint.z, 0));
             graph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, destination, material, 0)
                 { propertyBlock = properties }, passName: "World Chromatic Motion");
             resources.cameraColor = destination;

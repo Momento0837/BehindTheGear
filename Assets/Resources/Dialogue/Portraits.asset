@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: Portraits
   m_EditorClassIdentifier: Assembly-CSharp::DialoguePortraitLibrary
   ethan: {fileID: 21300000, guid: abb33a31c9aa44a4f9d579d3ca20ca12, type: 3}
+  selena: {fileID: 21300000, guid: 75e29a2c3bf13e641b6d47b9d2e5845b, type: 3}

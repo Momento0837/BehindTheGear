@@ -13,11 +13,12 @@ public sealed class WindowsQuitOnEscape : MonoBehaviour
         root.AddComponent<WindowsQuitOnEscape>();
     }
 
+    private float held;
     private void Update()
     {
-        if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && !InventoryUI.EscapeHandledThisFrame
-            && !BehindTheGear.HideOut.ScareCrowTrainingScene.IsActive)
-            Application.Quit(0);
+        held = Keyboard.current?.escapeKey.isPressed == true ? held + Time.unscaledDeltaTime : 0;
+        if (held >= 2f) Application.Quit(0);
     }
+    private void OnApplicationFocus(bool focused) { if (!focused) held = 0; }
 #endif
 }

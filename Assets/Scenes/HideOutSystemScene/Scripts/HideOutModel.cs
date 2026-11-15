@@ -72,6 +72,7 @@ namespace BehindTheGear.HideOut
         public int hp = 10, coins, actionPoints, baseMana = 100, mana = 100;
         public int baseInventorySlots = 15;
         public bool selenaRecruited;
+        public bool baseTutorialComplete;
         public double clinicReadyAt, potionsReadyAt, activeClock;
         public List<ExtensionState> extensions = new();
         // PlayerInventory currently identifies equipment by definition ItemId, not by a per-copy instance ID.

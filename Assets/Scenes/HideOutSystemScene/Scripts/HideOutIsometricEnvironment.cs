@@ -75,6 +75,7 @@ namespace BehindTheGear.HideOut
                 {
                     var cover = pair.Value.parent.GetComponent<HideOutFacilityLockCover>();
                     if (cover == null) cover = pair.Value.parent.gameObject.AddComponent<HideOutFacilityLockCover>();
+                    cover.IsClinic = pair.Key == Facility.Clinic;
                     cover.Refresh();
                 }
         }

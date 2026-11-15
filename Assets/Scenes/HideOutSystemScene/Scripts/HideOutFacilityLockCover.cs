@@ -42,10 +42,11 @@ namespace BehindTheGear.HideOut
                 covers.Add(source, renderer);
             }
         }
+        public bool IsClinic;
         private void LateUpdate()
         {
             foreach (var pair in covers)
-                if (pair.Key != null && pair.Value != null) pair.Value.enabled = pair.Key.enabled;
+                if (pair.Key != null && pair.Value != null) pair.Value.enabled = pair.Key.enabled && !(IsClinic && BaseArrivalTutorial.ClinicUnlocked);
         }
         private void OnDestroy() { foreach (var material in materials) if (material != null) Destroy(material); }
         public static void ShowLock(Button button, bool locked)

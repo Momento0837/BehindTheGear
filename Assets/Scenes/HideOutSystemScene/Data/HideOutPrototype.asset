@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 380c65a68f8d4685bf695c06e4e92a51, type: 3}
   m_Name: HideOutPrototype
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   rules:
     baseHealing: 5
     baseStorageSlots: 10
@@ -30,7 +30,7 @@ MonoBehaviour:
     offlineCooldown: 1
     facilities:
     - facility: 0
-      title: 치료 부스
+      title: "\uCE58\uB8CC \uBD80\uC2A4"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -83,7 +83,7 @@ MonoBehaviour:
         - itemId: hideout_scrap
           amount: 20
     - facility: 1
-      title: 침대
+      title: "\uCE68\uB300"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -136,7 +136,7 @@ MonoBehaviour:
         - itemId: hideout_scrap
           amount: 20
     - facility: 2
-      title: 허수아비
+      title: "\uD5C8\uC218\uC544\uBE44"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -189,7 +189,7 @@ MonoBehaviour:
         - itemId: hideout_scrap
           amount: 20
     - facility: 3
-      title: 창고
+      title: "\uCC3D\uACE0"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -242,7 +242,7 @@ MonoBehaviour:
         - itemId: hideout_scrap
           amount: 20
     - facility: 4
-      title: 물약 보관대
+      title: "\uBB3C\uC57D \uBCF4\uAD00\uB300"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -295,7 +295,7 @@ MonoBehaviour:
         - itemId: hideout_scrap
           amount: 20
     - facility: 5
-      title: 체력단련실
+      title: "\uCCB4\uB825\uB2E8\uB828\uC2E4"
       upgrades:
       - coins: 10
         actionPoints: 1
@@ -356,6 +356,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 644e5b747a684e5695f7129042e0ecb5, type: 2}
   - {fileID: 11400000, guid: 509a4e4686b34fae82f7b67091f78168, type: 2}
   - {fileID: 11400000, guid: d88c47c8aa6e47f09cad433586a9a40b, type: 2}
+  - {fileID: 11400000, guid: 6b8ed0f2824f8dc499ff3fa59e354f47, type: 2}
+  - {fileID: 11400000, guid: 1860f24bcea2cac498bd0d04945e4dbf, type: 2}
   scenePath: Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity
   testWeaponId: hideout_test_weapon
   appearanceSprites:
@@ -366,52 +368,183 @@ MonoBehaviour:
   prototypeFacilities:
   - facilityId: storage
     facility: 3
-    displayName: 창고
+    displayName: "\uCC3D\uACE0"
     icon: {fileID: 0}
     facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
-    currentEffectOverride:
-    nextEffectOverride:
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: treatment_booth
     facility: 0
-    displayName: 치료 부스
+    displayName: "\uCE58\uB8CC \uBD80\uC2A4"
     icon: {fileID: 0}
     facilityImage: {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}
-    currentEffectOverride:
-    nextEffectOverride:
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: training_dummy
     facility: 2
-    displayName: 허수아비
+    displayName: "\uD5C8\uC218\uC544\uBE44"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: bed
     facility: 1
-    displayName: 침대
+    displayName: "\uCE68\uB300"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: potion_shelf
     facility: 4
-    displayName: 물약 보관대
+    displayName: "\uBB3C\uC57D \uBCF4\uAD00\uB300"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: gym
     facility: 5
-    displayName: 체력단련실
+    displayName: "\uCCB4\uB825\uB2E8\uB828\uC2E4"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: 
+    roomPosition: {x: 0, y: 0, z: 0}
+    roomSize: {x: 7, y: 6.8}
+    iconOffset: {x: 0, y: 3.4, z: 0.2}
   - facilityId: dining
     facility: 6
-    displayName: 식탁
+    displayName: "\uC2DD\uD0C1"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: "NPC\uB4E4\uC774 \uD568\uAED8 \uC2DD\uC0AC\uD558\uB294
+      \uACF5\uAC04\uC785\uB2C8\uB2E4.\n\n\uD5A5\uD6C4 \uAE30\uD68D \xB7 \uD574\uAE08
+      \uC870\uAC74\n\uD601\uBA85\uAD70 NPC \uC218 \uC870\uAC74 \uCDA9\uC871\n\n\uD5A5\uD6C4
+      \uAE30\uD68D \xB7 \uAC15\uD654 \uD6A8\uACFC\nNPC \uC0AC\uAE30 \uC99D\uAC00
+      \uBC0F \uAE30\uC9C0 \uB0B4 \uC2A4\uD0EF \uD6A8\uC728 \uC99D\uAC00\n\uC0AC\uAE30
+      \uC218\uCE58 1\uB2F9 \uAE30\uC9C0 \uB0B4 \uC2A4\uD0EF \uC99D\uAC00\uC728 0.5%\n\n\uD604\uC7AC
+      \uC801\uC6A9\uB418\uB294 \uD6A8\uACFC\uB294 \uC5C6\uC2B5\uB2C8\uB2E4."
     roomPosition: {x: -15, y: 0, z: 0}
     roomSize: {x: 7, y: 6.8}
     iconOffset: {x: 0, y: 3.4, z: 0.2}
-    exhibitionDescription: "NPC들이 함께 식사하는 공간입니다.\n\n향후 기획 · 해금 조건\n혁명군 NPC 수 조건 충족\n\n향후 기획 · 강화 효과\nNPC 사기 증가 및 기지 내 스탯 효율 증가\n사기 수치 1당 기지 내 스탯 증가율 0.5%\n\n현재 적용되는 효과는 없습니다."
   - facilityId: workshop
     facility: 7
-    displayName: 무기제작실
+    displayName: "\uBB34\uAE30\uC81C\uC791\uC2E4"
+    icon: {fileID: 0}
+    facilityImage: {fileID: 0}
+    visualPrefab: {fileID: 0}
+    tierVisualPrefabs:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    visualPosition: {x: 0, y: 0, z: 0}
+    visualEuler: {x: 0, y: 0, z: 0}
+    visualScale: {x: 1, y: 1, z: 1}
+    currentEffectOverride: 
+    nextEffectOverride: 
     prototypeLocked: 0
+    exhibitionDescription: "\uBB34\uAE30\uB97C \uC81C\uC791\uD558\uB294 \uC791\uC5C5
+      \uACF5\uAC04\uC785\uB2C8\uB2E4.\n\n\uD5A5\uD6C4 \uAE30\uD68D \xB7 \uAE30\uB2A5\n\uC7AC\uB8CC\uB97C
+      \uC0AC\uC6A9\uD55C \uBB34\uAE30 \uC81C\uC791\n\n\uD5A5\uD6C4 \uAE30\uD68D \xB7
+      \uAC15\uD654 \uD6A8\uACFC\n\uC81C\uC791 \uC7AC\uB8CC \uC694\uAD6C\uB7C9 \uAC10\uC18C\n\n\uD604\uC7AC
+      \uC81C\uC791\xB7\uC7AC\uB8CC \uC18C\uBE44\xB7\uAC15\uD654\uB294 \uC81C\uACF5\uD558\uC9C0
+      \uC54A\uC2B5\uB2C8\uB2E4."
     roomPosition: {x: 15, y: 0, z: 0}
     roomSize: {x: 7, y: 6.8}
     iconOffset: {x: 0, y: 3.4, z: 0.2}
-    exhibitionDescription: "무기를 제작하는 작업 공간입니다.\n\n향후 기획 · 기능\n재료를 사용한 무기 제작\n\n향후 기획 · 강화 효과\n제작 재료 요구량 감소\n\n현재 제작·재료 소비·강화는 제공하지 않습니다."
   topView:
     overviewCameraPosition: {x: 12, y: 15, z: -16}
     cameraEuler: {x: 37, y: -37, z: 0}

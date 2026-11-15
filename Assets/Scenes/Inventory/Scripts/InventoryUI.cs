@@ -121,6 +121,8 @@ public sealed class InventoryUI : MonoBehaviour
     public GameObject Window => window;
     public Button ShortcutButton => shortcutButton;
     public bool IsOpen => IsAnyWindowOpen();
+    public bool IsOpening => window != null && window.GetComponent<InventoryEntranceAnimation>()?.IsPlaying == true;
+    private float closingDimmerAlpha;
     public void OpenInventory() { if (ready && window != null && !window.activeSelf) ToggleInventoryFromButton(); }
     private InventoryOpeningHint openingHint;
     public GameObject EquipmentStatsPanel => equipmentWindow;
@@ -134,28 +136,44 @@ public sealed class InventoryUI : MonoBehaviour
     private Vector3 hintReturnScale;
     private bool hintReturning;
 
+    public bool TutorialInventoryUnlocked { get; private set; } = true;
+    private EquipmentTutorialHighlight equipmentTutorial;
+    public void SetTutorialInventoryUnlocked(bool value)
+    {
+        TutorialInventoryUnlocked = value;
+        if (!value) CloseAllWindows();
+        if (shortcutButton != null) shortcutButton.gameObject.SetActive(value);
+    }
+    public Image FindTutorialItemImage(InventoryItemDefinition item)
+    {
+        foreach (var slot in slots)
+            if (slot != null && slot.gameObject.activeInHierarchy)
+                foreach (var image in slot.GetComponentsInChildren<Image>())
+                    if (image.enabled && image.sprite == item.Icon) return image;
+        return null;
+    }
+    public Transform FindTutorialSocket(InventoryItemDefinition item)
+    {
+        for (int i = 0; i < equipmentUnequipButtons.Length; i++)
+            if (GetEquipmentSlotForIndex(i) == item.Slot && equipmentUnequipButtons[i] != null) return equipmentUnequipButtons[i].transform;
+        return null;
+    }
     public void BeginEquipmentHint(InventoryItemDefinition item)
     {
-        ResetEquipmentHint();
-        if (item != null && !IsOpen)
+        ResetEquipmentHint(); SetTutorialInventoryUnlocked(true);
+        if (item == null) return;
+        if (!IsOpen)
         {
             if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
             openingHint.Begin(this);
         }
-        if (item == null || equipmentUnequipButtons == null) return;
-        for (int i = 0; i < equipmentUnequipButtons.Length; i++)
-        {
-            if (GetEquipmentSlotForIndex(i) != item.Slot || equipmentUnequipButtons[i] == null) continue;
-            hintedSlot = equipmentUnequipButtons[i].transform;
-            hintedScale = hintedSlot.localScale;
-            hintedItem = item;
-            hintElapsed = 0f;
-            break;
-        }
+        if (equipmentTutorial == null) equipmentTutorial = gameObject.AddComponent<EquipmentTutorialHighlight>();
+        equipmentTutorial.Begin(this, item);
     }
 
     public void EndEquipmentHint()
     {
+        if (equipmentTutorial != null) equipmentTutorial.enabled = false;
         openingHint?.Dismiss();
         if (hintedSlot == null || hintReturning) return;
         hintReturning = true;
@@ -440,6 +458,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void Update()
     {
         if (!ready) return;
+        if (shortcutButton != null) shortcutButton.gameObject.SetActive(TutorialInventoryUnlocked);
         if (Time.unscaledTime >= nextCatalogCheck)
         {
             nextCatalogCheck = Time.unscaledTime + .5f;
@@ -456,7 +475,8 @@ public sealed class InventoryUI : MonoBehaviour
         if (Keyboard.current?.escapeKey.wasPressedThisFrame == true && IsAnyWindowOpen())
         {
             escapeHandledFrame = Time.frameCount;
-            CloseAllWindows();
+            RequestCloseInventory();
+            CloseEquipmentStats();
         }
         var keyboard = Keyboard.current;
         if (keyboard != null)
@@ -468,9 +488,15 @@ public sealed class InventoryUI : MonoBehaviour
         if (toast != null && toast.gameObject.activeSelf && Time.unscaledTime >= toastUntil) toast.gameObject.SetActive(false);
         if (holdsInventoryLock && inventoryDimmer != null)
         {
-            dimmerElapsed += Time.unscaledDeltaTime;
             Color color = inventoryDimmer.color;
-            color.a = (211f / 255f) * Mathf.Clamp01(dimmerElapsed / DimmerFadeDuration);
+            var entrance = window != null ? window.GetComponent<InventoryEntranceAnimation>() : null;
+            if (entrance != null && entrance.IsClosing)
+                color.a = closingDimmerAlpha * (1f - Mathf.SmoothStep(0f, 1f, entrance.CloseProgress));
+            else
+            {
+                dimmerElapsed += Time.unscaledDeltaTime;
+                color.a = (211f / 255f) * Mathf.Clamp01(dimmerElapsed / DimmerFadeDuration);
+            }
             inventoryDimmer.color = color;
         }
     }
@@ -478,14 +504,15 @@ public sealed class InventoryUI : MonoBehaviour
     private void OnApplicationFocus(bool focused) { if (!focused) CancelDrag(); }
     private void OnRectTransformDimensionsChange() { if (ready) ApplySlotLayout(GetDisplayedSlotCount()); }
     private void ToggleInventoryFromButton() { PlayerInputReader.SuppressPointerForCurrentFrame(); ToggleInventory(); }
-    private void CloseInventoryFromButton() { PlayerInputReader.SuppressPointerForCurrentFrame(); CloseInventory(); }
+    private void CloseInventoryFromButton() { PlayerInputReader.SuppressPointerForCurrentFrame(); RequestCloseInventory(); }
     private void CloseEquipmentStatsFromButton() { PlayerInputReader.SuppressPointerForCurrentFrame(); CloseEquipmentStats(); }
 
     private void ToggleInventory()
     {
+        if (!TutorialInventoryUnlocked || !isActiveAndEnabled || SceneFadeTransition.IsRunning || (!IsOpen && GetComponent<PlayerControlLock>()?.IsLocked == true)) return;
         if (window.activeSelf)
         {
-            CloseInventory();
+            RequestCloseInventory();
             return;
         }
 
@@ -499,6 +526,11 @@ public sealed class InventoryUI : MonoBehaviour
             InventoryHoverReveal.HideAll(window);
         }
         if (equipmentWindow != null && equipmentWindow.activeSelf) ArrangeEquipmentBesideInventory();
+        if (usesDesignedCanvas)
+        {
+            var entrance = window.GetComponent<InventoryEntranceAnimation>() ?? window.AddComponent<InventoryEntranceAnimation>();
+            entrance.Play();
+        }
     }
 
     private void ToggleEquipmentStats()
@@ -521,6 +553,24 @@ public sealed class InventoryUI : MonoBehaviour
         equipmentWindow.SetActive(true);
         if (window != null && window.activeSelf) ArrangeEquipmentBesideInventory();
         else RestoreEquipmentSoloLayout();
+    }
+
+    private void RequestCloseInventory()
+    {
+        if (usesDesignedCanvas && window != null && window.activeInHierarchy)
+        {
+            var entrance = window.GetComponent<InventoryEntranceAnimation>();
+            if (entrance != null)
+            {
+                if (!entrance.IsClosing)
+                    closingDimmerAlpha = inventoryDimmer != null ? inventoryDimmer.color.a : 0f;
+                CancelDrag(); ShowDetails(-1);
+                InventoryHoverReveal.HideAll(window);
+                entrance.PlayClose(CloseInventory);
+                return;
+            }
+        }
+        CloseInventory();
     }
 
     private void CloseInventory()
