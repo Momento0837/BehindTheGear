@@ -9,6 +9,13 @@ namespace BehindTheGear.HideOut
     {
         private readonly Dictionary<MeshRenderer, MeshRenderer> covers = new();
         private readonly List<Material> materials = new();
+        private bool locked = true;
+
+        public void SetLocked(bool value)
+        {
+            locked = value;
+            UpdateCoverVisibility();
+        }
         public void Refresh()
         {
             var shader = Resources.Load<Shader>("Effects/HideOutLockCover");
@@ -38,12 +45,18 @@ namespace BehindTheGear.HideOut
                     replacements[i] = material; materials.Add(material);
                 }
                 renderer.sharedMaterials = replacements;
+                renderer.enabled = locked && source.enabled;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 covers.Add(source, renderer);
             }
         }
         public bool IsClinic;
         private void LateUpdate()
+        {
+            UpdateCoverVisibility();
+        }
+
+        private void UpdateCoverVisibility()
         {
             foreach (var pair in covers)
                 if (pair.Key != null && pair.Value != null) pair.Value.enabled = pair.Key.enabled && !(IsClinic && BaseArrivalTutorial.ClinicUnlocked);
