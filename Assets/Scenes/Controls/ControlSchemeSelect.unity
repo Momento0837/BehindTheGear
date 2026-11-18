@@ -557,6 +557,9 @@ MonoBehaviour:
   fadeDuration: 0.8
   mainMenuPrefab: {fileID: 8113000000, guid: 61dcb3ae50988884a9ed266f7ed25f80, type: 3}
   controlSelectionCanvas: {fileID: 0}
+  warningPrefab: {fileID: 7284077128592641537, guid: 50f90db5c719336429bf31403322e3bc, type: 3}
+  teamLogoPrefab: {fileID: 6265271372410926523, guid: 672d2afd6f2a86f48a8841cd3eeb190e, type: 3}
+  mainBgm: {fileID: 8300000, guid: 2f4516e68e1d0074b8e5e9afb29561f5, type: 3}
 --- !u!114 &8112000003
 MonoBehaviour:
   m_ObjectHideFlags: 0

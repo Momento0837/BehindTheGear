@@ -81,6 +81,15 @@ public sealed partial class StorySceneFlow
         var lines = ConversationDialogue.GetGreetingLines(Resources.Load<TextAsset>("Dialogue/neighborhood_conversation"), 3);
         float ppu = player.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit;
         float stopDistance = 50f / ppu;
+        // The F hint appears at the automatic stop, so that position must be interactive.
+        var entranceTrigger = entrance.GetComponent<BoxCollider2D>();
+        if (entranceTrigger != null)
+        {
+            var size = entranceTrigger.size;
+            size.x = Mathf.Max(size.x, 2f * (stopDistance + .25f) / Mathf.Max(.001f, Mathf.Abs(entrance.transform.lossyScale.x)));
+            entranceTrigger.size = size;
+        }
+        entrance.GetComponent<Interactable2D>().AllowFromEitherSide = true;
         float direction = Mathf.Sign(entrance.transform.position.x - player.transform.position.x);
         bubble.Begin(dialogue.TalkingImage, lines);
         player.SetCinematicWalking(true); npcAnimator?.SetBool("IsMoving", true);

@@ -44,6 +44,7 @@ public sealed class PlayerHealth : MonoBehaviour
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - damage);
         invincibilityEndTime = Time.time + invincibilityDuration;
+        PrototypeScreenEffects.TriggerDamageFlash();
         HealthChanged?.Invoke(CurrentHealth, MaxHealth);
 
         Damaged?.Invoke();

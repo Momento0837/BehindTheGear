@@ -15,6 +15,7 @@ Shader "BehindTheGear/World Chromatic Motion"
             float4 _OutputPixelSize;
             float _SeparationPixels;
             float4 _HealthTint;
+            float _DamageFlashOpacity;
             half3 SplitColor(float2 uv)
             {
                 float2 shift = float2(_OutputPixelSize.x * _SeparationPixels, 0);
@@ -35,6 +36,7 @@ Shader "BehindTheGear/World Chromatic Motion"
                 half3 tint = half3(110.0 / 255.0, 0, 0);
                 half3 overlay = lerp(2 * display * tint, 1 - 2 * (1 - display) * (1 - tint), step(.5, display));
                 display = lerp(display, overlay, _HealthTint.x) * (1 - _HealthTint.y);
+                display = lerp(display, half3(1, 0, 0), saturate(_DamageFlashOpacity));
                 color = SRGBToLinear(display);
                 half4 original = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 return half4(color, original.a);

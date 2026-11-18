@@ -32,6 +32,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         pass.pixelSize = new Vector2(1f / Mathf.Max(1, camera.pixelWidth), 1f / Mathf.Max(1, camera.pixelHeight));
         pass.separation = separation;
         pass.healthTint = new Vector3(healthEffect.y, healthEffect.z, healthEffect.w);
+        pass.damageFlash = Application.isPlaying ? PrototypeScreenEffects.DamageFlashOpacity : 0f;
         renderer.EnqueuePass(pass);
     }
     private sealed class MotionPass : ScriptableRenderPass
@@ -40,6 +41,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         public Vector2 pixelSize;
         public float separation;
         public Vector3 healthTint;
+        public float damageFlash;
         public MotionPass()
         {
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -59,6 +61,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
             properties.SetVector("_OutputPixelSize", new Vector4(pixelSize.x, pixelSize.y, 0, 0));
             properties.SetFloat("_SeparationPixels", separation);
             properties.SetVector("_HealthTint", new Vector4(healthTint.x, healthTint.y, healthTint.z, 0));
+            properties.SetFloat("_DamageFlashOpacity", damageFlash);
             graph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, destination, material, 0)
                 { propertyBlock = properties }, passName: "World Chromatic Motion");
             resources.cameraColor = destination;

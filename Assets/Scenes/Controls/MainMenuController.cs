@@ -10,6 +10,7 @@ public sealed class MainMenuController : MonoBehaviour
     private bool starting;
 
     public event Action StartRequested;
+    public event Action QuitRequested;
 
     private void Awake()
     {
@@ -29,6 +30,7 @@ public sealed class MainMenuController : MonoBehaviour
     public void QuitGame()
     {
         if (starting) return;
+        QuitRequested?.Invoke();
 #if !UNITY_EDITOR
         Application.Quit();
 #endif

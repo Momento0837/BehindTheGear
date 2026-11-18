@@ -11,6 +11,23 @@ public sealed class SceneFadeTransition : MonoBehaviour
     [SerializeField] private Image fadeImage;
     private bool running;
     private IDisposable worldPause;
+    private Camera transitionCamera;
+    private void SetTransitionCamera(bool active)
+    {
+        if (active && transitionCamera == null)
+        {
+            var root = new GameObject("Transition Black Camera");
+            root.transform.SetParent(transform, false);
+            transitionCamera = root.AddComponent<Camera>();
+            transitionCamera.depth = -10000;
+            transitionCamera.clearFlags = CameraClearFlags.SolidColor;
+            transitionCamera.backgroundColor = Color.black;
+            transitionCamera.cullingMask = 0;
+            transitionCamera.allowHDR = false;
+            transitionCamera.allowMSAA = false;
+        }
+        if (transitionCamera != null) transitionCamera.enabled = active;
+    }
     private void FreezeWorld() { worldPause ??= GameplayTimePause.Acquire(); if (fadeImage != null) fadeImage.raycastTarget = true; }
     private void RestoreWorld() { worldPause?.Dispose(); worldPause = null; if (fadeImage != null) fadeImage.raycastTarget = false; }
     private void LateUpdate() { if (running && worldPause != null) Time.timeScale = 0f; }
@@ -74,7 +91,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         yield return null;
     }
 
-    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true, Action whenBlack = null)
+    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true, Action whenBlack = null, Func<bool> readyToReveal = null)
     {
         if (instance == null) CreateRuntimeInstance();
 
@@ -84,7 +101,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             return;
         }
 
-        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay, whenBlack));
+        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay, whenBlack, readyToReveal));
     }
 
     public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
@@ -104,6 +121,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         var transition = instance;
         transition.running = true;
         transition.PrepareOverlay();
+        transition.SetTransitionCamera(true);
         transition.FreezeWorld();
         try
         {
@@ -120,14 +138,16 @@ public sealed class SceneFadeTransition : MonoBehaviour
                 transition.SetAlpha(0f);
                 transition.running = false;
                 transition.RestoreWorld();
+                transition.SetTransitionCamera(false);
             }
         }
     }
 
-    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay, Action whenBlack)
+    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay, Action whenBlack, Func<bool> readyToReveal)
     {
         running = true;
         PrepareOverlay();
+        SetTransitionCamera(true);
         if (freezeGameplay) FreezeWorld();
         else if (fadeImage != null) fadeImage.raycastTarget = true;
         yield return Fade(0f, 1f, fadeDuration);
@@ -153,6 +173,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
             yield return Fade(1f, 0f, fadeDuration);
             running = false;
             RestoreWorld();
+            SetTransitionCamera(false);
             onComplete?.Invoke(false);
             yield break;
         }
@@ -166,9 +187,15 @@ public sealed class SceneFadeTransition : MonoBehaviour
         if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
         PrepareOverlay();
         yield return HoldOpaqueFrame();
+        if (readyToReveal != null)
+        {
+            float deadline = Time.unscaledTime + 10f;
+            while (!readyToReveal() && Time.unscaledTime < deadline) yield return null;
+        }
         yield return Fade(1f, 0f, fadeDuration);
         running = false;
         RestoreWorld();
+        SetTransitionCamera(false);
         onComplete?.Invoke(true);
     }
 

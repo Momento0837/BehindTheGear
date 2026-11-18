@@ -12,6 +12,17 @@ public sealed partial class StorySceneFlow
     private static Transform travellingSelena;
     private Transform selena;
     private bool selenaUsed;
+    private bool neighborhoodRevealReady;
+    private static bool NeighborhoodReadyToReveal() => FindObjectsByType<StorySceneFlow>(FindObjectsSortMode.None)
+        .Any(flow => flow.gameObject.scene == SceneManager.GetActiveScene() && flow.neighborhoodRevealReady);
+
+    public bool MoveSelenaIntoBase()
+    {
+        if (currentChapter != StoryArrival.NeighborhoodFive || selena == null) return false;
+        Destroy(selena.gameObject);
+        selena = null;
+        return true;
+    }
 
     private void TravelToChapter(string scene, StoryArrival arrival)
     {
@@ -88,7 +99,30 @@ public sealed partial class StorySceneFlow
             selena.GetComponent<Interactable2D>().enabled = false;
             selena.GetComponent<StoryInteraction2D>().Activated = null;
         }
-        while (!restoring && SceneFadeTransition.IsRunning) yield return null;
+        if (!forest && !restoring && selena != null)
+        {
+            var controls = AcquireTutorialControls();
+            player.SetCinematicWalking(true);
+            var npcAnimator = selena.GetComponent<Animator>();
+            npcAnimator?.SetBool("IsMoving", true);
+            player.GetComponent<PlayerSpriteFacing>()?.FaceAttack(1);
+            try
+            {
+                while (SceneFadeTransition.IsRunning)
+                {
+                    float speed = player.RunningSpeed;
+                    body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
+                    selena.position = Vector3.MoveTowards(selena.position,
+                        new Vector3(player.transform.position.x - SelenaFollowDistance, selena.position.y, selena.position.z), speed * Time.deltaTime);
+                    var camera = Camera.main;
+                    if (camera != null && camera.WorldToViewportPoint(player.transform.position).x >= .45f)
+                        neighborhoodRevealReady = true;
+                    yield return null;
+                }
+            }
+            finally { ReleaseTutorialControls(); }
+        }
+        else while (!restoring && SceneFadeTransition.IsRunning) yield return null;
         locationHud?.SetLocation(forest ? "포레스트" : "거주구역");
         if (!forest && !restoring) yield return WalkToHideout();
     }
@@ -147,13 +181,16 @@ public sealed partial class StorySceneFlow
         bool loadStarted = false;
         bool restored = false;
         var departingPlayer = player;
-        System.Action restore = () =>
+        System.Action<bool> restore = preserveMotion =>
         {
             if (restored) return;
             restored = true;
-            if (departingPlayer != null) departingPlayer.SetCinematicWalking(false);
-            if (npcAnimator != null) npcAnimator.SetBool("IsMoving", false);
-            if (body != null) body.linearVelocity = Vector2.zero;
+            if (!preserveMotion)
+            {
+                if (departingPlayer != null) departingPlayer.SetCinematicWalking(false);
+                if (npcAnimator != null) npcAnimator.SetBool("IsMoving", false);
+                if (body != null) body.linearVelocity = Vector2.zero;
+            }
             if (inventoryUi != null) inventoryUi.enabled = inventoryEnabled;
             if (events != null) events.enabled = eventsEnabled;
             if (controls != null) controls.Release();
@@ -201,8 +238,8 @@ public sealed partial class StorySceneFlow
                         SceneManager.MoveGameObjectToScene(travellingSelena.gameObject, SceneManager.GetActiveScene());
                     travellingSelena = null;
                 }
-                restore();
-            }, freezeGameplay: false);
+                restore(success);
+            }, freezeGameplay: false, readyToReveal: NeighborhoodReadyToReveal);
             // Keep the input lock until this scene is replaced (or a load fails).
             while (SceneFadeTransition.IsRunning)
             {
@@ -213,7 +250,7 @@ public sealed partial class StorySceneFlow
         }
         finally
         {
-            if (!loadStarted) restore();
+            if (!loadStarted) restore(false);
             busy = false;
         }
     }

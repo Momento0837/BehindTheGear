@@ -91,9 +91,10 @@ namespace BehindTheGear.HideOut
 
         public void Build(HideOutSettings settings = null)
         {
-            Shader shader = Shader.Find("BehindTheGear/HideOut Vertex Color");
-            if (shader == null) throw new InvalidOperationException("HideOut vertex-color shader is missing.");
-            geometryMaterial = new Material(shader) { name = "HideOut Runtime Diorama Material" };
+            // A Resources material keeps this runtime-created geometry shader in player builds.
+            var template = Resources.Load<Material>("Effects/HideOutGeometry");
+            if (template == null) throw new InvalidOperationException("HideOut geometry material is missing.");
+            geometryMaterial = new Material(template) { name = "HideOut Runtime Diorama Material" };
 
             BuildGroundShadow();
             BuildStorageRoom();

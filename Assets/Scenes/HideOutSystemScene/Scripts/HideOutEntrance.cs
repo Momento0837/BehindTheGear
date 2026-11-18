@@ -143,6 +143,10 @@ namespace BehindTheGear.HideOut
         }
         public static IEnumerator Enter(HideOutPlayerBridge bridge, Scene from, Vector3 position, Action finished)
         {
+            yield return SceneFadeTransition.FadeThrough(EnterWhileBlack(bridge, from, position, finished));
+        }
+        private static IEnumerator EnterWhileBlack(HideOutPlayerBridge bridge, Scene from, Vector3 position, Action finished)
+        {
             if (travelling) { finished(); yield break; }
             travelling = true;
             origin = from; returnPosition = position;
@@ -180,6 +184,12 @@ namespace BehindTheGear.HideOut
             Scene hideout = SceneManager.GetSceneByPath(bridge.Settings.scenePath);
             SceneManager.SetActiveScene(hideout);
             yield return null;
+            foreach (var root in origin.GetRootGameObjects())
+            {
+                var flow = root.GetComponent<StorySceneFlow>();
+                if (flow != null && flow.MoveSelenaIntoBase() && bridge.State.fieldReturn?.story != null)
+                    bridge.State.fieldReturn.story.hasSelena = false;
+            }
             foreach (var root in suspended) if (root != null) root.SetActive(false);
             travelLock?.Release();
             var baseView = UnityEngine.Object.FindFirstObjectByType<HideOutScene>();
@@ -188,6 +198,10 @@ namespace BehindTheGear.HideOut
             travelling = false; finished();
         }
         public static IEnumerator Exit(HideOutPlayerBridge bridge, Scene hideout)
+        {
+            yield return SceneFadeTransition.FadeThrough(ExitWhileBlack(bridge, hideout));
+        }
+        private static IEnumerator ExitWhileBlack(HideOutPlayerBridge bridge, Scene hideout)
         {
             if (travelling || !CanReturn) { bridge.SetMessage("직접 실행한 테스트 씬입니다. 복귀할 플레이 구간이 없습니다."); yield break; }
             travelling = true;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using BehindTheGear.HideOut;
 using TMPro;
 using UnityEngine;
@@ -20,6 +21,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
     private GameObject selectionBeforeConfirmation;
     private Action confirmed;
     private bool visible = true;
+    private bool departing;
     public void SetVisible(bool value)
     {
         visible = value;
@@ -105,16 +107,54 @@ public sealed class ManualSaveMenu : MonoBehaviour
     }
     public void Continue()
     {
-        try { SaveGameSession.Continue(ManualSaveStore.ReadSlot(), settings, continuePlayerPrefab); }
+        if (departing || SceneFadeTransition.IsRunning) return;
+        try
+        {
+            var save = ManualSaveStore.ReadSlot();
+            HideOutPlayerBridge.ValidateSnapshot(save, settings);
+            if (continuePlayerPrefab == null) throw new InvalidOperationException("이어하기 플레이어 프리팹이 연결되지 않았습니다.");
+            StartCoroutine(Depart(() => SaveGameSession.Continue(save, settings, continuePlayerPrefab)));
+        }
         catch (Exception error) { if (status != null) status.text = "불러오기 실패: " + error.Message; }
     }
     public void NewGame()
     {
-        if (SceneFadeTransition.IsRunning) return;
+        if (departing || SceneFadeTransition.IsRunning) return;
         if (ManualSaveStore.Exists) Ask("새 게임을 시작할까요?\n침대에서 처음 저장하면 기존 진행 기록을 덮어씁니다.", Begin, "시작하기");
         else Begin();
     }
-    private void Begin() { SaveGameSession.BeginNewGame(); ChoosingControls = true; panel.SetActive(false); GetComponent<ControlSchemeSelectScene>()?.StartNewGame(); }
+    private void Begin()
+    {
+        if (departing) return;
+        StartCoroutine(Depart(() =>
+        {
+            SaveGameSession.BeginNewGame();
+            ChoosingControls = true;
+            GetComponent<ControlSchemeSelectScene>()?.StartNewGame();
+        }));
+    }
+
+    private IEnumerator Depart(Action transition)
+    {
+        departing = true;
+        var group = panel.GetComponent<CanvasGroup>();
+        if (group == null) group = panel.AddComponent<CanvasGroup>();
+        group.interactable = false;
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+        var startup = GetComponent<ControlSchemeSelectScene>();
+        if (startup != null) yield return startup.FadeOutMenuMusic();
+        // The save screen is already black; keep it covered while starting scene travel.
+        try { transition(); }
+        catch (Exception error) { if (status != null) status.text = "전환 실패: " + error.Message; }
+        yield return null;
+        while (SceneFadeTransition.IsRunning) yield return null;
+        // Successful travel destroys this menu; only failed/cancelled travel reaches here.
+        departing = false;
+        ChoosingControls = false;
+        group.interactable = true;
+        startup?.ResumeMenuMusic();
+        SelectPreferredButton();
+    }
     public void Delete() => Ask("저장 데이터를 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다.", () =>
     {
         try { ManualSaveStore.DeleteSlot(); Refresh(); }
@@ -122,6 +162,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
     }, "삭제");
     private void Ask(string text, Action action, string confirmText = "확인")
     {
+        if (departing) return;
         selectionBeforeConfirmation = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
         confirmed = action; question.text = text; confirmation.SetActive(true);
         confirmButton.GetComponentInChildren<TMP_Text>().text = confirmText;
@@ -129,11 +170,13 @@ public sealed class ManualSaveMenu : MonoBehaviour
     }
     public void Confirm()
     {
+        if (departing) return;
         var action = confirmed; confirmed = null; confirmation.SetActive(false); action?.Invoke();
         if (panel.activeInHierarchy) SelectPreferredButton();
     }
     public void Cancel()
     {
+        if (departing) return;
         confirmed = null; confirmation.SetActive(false);
         var previous = selectionBeforeConfirmation != null ? selectionBeforeConfirmation.GetComponent<Button>() : null;
         if (previous != null && previous.IsInteractable() && previous.gameObject.activeInHierarchy) SelectButton(previous);
