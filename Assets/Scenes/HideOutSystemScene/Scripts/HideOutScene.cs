@@ -1162,9 +1162,10 @@ namespace BehindTheGear.HideOut
                 player.StartCoroutine(HideOutTravel.Exit(player, gameObject.scene));
                 return;
             }
-            ReleasePlayer();
-            if (player.State.fieldReturn != null) SaveGameSession.ReturnToField(player.State.fieldReturn);
-            else SaveGameSession.StartExpedition("Market"); // Older slots/direct scene play have no entry record.
+            // Restore the field HUD canvases only after the fade is opaque, matching HideOutTravel.Exit.
+            // Releasing first made the HP/MP HUD flash over the base during the fade-out.
+            if (player.State.fieldReturn != null) SaveGameSession.ReturnToField(player.State.fieldReturn, ReleasePlayer);
+            else SaveGameSession.StartExpedition("Market", ReleasePlayer); // Older slots/direct scene play have no entry record.
         }
 
         private void OpenStoragePanel()
@@ -1680,6 +1681,9 @@ namespace BehindTheGear.HideOut
 
         private bool IsLocked(Facility facility)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (testFacilitiesUnlocked) return false;
+#endif
             if (facility == Facility.Clinic && player.State.baseTutorialComplete) return false;
             if (facility != Facility.Bed) return true;
             var presentation = settings.FindPresentation(facility);
@@ -2010,14 +2014,10 @@ namespace BehindTheGear.HideOut
 
         private void AddHover(GameObject target, UnityEngine.Events.UnityAction enter, UnityEngine.Events.UnityAction exit)
         {
-            var trigger = target.GetComponent<EventTrigger>() ?? target.AddComponent<EventTrigger>();
-            trigger.triggers.RemoveAll(entry => entry.eventID == EventTriggerType.PointerEnter || entry.eventID == EventTriggerType.PointerExit);
-            var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enterEntry.callback.AddListener(_ => enter());
-            trigger.triggers.Add(enterEntry);
-            var exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-            exitEntry.callback.AddListener(_ => exit());
-            trigger.triggers.Add(exitEntry);
+            // Hover-only relay: an EventTrigger here would also consume drag/scroll and stop the
+            // shortcut bar's ScrollRect from receiving mouse drags started on a card.
+            var relay = target.GetComponent<HideOutHoverRelay>() ?? target.AddComponent<HideOutHoverRelay>();
+            relay.Configure(enter, exit);
         }
 
         private static Sprite CreateCircleSprite()

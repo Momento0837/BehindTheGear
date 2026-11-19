@@ -62,12 +62,13 @@ public static class SaveGameSession
             SceneManager.LoadScene("ControlSchemeSelect");
         }
     }
-    public static void StartExpedition(string sceneName = "Forest")
+    // whenBlack runs once the outgoing scene is fully covered (e.g. restoring suspended field HUDs).
+    public static void StartExpedition(string sceneName = "Forest", Action whenBlack = null)
     {
         Expedition = true; RoomDropCache.Clear();
-        SceneFadeTransition.LoadScene(sceneName, .4f);
+        SceneFadeTransition.LoadScene(sceneName, .4f, whenBlack: whenBlack);
     }
-    public static void ReturnToField(FieldReturnState state)
+    public static void ReturnToField(FieldReturnState state, Action whenBlack = null)
     {
         if (SceneFadeTransition.IsRunning || state == null) return;
         state.Validate();
@@ -75,7 +76,7 @@ public static class SaveGameSession
         SceneFadeTransition.LoadScene(state.scenePath, .4f, success =>
         {
             if (!success) pendingFieldReturn = null;
-        });
+        }, whenBlack: whenBlack);
     }
     public static FieldReturnState TakeFieldReturn(string scenePath)
     {

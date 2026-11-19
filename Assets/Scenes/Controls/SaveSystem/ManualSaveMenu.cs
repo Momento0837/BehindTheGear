@@ -16,6 +16,8 @@ public sealed class ManualSaveMenu : MonoBehaviour
     [SerializeField] private Sprite buttonPlateSprite;
     [SerializeField] private InventoryItemDefinition buttonGear;
     private GameObject panel, confirmation;
+    private SaveConfirmGraphic confirmationPanel;
+    private SaveConfirmButtonStyle confirmStyle, cancelStyle;
     private TMP_Text status, question, guidance;
     private Button newGameButton, continueButton, deleteButton, confirmButton, cancelButton;
     private GameObject selectionBeforeConfirmation;
@@ -50,10 +52,15 @@ public sealed class ManualSaveMenu : MonoBehaviour
         guidance = Label(panel.transform, "", 670, 22);
         confirmation = new GameObject("Confirmation", typeof(RectTransform), typeof(Image)); confirmation.transform.SetParent(panel.transform, false);
         rect = (RectTransform)confirmation.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
-        confirmation.GetComponent<Image>().color = new Color(.11f, .055f, .04f, .99f);
-        question = Label(confirmation.transform, "", 260, 25);
-        confirmButton = Button(confirmation.transform, "확인", 430, Confirm);
-        cancelButton = Button(confirmation.transform, "취소", 530, Cancel);
+        // Dim (not hide) the slot menu so the dialog reads as a notice laid over it.
+        confirmation.GetComponent<Image>().color = new Color(.022f, .012f, .009f, .86f);
+        var dialog = CreateConfirmationPanel(confirmation.transform);
+        question = Label(dialog, "", 78, 25);
+        question.rectTransform.sizeDelta = new Vector2(760, 110);
+        question.lineSpacing = 18f;
+        question.color = new Color(.90f, .84f, .74f);
+        confirmButton = ConfirmationButton(dialog, "확인", -140, Confirm, true, out confirmStyle);
+        cancelButton = ConfirmationButton(dialog, "취소", 140, Cancel, false, out cancelStyle);
         confirmation.SetActive(false); Refresh();
         panel.SetActive(visible);
         if (visible) SelectPreferredButton();
@@ -159,12 +166,15 @@ public sealed class ManualSaveMenu : MonoBehaviour
     {
         try { ManualSaveStore.DeleteSlot(); Refresh(); }
         catch (Exception error) { status.text = "삭제 실패: " + error.Message; }
-    }, "삭제");
-    private void Ask(string text, Action action, string confirmText = "확인")
+    }, "삭제", true);
+    private void Ask(string text, Action action, string confirmText = "확인", bool destructive = false)
     {
         if (departing) return;
         selectionBeforeConfirmation = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        var tone = destructive ? SaveConfirmGraphic.Tone.Danger : SaveConfirmGraphic.Tone.Caution;
+        confirmationPanel?.SetTone(tone); confirmStyle?.SetTone(tone); cancelStyle?.SetTone(tone);
         confirmed = action; question.text = text; confirmation.SetActive(true);
+        confirmationPanel?.PlayIntro();
         confirmButton.GetComponentInChildren<TMP_Text>().text = confirmText;
         SelectButton(cancelButton);
     }
@@ -211,6 +221,39 @@ public sealed class ManualSaveMenu : MonoBehaviour
         rect.anchoredPosition = new Vector2(0, -top); rect.sizeDelta = new Vector2(1250, 100);
         var label = go.GetComponent<TMP_Text>(); UIFontTheme.Apply(label, UIFontTheme.Normal);
         label.text = value; label.fontSize = size; label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false; return label;
+    }
+    private Transform CreateConfirmationPanel(Transform parent)
+    {
+        var go = new GameObject("Confirmation Panel", typeof(RectTransform), typeof(CanvasGroup), typeof(SaveConfirmGraphic));
+        go.transform.SetParent(parent, false);
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition = new Vector2(0, -10); rect.sizeDelta = new Vector2(820, 330);
+        confirmationPanel = go.GetComponent<SaveConfirmGraphic>();
+        confirmationPanel.Configure(SaveConfirmGraphic.Mode.Panel);
+        var icon = buttonGear != null ? buttonGear.Icon : null;
+        if (icon != null)
+        {
+            // Reuse the existing copper gear icon as a seal between the header rules.
+            var seal = new GameObject("Gear Seal", typeof(RectTransform), typeof(Image));
+            seal.transform.SetParent(go.transform, false);
+            var image = seal.GetComponent<Image>(); image.sprite = icon; image.preserveAspect = true; image.raycastTarget = false;
+            image.color = new Color(.92f, .76f, .52f);
+            var sealRect = image.rectTransform; sealRect.anchorMin = sealRect.anchorMax = new Vector2(.5f, 1);
+            sealRect.anchoredPosition = new Vector2(0, -45); sealRect.sizeDelta = new Vector2(30, 30);
+        }
+        return go.transform;
+    }
+    private static Button ConfirmationButton(Transform parent, string text, float x, UnityEngine.Events.UnityAction action,
+        bool isConfirm, out SaveConfirmButtonStyle style)
+    {
+        var go = new GameObject(text, typeof(RectTransform), typeof(Image), typeof(Button)); go.transform.SetParent(parent, false);
+        var rect = (RectTransform)go.transform; rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0); rect.pivot = new Vector2(.5f, 0);
+        rect.anchoredPosition = new Vector2(x, 34); rect.sizeDelta = new Vector2(240, 58);
+        var label = Label(go.transform, text, 0, 24); label.rectTransform.sizeDelta = new Vector2(220, 40);
+        var button = go.GetComponent<Button>(); button.onClick.AddListener(action);
+        style = go.AddComponent<SaveConfirmButtonStyle>(); style.Configure(label, isConfirm);
+        return button;
     }
     private Button Button(Transform parent, string text, float top, UnityEngine.Events.UnityAction action,
         bool metalPlate = false, bool destructive = false)
