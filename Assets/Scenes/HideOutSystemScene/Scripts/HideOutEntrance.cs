@@ -113,16 +113,29 @@ namespace BehindTheGear.HideOut
         public static IEnumerator ExitTraining(ScareCrowTrainingScene training)
         {
             if (travelling || training == null) yield break;
-            travelling = true;
             var view = trainingBase;
             var bridge = training.Player;
-            training.PrepareToLeave();
             if (view == null)
             {
-                // Direct training-scene Play still uses the existing persistent player on return.
+                // Direct training-scene Play still uses the existing persistent player on return (LoadScene fades itself).
+                travelling = true;
+                training.PrepareToLeave();
                 if (bridge != null) SceneFadeTransition.LoadScene(bridge.Settings.scenePath, .4f);
                 travelling = false; yield break;
             }
+            travelling = true;
+            try
+            {
+                // Fade out over the training room, swap back to the retained base while opaque, then fade the base in.
+                // (Previously the room was unloaded with no fade, so returning cut straight to the base.)
+                yield return SceneFadeTransition.FadeThrough(ExitTrainingWhileBlack(training, view, bridge), view.trainingFadeDuration);
+            }
+            finally { travelling = false; }
+        }
+
+        private static IEnumerator ExitTrainingWhileBlack(ScareCrowTrainingScene training, HideOutScene view, HideOutPlayerBridge bridge)
+        {
+            training.PrepareToLeave();
             // Freeze with the existing base policy before yielding to asynchronous unloading.
             // Otherwise gravity can move the restored player for a frame before the base resumes.
             view.SuspendPlayer();
@@ -139,7 +152,6 @@ namespace BehindTheGear.HideOut
             foreach (var root in trainingSuspended) if (root != null) root.SetActive(true);
             trainingSuspended.Clear();
             trainingBase = null;
-            travelling = false;
         }
         public static IEnumerator Enter(HideOutPlayerBridge bridge, Scene from, Vector3 position, Action finished)
         {

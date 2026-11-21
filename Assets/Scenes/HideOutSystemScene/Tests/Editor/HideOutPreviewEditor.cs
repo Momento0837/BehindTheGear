@@ -65,7 +65,7 @@ public sealed class HideOutPreviewEditor : Editor
         EditorGUILayout.HelpBox("씬 열기 / Play 종료 시 Scene·Game 미리보기를 복원합니다. 샘플 데이터만 사용하며 Play 진입 전 정리됩니다. 외형 수정 후에는 갱신 버튼을 누르세요.", MessageType.Info);
         using (new EditorGUI.DisabledScope(PrefabStageUtility.GetCurrentPrefabStage() != null || source.settings == null))
         {
-            if (GUILayout.Button("하이드아웃 미리보기 생성 / 갱신"))
+            if (GUILayout.Button("기지 미리보기 생성 / 갱신"))
             {
                 Generate(source);
             }

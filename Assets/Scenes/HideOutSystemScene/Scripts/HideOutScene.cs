@@ -15,6 +15,10 @@ namespace BehindTheGear.HideOut
     {
         private const float ReferenceWidth = 1600f;
         private const float ReferenceHeight = 900f;
+        // Width of the HP/MP gauge inside a resource card; shared by BuildResourceHud and the per-frame refresh.
+        private const float ResourceGaugeWidth = 65f;
+        // Player-facing name of the whole-base overview (was "전체 하이드아웃").
+        private const string BaseOverviewName = "기지 전체 지도";
         private const int StorageRowsPerPage = 10;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         [NonSerialized] private bool testFacilitiesUnlocked;
@@ -355,8 +359,10 @@ namespace BehindTheGear.HideOut
             BuildShortcutBar(baseView.transform);
             storagePanel.transform.localScale = Vector3.one * .86f;
             Rect(storagePanel.GetComponent<RectTransform>(), 895, 88, 770, 820);
-            upgradeOverlay.transform.Find("Upgrade Panel").localScale = Vector3.one * .86f;
-            Rect(upgradeOverlay.transform.Find("Upgrade Panel").GetComponent<RectTransform>(), 1020, 45, 650, 820);
+            // Smaller uniform scale and top at y=88 (same as the storage panel) so the upgrade panel no longer
+            // covers the HP/MP/coin/AP cards (now y 14..62 after the 0.8 top-HUD scale; originally y 18..78). 650x820 * .76 = 494x623 -> y 88..711, right edge 1580.
+            upgradeOverlay.transform.Find("Upgrade Panel").localScale = Vector3.one * .76f;
+            Rect(upgradeOverlay.transform.Find("Upgrade Panel").GetComponent<RectTransform>(), 1086, 88, 650, 820);
             Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
             ConfigureTopViewCamera();
         }
@@ -785,7 +791,7 @@ namespace BehindTheGear.HideOut
             var rootObject = new GameObject(label + " World Icon", typeof(RectTransform));
             rootObject.transform.SetParent(parent, false);
             var root = rootObject.GetComponent<RectTransform>();
-            root.sizeDelta = new Vector2(184f, 146f);
+            root.sizeDelta = new Vector2(184f, 152f);
             CenterAnchors(root);
             facilityOverlayRoots[facility] = root;
 
@@ -802,10 +808,13 @@ namespace BehindTheGear.HideOut
             outline.effectDistance = new Vector2(2f, -2f);
             drawIcon(button.transform);
 
-            TMP_Text nameLabel = Text(root, label, 0, 91, 184, 28, 19, Color.white);
+            // Facility name / level under the icon: larger and bold for readability over the 3D base.
+            TMP_Text nameLabel = Text(root, label, 0, 91, 184, 30, 22, Color.white);
             nameLabel.alignment = TextAlignmentOptions.Center;
-            TMP_Text level = Text(root, "", 0, 119, 184, 24, 15, Accent);
+            UIFontTheme.Apply(nameLabel, UIFontTheme.Bold);
+            TMP_Text level = Text(root, "", 0, 122, 184, 28, 19, Accent);
             level.alignment = TextAlignmentOptions.Center;
+            UIFontTheme.Apply(level, UIFontTheme.Bold);
             facilityLevelLabels[facility] = level;
             AddFacilityHover(button, facility);
         }
@@ -859,10 +868,17 @@ namespace BehindTheGear.HideOut
 
         private void BuildShortcutBar(Transform parent)
         {
-            const float viewportWidth = 1416f;
-            const float cardStride = 250f;
-            var bar = Box(parent, "Facility Shortcuts", 24, 794, 1552, 100, new Color(.035f, .045f, .05f, .98f));
+            // The bar is drawn in its own 100-high layout and scaled uniformly, so cards/icons/labels keep their
+            // original proportions. Its on-screen width stays the original 1552 (x 24..1576, no side gaps) and the
+            // unscaled inner width grows instead, so exactly visibleCards cards (store..dining) fit before ">".
+            const float shortcutBarScale = .82f;
+            const int visibleCards = 7;
+            const float barWidth = 1552f / shortcutBarScale;
+            const float viewportWidth = barWidth - 136f;
+            const float cardStride = viewportWidth / visibleCards;
+            var bar = Box(parent, "Facility Shortcuts", 24, 894f - 100f * shortcutBarScale, barWidth, 100, new Color(.035f, .045f, .05f, .98f));
             bar.raycastTarget = true;
+            bar.rectTransform.localScale = Vector3.one * shortcutBarScale;
             var viewport = Box(bar.transform, "Viewport", 68, 4, viewportWidth, 92, Color.clear);
             viewport.raycastTarget = true;
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -885,7 +901,7 @@ namespace BehindTheGear.HideOut
             var previous = Button(bar.transform, "Previous Facilities", 8, 4, 52, 92,
                 () => ScrollShortcuts(-1), PanelSoft, 32);
             previous.GetComponentInChildren<TMP_Text>().text = "<";
-            var next = Button(bar.transform, "Next Facilities", 1492, 4, 52, 92,
+            var next = Button(bar.transform, "Next Facilities", barWidth - 60f, 4, 52, 92,
                 () => ScrollShortcuts(1), PanelSoft, 32);
             next.GetComponentInChildren<TMP_Text>().text = ">";
 
@@ -902,14 +918,15 @@ namespace BehindTheGear.HideOut
             for (int i = 0; i < settings.topView.shortcutOrder.Length; i++)
             {
                 Facility facility = settings.topView.shortcutOrder[i];
-                var button = Button(content, "Shortcut " + facility, i * cardStride, 0, 244, 88,
+                var button = Button(content, "Shortcut " + facility, i * cardStride, 0, cardStride - 6f, 88,
                     () => SelectFacility(facility), PanelSoft, 0);
                 shortcutButtons[facility] = button;
                 AddFacilityHover(button, facility);
                 var iconRoot = new GameObject("Icon", typeof(RectTransform)).GetComponent<RectTransform>();
                 iconRoot.SetParent(button.transform, false); Rect(iconRoot, 0, 0, 88, 88);
                 DrawRegisteredIcon(facility, iconRoot);
-                var label = Text(button.transform, "", 90, 14, 150, 64, 16, Color.white);
+                // 18 (was 16) so the scaled-down card label stays readable.
+                var label = Text(button.transform, "", 90, 14, cardStride - 102f, 64, 18, Color.white);
                 shortcutLabels[facility] = label;
             }
         }
@@ -956,26 +973,48 @@ namespace BehindTheGear.HideOut
 
         private void BuildBaseHud(Transform parent)
         {
-            Box(parent, "Vignette Top", 0, 0, ReferenceWidth, 105, new Color(0f, 0f, 0f, .48f));
+            // Top HUD is scaled to 0.8: top band 105 -> 84 high, side bands 96 -> 77 wide, and everything inside the top band
+            // (buttons, title, resource cards) shrinks by the same ratio. Side bands start where the top band ends (no
+            // overlapping corners): 84 + 706 = 790 = bottom band.
+            Box(parent, "Vignette Top", 0, 0, ReferenceWidth, 84, new Color(0f, 0f, 0f, .48f));
             Box(parent, "Vignette Bottom", 0, 790, ReferenceWidth, 110, new Color(0f, 0f, 0f, .55f));
-            Box(parent, "Vignette Left", 0, 100, 96, 690, new Color(0f, 0f, 0f, .32f));
-            Box(parent, "Vignette Right", 1504, 100, 96, 690, new Color(0f, 0f, 0f, .32f));
+            Box(parent, "Vignette Left", 0, 84, 77, 706, new Color(0f, 0f, 0f, .32f));
+            Box(parent, "Vignette Right", 1523, 84, 77, 706, new Color(0f, 0f, 0f, .32f));
 
-            Button(parent, "Exit Button", 24, 24, 126, 50, ExitHideOut, new Color(.10f, .12f, .13f, .94f), 18)
+            // Exit (y 10..42) + Main Menu (y 46..75): 112x40 / 112x36 -> 90x32 / 90x29, labels 17/15 -> 14/12, 9px bottom margin.
+            Button(parent, "Exit Button", 20, 10, 90, 32, ExitHideOut, new Color(.10f, .12f, .13f, .94f), 14)
                 .GetComponentInChildren<TMP_Text>().text = "← 나가기";
-            Text(parent, "HIDEOUT", 176, 23, 250, 42, 26, Color.white);
-            Text(parent, "부지 내부", 176, 55, 250, 26, 14, Muted);
+            // 34 -> 27 (x 125..309). ExtraBold is applied explicitly because Text() only picks it for sizes >= 30.
+            var baseTitle = Text(parent, "기지 내부", 125, 21, 184, 42, 27, Color.white);
+            UIFontTheme.Apply(baseTitle, UIFontTheme.ExtraBold);
+            baseTitle.alignment = TextAlignmentOptions.MidlineLeft;
 
-            roomNameText = Text(parent, "전체 하이드아웃", 650, 24, 300, 34, 17, new Color(.80f, .79f, .72f));
+            // Center-top location label ("기지 전체 지도" / facility name): 17 -> 28, ExtraBold, bright warm white on a dark
+            // plate with an accent underline. x 625..975 stays centered on 800, ~120px clear of the resource cards (x 1095..).
+            var roomNamePlate = Box(parent, "Room Name Plate", 625, 6, 350, 44, new Color(0f, 0f, 0f, .42f));
+            Box(roomNamePlate.transform, "Room Name Accent", 0, 42, 350, 2, new Color(Accent.r, Accent.g, Accent.b, .85f));
+            roomNameText = Text(parent, BaseOverviewName, 625, 6, 350, 44, 28, new Color(1f, .91f, .66f));
+            UIFontTheme.Apply(roomNameText, UIFontTheme.ExtraBold);
             roomNameText.alignment = TextAlignmentOptions.Center;
+            roomNameText.textWrappingMode = TextWrappingModes.NoWrap;
+            roomNameText.enableAutoSizing = true;
+            roomNameText.fontSizeMin = 20;
+            roomNameText.fontSizeMax = 28;
 
             BuildResourceHud(parent);
-            Button(parent, "Main Menu Button", 24, 84, 126, 44, SaveGameSession.ReturnToMenu, new Color(.10f, .12f, .13f, .94f), 16)
+            Button(parent, "Main Menu Button", 20, 46, 90, 29, SaveGameSession.ReturnToMenu, new Color(.10f, .12f, .13f, .94f), 12)
                 .GetComponentInChildren<TMP_Text>().text = "메인 메뉴";
-            questSummaryText = Text(parent, "", 400, 52, 620, 44, 16, Accent);
+            // y 52..82 (under the room-name plate, inside the 84-high band), x 560..1040 (centered on 800, clear of the
+            // title and resource cards). Two lines (quest name + objective) auto-fit between 10 and 14.
+            questSummaryText = Text(parent, "", 560, 52, 480, 30, 14, Accent);
             questSummaryText.alignment = TextAlignmentOptions.Center;
-            feedbackText = Text(parent, "", 400, 750, 800, 36, 17, Accent);
+            questSummaryText.enableAutoSizing = true;
+            questSummaryText.fontSizeMin = 10;
+            questSummaryText.fontSizeMax = 14;
+            // Guidance line ("시설을 선택하세요." etc.): larger and bold so it reads over the 3D base.
+            feedbackText = Text(parent, "", 300, 756, 1000, 42, 22, Accent);
             feedbackText.alignment = TextAlignmentOptions.Center;
+            UIFontTheme.Apply(feedbackText, UIFontTheme.Bold);
 
             var resetCamera = Button(parent, "Reset HideOut Camera", 1418, 92, 154, 44, ReturnToOverview,
                 new Color(.09f, .11f, .115f, .94f), 15);
@@ -1016,18 +1055,19 @@ namespace BehindTheGear.HideOut
             Color[] colors = { new(.81f,.43f,.39f), new(.35f,.64f,.71f), new(.82f,.67f,.38f), new(.83f,.79f,.66f) };
             for (int i = 0; i < 4; i++)
             {
-                var card = Box(parent, "Resource " + labels[i], 976 + i * 151, 18, 143, 60, new Color(.045f,.055f,.06f,.97f));
-                Box(card.transform, "Top Edge", 0, 0, 143, 1, new Color(colors[i].r, colors[i].g, colors[i].b, .6f));
-                var badge = Box(card.transform, "Icon Socket", 8, 12, 34, 34, new Color(.10f,.12f,.12f)); badge.sprite = circleSprite;
-                var icon = Box(card.transform, labels[i] + " Symbol", 13, 17, 24, 24, colors[i]);
+                // Cards scaled 0.8 (143x60 -> 114x48, stride 151 -> 121) and kept right-aligned at x 1572: x 1095..1572, y 14..62.
+                var card = Box(parent, "Resource " + labels[i], 1095 + i * 121, 14, 114, 48, new Color(.045f,.055f,.06f,.97f));
+                Box(card.transform, "Top Edge", 0, 0, 114, 1, new Color(colors[i].r, colors[i].g, colors[i].b, .6f));
+                var badge = Box(card.transform, "Icon Socket", 6, 10, 27, 27, new Color(.10f,.12f,.12f)); badge.sprite = circleSprite;
+                var icon = Box(card.transform, labels[i] + " Symbol", 10, 14, 19, 19, colors[i]);
                 icon.sprite = CreateResourceSprite(i); icon.preserveAspect = true;
-                Text(card.transform, labels[i], 50, 6, 86, 18, 12, Muted);
-                resourceValues[i] = Text(card.transform, "—", 50, 24, 88, 25, 17, Color.white);
+                Text(card.transform, labels[i], 40, 5, 70, 14, 10, Muted);
+                resourceValues[i] = Text(card.transform, "—", 40, 19, 70, 20, 14, Color.white);
                 resourceValues[i].textWrappingMode = TextWrappingModes.NoWrap;
                 if (i < 2)
                 {
-                    Box(card.transform, "Gauge Track", 50, 51, 81, 3, new Color(.15f,.18f,.18f));
-                    resourceBars[i] = Box(card.transform, "Gauge Fill", 50, 51, 81, 3, colors[i]);
+                    Box(card.transform, "Gauge Track", 40, 41, ResourceGaugeWidth, 3, new Color(.15f,.18f,.18f));
+                    resourceBars[i] = Box(card.transform, "Gauge Fill", 40, 41, ResourceGaugeWidth, 3, colors[i]);
                 }
             }
         }
@@ -1138,7 +1178,7 @@ namespace BehindTheGear.HideOut
             upgradeButton = Button(panel.transform, "Upgrade Button", 220, 738, 406, 58, UpgradeSelected, Accent, 20);
             upgradeButton.GetComponentInChildren<TMP_Text>().text = "업그레이드";
             Button(panel.transform, "Back Button", 24, 738, 180, 58, CloseUpgrade, new Color(.13f, .15f, .155f), 17)
-                .GetComponentInChildren<TMP_Text>().text = "← 부지 내부로 돌아가기";
+                .GetComponentInChildren<TMP_Text>().text = "← 기지 내부로 돌아가기";
 
             upgradeOverlay.SetActive(false);
         }
@@ -1306,7 +1346,7 @@ namespace BehindTheGear.HideOut
             {
                 trainingTransitionPending = false;
                 hasSelection = false;
-                roomNameText.text = "전체 하이드아웃";
+                roomNameText.text = BaseOverviewName;
                 Refresh();
             }
             RefreshFacilityInput();
@@ -1403,8 +1443,8 @@ namespace BehindTheGear.HideOut
             hasSelection = false;
             selectedInventorySlot = selectedStorageSlot = -1;
             HideTooltip();
-            roomNameText.text = "전체 하이드아웃";
-            player.SetMessage("전체 하이드아웃으로 돌아갑니다.");
+            roomNameText.text = BaseOverviewName;
+            player.SetMessage(BaseOverviewName + "로 돌아갑니다.");
             cameraController.TryReturnToOverview(() =>
             {
                 player.SetMessage("시설을 선택하세요.");
@@ -1435,7 +1475,7 @@ namespace BehindTheGear.HideOut
                 {
                     cameraController.SnapToOverview();
                     hasSelection = false;
-                    roomNameText.text = "전체 하이드아웃";
+                    roomNameText.text = BaseOverviewName;
                 }
             }
             RefreshFacilityInput();
@@ -1669,7 +1709,7 @@ namespace BehindTheGear.HideOut
                 upgradeOverlay.SetActive(false);
                 hasSelection = false;
                 selectedInventorySlot = selectedStorageSlot = -1;
-                roomNameText.text = "전체 하이드아웃";
+                roomNameText.text = BaseOverviewName;
                 if (cameraController != null) cameraController.SnapToOverview();
             }
             foreach (var cover in isometricEnvironment.GetComponentsInChildren<HideOutFacilityLockCover>(true))
@@ -1739,8 +1779,8 @@ namespace BehindTheGear.HideOut
             resourceValues[1].text = $"{state.mana}/{player.MaxMana}";
             resourceValues[2].text = state.coins.ToString("N0");
             resourceValues[3].text = state.actionPoints.ToString("N0");
-            resourceBars[0].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), 3f);
-            resourceBars[1].rectTransform.sizeDelta = new Vector2(81f * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), 3f);
+            resourceBars[0].rectTransform.sizeDelta = new Vector2(ResourceGaugeWidth * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), 3f);
+            resourceBars[1].rectTransform.sizeDelta = new Vector2(ResourceGaugeWidth * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), 3f);
             feedbackText.text = player.Message;
             if (questSummaryText != null) questSummaryText.text = QuestTracker.CurrentQuestName + (QuestTracker.ShowObjective ? "\n" + QuestTracker.CurrentObjective : "");
             RefreshStorageAppearance();
