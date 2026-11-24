@@ -1,0 +1,1971 @@
+{
+ "version": "2026-11-24",
+ "npcId": "selena",
+ "source": "셀레나_대사_검수표.xlsx",
+ "selection": "칸 조건은 서로 겹치지 않는다. 상태를 normalize한 뒤 조건이 모두 맞는 칸 하나를 찾고, 최근에 한 대사 2개를 피해서 무작위로 고른다.",
+ "normalize": {
+  "health": "apparentHealth 그대로 (unknown → healthy)",
+  "stamina": "apparentStamina 그대로 (unknown → fresh). event가 tired이면 fresh·unknown도 tired로 본다",
+  "clinic": "clinicStatus가 ready이면 ready, 그 밖(cooldown_soon, cooldown_wait, locked, unknown)은 wait",
+  "potion": "potionDelivery가 ready이면 ready, 그 밖은 none",
+  "map": "lastMap (포레스트·가베지·마켓·거주구역, 모르면 '')",
+  "gear": "event가 new_equipment일 때 새 장비가 망토이면 cloak, 무기이면 weapon. 망토는 '헤진 망토', 무기는 '연습용 무기' 기준으로 만든 대사"
+ },
+ "slots": [
+  {
+   "id": "returned_01",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "포레스트",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 기운 있음 · 다녀온 곳: 포레스트",
+   "lines": [
+    "포레스트를 다녀오셨군요. 무사하셔서 다행이에요.",
+    "포레스트에 다녀오셨군요. 무사하시네요.",
+    "포레스트에서 돌아오셨군요. 무사하셔서 다행이에요.",
+    "포레스트에 다녀오셨군요. 무사하셔서 다행이에요.",
+    "포레스트를 다녀오셨군요. 무사해 보여서 다행이에요.",
+    "숲에 다녀오셨군요. 무사하시네요."
+   ]
+  },
+  {
+   "id": "returned_02",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "가베지",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 기운 있음 · 다녀온 곳: 가베지",
+   "lines": [
+    "가베지에서 돌아오셨네요. 무사하셔서 다행이에요.",
+    "가베지에서 돌아오셨군요. 무사하시네요.",
+    "가베지에서 오셨군요. 무사해 보여서 다행이에요.",
+    "가베지에서 오셨어요? 다친 데는 없어 보여서 다행이에요.",
+    "가베지에서 돌아오셨군요. 무사하셔서 다행이에요.",
+    "가베지에서 돌아오셨네요. 무사해 보여서 다행이에요.",
+    "가베지에서 돌아오셨군요. 멀쩡해 보여서 다행이에요.",
+    "가베지에서 오셨네요. 무사해 보여서 다행이에요."
+   ]
+  },
+  {
+   "id": "returned_03",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "마켓",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 기운 있음 · 다녀온 곳: 마켓",
+   "lines": [
+    "마켓에 다녀오셨군요. 무사하셔서 다행이에요.",
+    "마켓에 다녀오셨군요. 무사하시네요.",
+    "마켓에 다녀오셨어요? 무사해 보여서 다행이에요.",
+    "마켓에서 돌아오셨네요. 무사해 보여서 다행이에요.",
+    "마켓에 다녀오셨군요. 무사히 돌아오셨네요.",
+    "마켓에 다녀오셨군요. 무사해 보여서 다행이에요.",
+    "마켓에 다녀오셨어요? 무사하셔서 다행이에요.",
+    "마켓에 다녀오셨어요? 무사하시네요."
+   ]
+  },
+  {
+   "id": "returned_04",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "거주구역",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 기운 있음 · 다녀온 곳: 거주구역",
+   "lines": [
+    "거주구역에 다녀오셨군요. 무사하셔서 다행이에요.",
+    "거주구역에 다녀오셨군요. 무사하시네요.",
+    "거주구역까지 다녀오셨군요. 무사하셔서 다행이에요."
+   ]
+  },
+  {
+   "id": "returned_05",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 기운 있음 · 다녀온 곳: 모름",
+   "lines": [
+    "어디 다녀오셨어요? 다친 데는 없어 보여요.",
+    "어디 다녀오셨어요? 무사하셔서 다행이에요."
+   ]
+  },
+  {
+   "id": "returned_06",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 조금 지침",
+   "lines": [
+    "숨이 좀 차 보여요. 쉬세요."
+   ]
+  },
+  {
+   "id": "returned_07",
+   "event": "returned",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 건강 · 많이 지침",
+   "lines": [
+    "많이 지쳐 보이시네요. 숨부터 돌리세요.",
+    "많이 지치셨네요. 숨부터 돌리세요.",
+    "많이 지쳐 보이시네요. 숨을 고르세요.",
+    "많이 지치셨네요. 숨을 돌리며 잠깐 쉬세요.",
+    "많이 지쳐 보여요. 숨을 돌리면서 잠깐 쉬세요.",
+    "많이 지쳐 보여요. 숨을 좀 돌리세요.",
+    "많이 지쳐 보여요. 쉬세요.",
+    "많이 지치셨네요. 숨을 돌리며 쉬세요."
+   ]
+  },
+  {
+   "id": "returned_08",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "포레스트",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 기운 있음 · 다녀온 곳: 포레스트",
+   "lines": [
+    "숲에 다녀오셨군요. 가볍게 다친 데는 치료부터 받으세요.",
+    "숲에 다녀오시느라 고생하셨네요. 가볍게 다친 곳은 치료부터 받으세요.",
+    "숲에 다녀오셨군요. 가볍게 다친 곳은 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "returned_09",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "가베지",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 기운 있음 · 다녀온 곳: 가베지",
+   "lines": [
+    "가베지에서 조금 다치셨네요. 치료 부스로 오세요."
+   ]
+  },
+  {
+   "id": "returned_10",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "마켓",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 기운 있음 · 다녀온 곳: 마켓",
+   "lines": [
+    "마켓에 다녀오셨군요. 약간 다치셨으니 치료부터 받으세요.",
+    "마켓에 다녀오셨군요. 가볍게 다친 데는 치료부터 받으세요.",
+    "마켓에 다녀오셨네요. 살짝 다치셨으니 치료부터 받으세요.",
+    "마켓에 다녀오셨군요. 살짝 다치셨으니 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "returned_11",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "거주구역",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 기운 있음 · 다녀온 곳: 거주구역",
+   "lines": [
+    "거주구역에 다녀오셨군요. 가볍게 다치셨네요, 치료부터 받으세요.",
+    "거주구역에 다녀오셨군요. 가볍게 다친 곳은 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "returned_12",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 기운 있음 · 다녀온 곳: 모름",
+   "lines": [
+    "조금 다치셨네요. 다친 곳은 치료부터 받고 쉬세요.",
+    "지금은 무리하지 마시고 치료부터 받으세요.",
+    "조금 다치셨네요. 다친 곳은 치료부터 받으세요.",
+    "조금 다치셨네요. 다친 곳은 치료부터 받고 천천히 쉬세요."
+   ]
+  },
+  {
+   "id": "returned_13",
+   "event": "returned",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 가볍게 다침 · 지침(조금·많이)",
+   "lines": [
+    "조금 다치셨네요. 숨도 차 보여요, 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "returned_14",
+   "event": "returned",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "다녀오셨어요? 다치셨으니 치료부터 받으세요.",
+    "어디서 이렇게 다치셨어요? 치료부터 받으세요.",
+    "어디서 이렇게 다치셨어요? 치료 부스를 바로 쓰실 수 있어요.",
+    "다녀오셨군요. 다치셨으니 치료 부스로 오세요.",
+    "어디서 이렇게 다치셨어요? 치료 부스는 지금 준비돼 있어요.",
+    "다녀오셨군요. 다치셨으니 치료부터 받으세요.",
+    "다녀오셨어요? 다치셨으니 치료 부스로 오세요."
+   ]
+  },
+  {
+   "id": "returned_15",
+   "event": "returned",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "다녀오셨는데 다치셨네요. 치료 부스는 아직이니 앉아서 쉬세요.",
+    "다치셨네요. 치료 부스는 아직 준비 중이니 보관대 물약부터 챙기세요."
+   ]
+  },
+  {
+   "id": "returned_16",
+   "event": "returned",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "다치셨네요. 치료 부스는 아직이니 조금만 기다려 주세요.",
+    "다치셨네요. 치료 부스가 준비될 때까지 조금만 기다려 주세요."
+   ]
+  },
+  {
+   "id": "returned_17",
+   "event": "returned",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 많이 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "많이 다치셨어요! 얼른 치료 부스로 오세요.",
+    "많이 다치셨네요··· 얼른 치료 부스로 오세요!",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 누우세요.",
+    "많이 다치셨어요! 치료 부스가 준비돼 있으니 치료부터 받으세요.",
+    "많이 다치셨어요! 치료 부스가 준비됐으니 바로 누우세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓰실 수 있어요.",
+    "많이 다치셨어요! 얼른 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "returned_18",
+   "event": "returned",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "많이 다치셨어요! 치료 부스는 아직 준비 중이니 앉아서 기다려 주세요.",
+    "많이 다치셨어요! 치료 부스는 아직이지만 물약부터 드세요.",
+    "많이 다치셨어요! 치료 부스는 아직 준비 중이니 앉아서 기다리세요.",
+    "많이 다치셨어요! 치료 부스는 아직이지만, 물약부터 챙기세요."
+   ]
+  },
+  {
+   "id": "returned_19",
+   "event": "returned",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "많이 다치셨어요! 치료 부스가 준비될 때까지 앉아 계세요.",
+    "많이 다치셨어요! 치료 부스는 아직 준비 중이니 앉아서 기다리세요.",
+    "많이 다치셨네요··· 치료 부스는 아직이지만, 가만히 누워서 쉬세요.",
+    "많이 다치셨어요! 치료 부스가 준비될 때까지 조금 기다리셔야 해요."
+   ]
+  },
+  {
+   "id": "returned_20",
+   "event": "returned",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 위독 · 치료 부스 사용 가능",
+   "lines": [
+    "어떡해요··· 이든 씨, 얼른 치료 부스로 오세요!",
+    "어떡해요··· 몹시 위태로워 보여요! 얼른 치료 부스로 오세요!",
+    "버티세요! 어서 치료 부스로 오세요!",
+    "어떡해요··· 이대로는 위험해요! 치료 부스를 바로 쓰세요!",
+    "어떡해요··· 이든 씨, 얼른 치료 부스에 누우세요!",
+    "어떡해요··· 이렇게 다치시다니, 얼른 치료 부스로 오세요!"
+   ]
+  },
+  {
+   "id": "returned_21",
+   "event": "returned",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 위독 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "어떡해요··· 치료 부스는 아직이니 보관대 물약부터 얼른 챙기세요!",
+    "이든 씨! 보관대에 물약이 있어요, 얼른 드세요!",
+    "많이 위험해 보여요! 치료 부스가 준비될 때까지 보관대 물약부터요!"
+   ]
+  },
+  {
+   "id": "returned_22",
+   "event": "returned",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드에서 귀환 · 위독 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "어떡해요··· 치료 부스는 아직이니 조금만 버텨 주세요!"
+   ]
+  },
+  {
+   "id": "clinic_ready_01",
+   "event": "clinic_ready",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 건강 · 기운 있음",
+   "lines": [
+    "치료 부스는 준비돼 있어요. 다친 데는 없으시니 걱정 마세요.",
+    "치료 부스는 지금 준비돼 있어요. 다친 데는 없으시니 걱정 마세요.",
+    "치료 부스는 준비돼 있어요. 다친 데는 없으시니 걱정 마셔도 돼요."
+   ]
+  },
+  {
+   "id": "clinic_ready_02",
+   "event": "clinic_ready",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 건강 · 조금 지침",
+   "lines": [
+    "치료 부스는 준비돼 있어요. 숨이 좀 차 보이니 잠깐 쉬세요.",
+    "다친 데는 없어 보여요. 숨이 차시면 잠깐 누우세요.",
+    "조금 지쳐 보이시네요. 치료 부스를 지금 바로 이용하세요.",
+    "조금 지쳐 보이시네요. 치료 부스를 이용해 숨을 돌리세요.",
+    "다친 데는 없어 보여요. 숨이 좀 차 보이니 잠깐 쉬세요.",
+    "다친 데는 없으시네요. 숨이 좀 차 보이니 좀 쉬세요.",
+    "다친 데는 없어 보여요. 숨이 차시면 잠깐 누워서 쉬세요.",
+    "다친 데는 없어 보여요. 숨이 좀 차시면 잠깐 누워 계세요."
+   ]
+  },
+  {
+   "id": "clinic_ready_03",
+   "event": "clinic_ready",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 건강 · 많이 지침",
+   "lines": [
+    "다친 데는 없어 보여요. 숨이 많이 차시니 쉬세요.",
+    "다친 데는 없으시네요. 숨이 많이 차 보이니 누우세요.",
+    "다친 데는 없어 보여요. 숨이 많이 차시면 치료 부스를 이용하세요.",
+    "다친 데는 없으시지만 숨이 많이 차 보여요. 쉬세요.",
+    "다친 데는 없어 보여요. 숨이 많이 차시면 잠깐 누우세요.",
+    "다친 데는 없어 보여요. 숨이 많이 차시면 치료 부스에 누우세요.",
+    "다친 데는 없어 보이지만 숨이 많이 차 보여요. 치료 부스에서 쉬세요."
+   ]
+  },
+  {
+   "id": "clinic_ready_04",
+   "event": "clinic_ready",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 가볍게 다침",
+   "lines": [
+    "조금 다치셨네요. 치료 부스를 지금 바로 이용하세요.",
+    "조금 다치셨네요. 치료 부스가 준비돼 있으니 이용하세요.",
+    "조금 다치셨네요. 치료 부스를 이용하시면 괜찮아지실 거예요.",
+    "조금 다치셨네요. 치료 부스를 지금 바로 쓸 수 있어요.",
+    "조금 다치셨네요. 치료 부스가 준비되어 있으니 이용하세요.",
+    "조금 다치셨네요. 치료 부스가 준비돼 있으니 누우세요.",
+    "조금 다치셨네요. 치료 부스가 준비되어 있으니 누우세요."
+   ]
+  },
+  {
+   "id": "clinic_ready_05",
+   "event": "clinic_ready",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 다침",
+   "lines": [
+    "다치셨네요. 치료 부스가 준비돼 있으니 누우세요.",
+    "다치셨네요. 치료 부스를 지금 바로 쓰실 수 있어요.",
+    "다치셨네요. 치료 부스를 지금 바로 이용하세요.",
+    "다치셨네요. 치료 부스를 바로 쓸 수 있으니, 누우세요.",
+    "다치셨네요. 치료 부스를 바로 이용하시면 돼요.",
+    "다치셨네요. 치료 부스를 바로 쓸 수 있어요.",
+    "다치셨네요. 치료 부스를 지금 바로 쓸 수 있어요."
+   ]
+  },
+  {
+   "id": "clinic_ready_06",
+   "event": "clinic_ready",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 많이 다침",
+   "lines": [
+    "많이 다치셨어요! 치료 부스를 바로 이용하세요.",
+    "많이 다치셨어요! 치료 부스가 준비돼 있으니 얼른 누우세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 얼른 누우세요.",
+    "많이 다치셨어요! 치료 부스를 지금 바로 쓸 수 있으니 이용하세요.",
+    "많이 다치셨어요! 치료 부스를 지금 바로 쓸 수 있으니 누우세요.",
+    "많이 다치셨어요! 치료 부스가 준비돼 있으니 누우세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 누우세요.",
+    "많이 다치셨네요··· 치료 부스를 바로 쓸 수 있으니 가만히 누우세요."
+   ]
+  },
+  {
+   "id": "clinic_ready_07",
+   "event": "clinic_ready",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(사용 가능) · 위독",
+   "lines": [
+    "이든 씨, 지금 바로 치료 부스에 누우세요! 얼른요!",
+    "버티세요, 이든 씨! 지금 바로 치료 부스에 누우세요!",
+    "버티세요! 지금 바로 치료부터 받으세요!",
+    "이든 씨, 지금 바로 치료 부스를 쓸 수 있어요. 얼른 누우세요!",
+    "버티세요! 얼른 치료 부스로 오세요!",
+    "어떡해요··· 여기까지 오셨어요? 어서 누우세요!",
+    "이든 씨, 지금 바로 치료 부스에 누워 계세요!",
+    "버티세요, 이든 씨! 얼른 치료 부스로 오세요!"
+   ]
+  },
+  {
+   "id": "clinic_cooldown_01",
+   "event": "clinic_cooldown",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 건강 · 기운 있음",
+   "lines": [
+    "치료 부스는 아직 준비 중이에요. 조금만 기다려 주세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_02",
+   "event": "clinic_cooldown",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 건강 · 지침(조금·많이)",
+   "lines": [
+    "치료 부스는 아직 준비 중이에요. 숨이 차 보이니 잠깐 앉아 계세요.",
+    "치료 부스는 아직 준비 중이에요. 숨만 돌리세요.",
+    "치료 부스는 아직 준비 중이에요. 숨이 차 보이니 좀 쉬세요.",
+    "치료 부스는 아직 준비 중이에요. 숨이 차 보이니 앉아서 쉬세요.",
+    "치료 부스는 아직 준비 중이에요. 숨이 차 보이니 조금 쉬세요.",
+    "치료 부스는 아직 준비 중이에요. 숨이 차 보이니 잠깐 쉬세요.",
+    "치료 부스는 아직 준비 중이에요. 숨을 돌리면 좋겠네요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_03",
+   "event": "clinic_cooldown",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 가볍게 다침",
+   "lines": [
+    "치료 부스는 아직 준비 중이에요. 조금만 기다려 주세요.",
+    "치료 부스는 아직 준비 중이에요. 가볍게 다치셨으니 조금만 버티세요.",
+    "치료 부스는 아직 준비 중이에요. 가볍게 다치신 것 같으니 앉아 계세요.",
+    "치료 부스가 준비되는 동안 앉아서 쉬세요. 가볍게 다치신 것 같아요.",
+    "치료 부스는 아직 준비 중이에요. 가볍게 다치셨으니 조금만 참으세요.",
+    "치료 부스는 아직 준비 중이에요. 가볍게 다치셨으니 앉아 계세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_04",
+   "event": "clinic_cooldown",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "치료 부스는 아직 준비 중이에요. 조금만 기다려 주세요.",
+    "치료 부스는 아직 준비 중이에요. 앉아서 기다리세요.",
+    "치료 부스는 아직 준비 중이에요. 다치셨으니 조금만 버티세요.",
+    "치료 부스는 아직 준비 중이에요. 조금만 버티세요.",
+    "치료 부스는 아직 준비 중이에요. 다치셨으니 조금만 기다려 주세요.",
+    "치료 부스는 아직 준비 중이에요. 다치셨으니 조금만 참으세요.",
+    "치료 부스는 아직 준비 중이에요. 앉아서 기다려 주세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_05",
+   "event": "clinic_cooldown",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "치료 부스는 아직 준비 중이에요. 조금만 버티세요.",
+    "치료 부스는 아직 준비 중이에요. 조금만 기다려 주세요.",
+    "치료 부스는 아직 준비 중이에요. 조금만 참으세요.",
+    "치료 부스는 아직 준비 중이에요. 조금만 참아 주세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_06",
+   "event": "clinic_cooldown",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "많이 다치셨는데 치료 부스가 아직 준비 중이에요. 앉아서 기다려 주세요.",
+    "많이 다치셨는데 치료 부스가 아직 준비 중이에요··· 가만히 앉아 계세요.",
+    "많이 다치셨는데 치료 부스가 아직 준비 중이에요··· 꼭 누워서 기다리세요.",
+    "많이 다치셨는데 치료 부스가 아직 준비 중이에요··· 앉아서 기다리세요.",
+    "많이 다치셨는데 치료 부스가 아직 준비 중이에요··· 가만히 누워 계세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_07",
+   "event": "clinic_cooldown",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "많이 다치셨는데 치료 부스가 아직이에요··· 조금만 버텨 주세요.",
+    "치료 부스가 준비될 때까지 움직이지 말고 앉아 계세요.",
+    "많이 아파 보여요. 치료 부스가 준비되면 바로 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "clinic_cooldown_08",
+   "event": "clinic_cooldown",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 위독 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "치료 부스가 아직 준비 중이에요. 보관대에 물약이 있어요, 그걸 먼저 드세요!",
+    "치료 부스가 아직 준비 중이에요. 지금 당장 보관대에서 물약을 드세요!",
+    "치료 부스가 아직 준비 중이에요. 지금 당장 물약부터 드세요!"
+   ]
+  },
+  {
+   "id": "clinic_cooldown_09",
+   "event": "clinic_cooldown",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 부스 방문(대기 중) · 위독 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "버티세요! 치료 부스가 준비될 때까지 여기 앉아 계세요!",
+    "치료 부스는 아직 준비 중이에요. 가만히 앉아서 버티세요!",
+    "치료 부스는 아직 준비 중이에요. 위험해 보여요··· 조금만 기다려 주세요."
+   ]
+  },
+  {
+   "id": "after_heal_01",
+   "event": "after_heal",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 건강 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "다 나으셨어요. 얼굴이 편안해 보여요.",
+    "치료를 받으셨네요. 다 나으신 것 같아요.",
+    "치료를 받으셨네요. 다 나으셨어요?",
+    "다 나으셨어요! 무사하셔서 다행이에요.",
+    "다 나으셨네요. 다친 곳은 없으니 다행이에요.",
+    "다 나으셨어요! 멀쩡해 보여서 다행이에요.",
+    "다 나으셨어요! 얼굴이 괜찮아 보여서 다행이에요.",
+    "치료를 받으셨어요? 다 나으셨네요."
+   ]
+  },
+  {
+   "id": "after_heal_02",
+   "event": "after_heal",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 가볍게 다침 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "조금 나아지셨어요. 얼굴이 좀 편안해 보여요.",
+    "좀 나아지셨어요? 그래도 무리하지 마세요.",
+    "조금 나아지셨네요. 아직 다 낫진 않았으니 천천히 쉬세요."
+   ]
+  },
+  {
+   "id": "after_heal_03",
+   "event": "after_heal",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 다침 · 보관대 물약 있음 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "좀 나아지셨어요? 아직 다 낫진 않았으니 천천히 회복하세요.",
+    "다 나으셨어요? 그래도 조금 다치셨으니 천천히 회복하세요.",
+    "다 나으셨어요? 얼굴이 좀 좋아졌네요."
+   ]
+  },
+  {
+   "id": "after_heal_04",
+   "event": "after_heal",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 다침 · 보관대 물약 없음 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "다 나아지셨어요? 그래도 조금 다치셨으니 천천히 회복하세요.",
+    "다 나아지셨어요? 그래도 조금 다치셨으니 무리하지 마세요.",
+    "좀 나아지셨어요? 그래도 아직 아파 보여요."
+   ]
+  },
+  {
+   "id": "after_heal_05",
+   "event": "after_heal",
+   "health": [
+    "badly_hurt",
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 많이 다침·위독 · 보관대 물약 있음 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "아직도 몹시 위태로워 보여요! 얼른 누우세요!",
+    "많이 다치셨잖아요. 치료 부스를 다시 쓸 수 있을 때까지 쉬세요.",
+    "이제 아무것도 하지 마시고 누우세요!",
+    "많이 다치셨는데 치료 부스가 아직이에요··· 가만히 누워서 기다리세요."
+   ]
+  },
+  {
+   "id": "after_heal_06",
+   "event": "after_heal",
+   "health": [
+    "badly_hurt",
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "치료 직후 · 많이 다침·위독 · 보관대 물약 없음 · 치료 부스는 방금 써서 대기 중",
+   "lines": [
+    "아직 많이 아파 보여요. 푹 쉬세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_01",
+   "event": "potion_refilled",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 건강 · 기운 있음",
+   "lines": [
+    "물약을 채워 뒀어요. 필요하시면 언제든 꺼내 가세요.",
+    "물약이 채워졌어요. 필요하시면 챙기세요.",
+    "물약을 채워 뒀어요. 필요하신 걸 언제든 챙기세요.",
+    "물약이 채워졌어요. 다치지 않으시길 바라요.",
+    "물약이 채워졌어요. 보관대에서 꼭 꺼내 보세요.",
+    "물약이 채워졌어요. 필요하시면 바로 챙겨서 쓰세요.",
+    "물약을 채워 뒀어요. 필요하시면 챙기세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_02",
+   "event": "potion_refilled",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 건강 · 지침(조금·많이)",
+   "lines": [
+    "물약이 채워졌어요. 다친 데는 없으니 숨부터 돌리세요.",
+    "물약을 채워 뒀어요. 다친 데는 없지만 숨이 좀 차 보여요.",
+    "물약을 채워 뒀어요. 다친 데는 없으니 숨부터 돌리세요.",
+    "물약이 채워졌어요. 다친 데는 없으니 숨만 돌리세요.",
+    "물약을 채워 뒀어요. 다친 데는 없으니 숨만 돌리세요.",
+    "물약이 채워졌어요. 다친 데는 없지만 숨이 차 보여요."
+   ]
+  },
+  {
+   "id": "potion_refilled_03",
+   "event": "potion_refilled",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 가볍게 다침",
+   "lines": [
+    "물약이 채워졌어요. 조금 다치셨으니 챙기세요.",
+    "물약을 채워 뒀어요. 조금 다치셨으니 쓰세요.",
+    "물약을 채워 뒀어요. 조금 다치셨으니 하나 챙기세요.",
+    "물약을 채워 뒀어요. 조금 다치셨으니 든든히 챙기세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_04",
+   "event": "potion_refilled",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "보관대에 물약이 채워졌어요. 얼른 챙기세요.",
+    "물약이 채워졌어요. 다치셨으니 얼른 쓰세요.",
+    "물약이 새로 채워졌어요. 다치셨으니 꼭 챙기세요.",
+    "물약을 채워 뒀어요. 다치셨으니 쓰세요.",
+    "물약이 채워졌어요! 다치셨으니 바로 쓰세요.",
+    "보관대에 물약이 채워졌어요. 다치셨으니 챙기세요.",
+    "보관대에 물약이 채워졌어요. 얼른 쓰세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_05",
+   "event": "potion_refilled",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 다침 · 치료 부스 대기 중",
+   "lines": [
+    "물약이 채워졌어요. 다치셨으니 얼른 챙기세요.",
+    "물약이 채워졌어요! 다치셨으니 바로 쓰세요.",
+    "물약을 채워 뒀어요. 다치셨으니 쓰세요.",
+    "물약을 채워 뒀어요. 다친 데에 쓸 수 있어요.",
+    "물약을 채워 뒀어요. 다치셨으니 얼른 챙기세요.",
+    "물약이 채워졌어요. 다치셨으니 꼭 챙기세요.",
+    "물약이 채워졌어요! 다치셨으니 바로 챙기세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_06",
+   "event": "potion_refilled",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 많이 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 꼭 챙기세요.",
+    "물약이 채워졌어요. 많이 다치셨으니 꼭 챙기세요.",
+    "물약을 채워 뒀어요. 많이 다치셨으니 쓰세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 바로 쓰세요.",
+    "물약을 채워 뒀어요. 많이 다치셨으니 꼭 챙기세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 쓰세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 챙기세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_07",
+   "event": "potion_refilled",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 많이 다침 · 치료 부스 대기 중",
+   "lines": [
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 꼭 챙기세요.",
+    "물약이 채워졌어요! 많이 다치셨으니 꼭 챙기세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 바로 쓰세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 챙기세요.",
+    "물약을 채워 뒀어요. 많이 다치셨으니 꼭 챙기세요.",
+    "물약이 채워졌어요. 많이 다치셨으니 챙기세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 꼭 드세요.",
+    "보관대에 물약을 채워 뒀어요. 많이 다치셨으니 쓰세요."
+   ]
+  },
+  {
+   "id": "potion_refilled_08",
+   "event": "potion_refilled",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 위독 · 치료 부스 사용 가능",
+   "lines": [
+    "물약이 채워졌어요! 얼른 챙기세요, 위험해요!",
+    "물약을 채워 뒀어요! 어서 챙기세요, 위험해요!",
+    "물약을 채워 뒀어요. 지금 바로 쓸 수 있어요, 어서 챙기세요!",
+    "물약이 채워졌어요! 얼른 드세요, 어서요!",
+    "물약이 채워졌어요! 지금 바로 치료부터 받으세요!",
+    "물약이 채워졌어요! 바로 쓸 수 있어요, 어서 드세요!",
+    "물약이 채워졌어요! 얼른 챙기세요!",
+    "물약이 채워졌어요! 얼른 챙기세요, 어서요!"
+   ]
+  },
+  {
+   "id": "potion_refilled_09",
+   "event": "potion_refilled",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "보관대 물약 채워짐 · 위독 · 치료 부스 대기 중",
+   "lines": [
+    "물약이 채워졌어요! 얼른 챙기세요!",
+    "물약이 채워졌어요! 얼른 드세요, 위험해요!",
+    "물약을 채워 뒀어요! 어서 챙기세요, 위험해요!",
+    "물약을 채워 뒀어요! 지금 바로 드세요, 어서요!",
+    "물약을 채워 뒀어요! 지금 당장 쓰세요!",
+    "물약이 채워졌어요! 얼른 챙기세요, 어서요!",
+    "물약이 채워졌어요! 얼른 드세요, 어서요!",
+    "물약을 채워 뒀어요! 어서 챙기세요, 위험할 수 있어요!"
+   ]
+  },
+  {
+   "id": "new_equipment_01",
+   "event": "new_equipment",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "cloak",
+   "description": "새 장비 장착 · 건강 · 기운 있음 · 새 장비: 헤진 망토",
+   "lines": [
+    "새 망토네요. 헤진 듯해요.",
+    "새 망토를 두르셨네요. 잘 어울리시네요.",
+    "새 망토를 착용하셨네요. 잘 어울리시네요."
+   ]
+  },
+  {
+   "id": "new_equipment_02",
+   "event": "new_equipment",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "cloak",
+   "description": "새 장비 장착 · 건강 · 지침(조금·많이) · 새 장비: 헤진 망토",
+   "lines": [
+    "새 망토를 착용하셨네요. 숨이 차 보이니 잠깐 쉬세요.",
+    "새 장비네요. 다친 데는 없으니 숨만 돌리세요.",
+    "새 망토를 두르셨네요. 숨이 좀 차 보이니 잠깐 쉬세요.",
+    "새 망토를 착용하셨네요. 숨이 좀 차 보이니 잠깐 쉬세요."
+   ]
+  },
+  {
+   "id": "new_equipment_03",
+   "event": "new_equipment",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "cloak",
+   "description": "새 장비 장착 · 가볍게 다침 · 새 장비: 헤진 망토",
+   "lines": [
+    "새 망토네요. 가볍게 다치셨으니 치료부터 받으세요.",
+    "새 망토를 두르셨네요. 가볍게 다친 곳은 치료부터 받으세요.",
+    "새 망토를 착용하셨네요. 가볍게 다친 곳은 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "new_equipment_04",
+   "event": "new_equipment",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "cloak",
+   "description": "새 장비 장착 · 다침 · 새 장비: 헤진 망토",
+   "lines": [
+    "새 망토를 착용하셨네요. 다치셨으니 치료부터 받으세요.",
+    "새 망토를 두르셨네요. 다치셨으니 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "new_equipment_05",
+   "event": "new_equipment",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "weapon",
+   "description": "새 장비 장착 · 건강 · 기운 있음 · 새 장비: 연습용 무기",
+   "lines": [
+    "새 무기네요. 연습에 도움이 되는 것 같아요.",
+    "새 무기네요. 연습에 도움이 되었으면 좋겠어요.",
+    "새 무기네요. 연습을 잘해 보세요."
+   ]
+  },
+  {
+   "id": "new_equipment_06",
+   "event": "new_equipment",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "weapon",
+   "description": "새 장비 장착 · 건강 · 지침(조금·많이) · 새 장비: 연습용 무기",
+   "lines": [
+    "새 무기네요. 숨이 좀 차 보이니 잠깐 쉬세요.",
+    "연습용 무기를 새로 장착하셨네요. 다친 데는 없으니 숨만 돌리세요.",
+    "새 무기네요. 다친 데는 없으니 숨만 돌리세요.",
+    "새 무기네요. 다친 데는 없으니 숨부터 돌리세요.",
+    "연습용 무기를 바꾸셨네요. 다친 데는 없으니 숨만 돌리세요."
+   ]
+  },
+  {
+   "id": "new_equipment_07",
+   "event": "new_equipment",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "weapon",
+   "description": "새 장비 장착 · 가볍게 다침 · 새 장비: 연습용 무기",
+   "lines": [
+    "새 무기네요. 조금 다치셨으니 치료부터 받으세요.",
+    "새 무기네요. 가볍게 다치셨으니 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "new_equipment_08",
+   "event": "new_equipment",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "weapon",
+   "description": "새 장비 장착 · 다침 · 새 장비: 연습용 무기",
+   "lines": [
+    "새 무기네요. 다치셨으니 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "new_equipment_09",
+   "event": "new_equipment",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "새 장비 장착 · 많이 다침",
+   "lines": [
+    "새 장비는 좋지만 많이 다치셨어요. 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "new_equipment_10",
+   "event": "new_equipment",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "새 장비 장착 · 위독",
+   "lines": [
+    "장비 얘기는 나중에 해요! 지금은 몸부터 챙기세요!",
+    "새 장비보다 몸이 먼저예요! 얼른 치료부터 받으세요!"
+   ]
+  },
+  {
+   "id": "leaving_01",
+   "event": "leaving",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "fresh"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 건강 · 기운 있음",
+   "lines": [
+    "나가시는 거예요? 꼭 무사히 돌아오세요.",
+    "나가시려고 해요? 무리하지 마시고요.",
+    "나가시는 거예요? 꼭 무리하지 마시고요.",
+    "나가시려고 하시나요? 꼭 무사히 돌아오세요.",
+    "나가시려고 해요? 무리하지 마시고 꼼꼼히 준비하세요.",
+    "나가시려고요? 꼭 무사히 돌아오세요.",
+    "나가시려고 해요? 꼭 무사히 돌아오세요.",
+    "나가시려고 해요? 꼭 무리하지 마시고요."
+   ]
+  },
+  {
+   "id": "leaving_02",
+   "event": "leaving",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 건강 · 지침(조금·많이)",
+   "lines": [
+    "나가시기 전에 숨부터 돌리세요. 다친 데는 없어 보여요.",
+    "나가시기 전에 숨부터 돌리세요. 다친 데는 없으니 걱정 마세요.",
+    "나가시려고요? 숨이 좀 차 보이니 꼭 잠깐 쉬세요."
+   ]
+  },
+  {
+   "id": "leaving_03",
+   "event": "leaving",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 가볍게 다침",
+   "lines": [
+    "조금 다치셨네요. 나가시기 전에 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "leaving_04",
+   "event": "leaving",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "조금 다치셨는데 나가시려고요? 치료부터 받으세요.",
+    "나가시려고요? 치료부터 받고 나가세요.",
+    "다치셨잖아요··· 나가시기 전에 치료부터 받으세요.",
+    "지금 나가시는 거예요? 치료부터 받고 가세요.",
+    "나가시기 전에 치료부터 받으세요. 다치셨으니 절대 무리하지 마세요.",
+    "지금 나가시는 게 위험해요. 치료부터 받으세요.",
+    "조금 다치셨는데 나가시려고 해요? 치료부터 받으세요.",
+    "조금 다치셨는데 나가시려고요··· 치료부터 받고 가세요."
+   ]
+  },
+  {
+   "id": "leaving_05",
+   "event": "leaving",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "치료 부스는 아직이지만, 물약은 준비돼 있어요. 다치셨으니 꼭 챙기세요.",
+    "치료 부스는 아직 준비 중이지만, 물약은 챙기세요.",
+    "치료 부스는 아직이지만, 물약은 있으니 꼭 챙기세요.",
+    "치료 부스는 아직이지만, 물약이 준비돼 있어요. 꼭 챙기세요.",
+    "치료 부스는 아직이지만, 물약은 준비돼 있어요. 꼭 챙기세요."
+   ]
+  },
+  {
+   "id": "leaving_06",
+   "event": "leaving",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "치료 부스는 아직이지만, 나가시기 전에 조금 쉬세요.",
+    "치료 부스는 아직이지만, 보관대에 물약이 있으면 꼭 챙기세요."
+   ]
+  },
+  {
+   "id": "leaving_07",
+   "event": "leaving",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 많이 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "많이 다치셨잖아요. 나가시기 전에 치료부터 받으세요.",
+    "많이 다치셨는데 나가시려고요? 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 나가시는 거면 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 치료 부스는 지금 준비돼 있으니, 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 치료 부스를 바로 쓸 수 있으니 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 치료부터 받으세요, 그다음에 나가시는 거예요.",
+    "많이 다치셨어요! 나가시기 전에 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "leaving_08",
+   "event": "leaving",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "많이 다치셨잖아요··· 나가시기 전에 치료부터 받으세요.",
+    "많이 다치셨어요, 이든 씨. 나가시기 전에 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 치료 부스를 다시 쓸 수 있을 때까지 쉬세요.",
+    "많이 다치셨어요! 나가시기 전에 치료부터 받으세요.",
+    "많이 다치셨잖아요··· 나가시는 거면 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "leaving_09",
+   "event": "leaving",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 많이 다침 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "많이 다치셨잖아요. 나가시기 전에 치료부터 받으세요.",
+    "많이 다치셨잖아요. 나가시기 전에 치료 부스를 다시 쓸 수 있을 때까지 쉬세요.",
+    "많이 다치셨잖아요··· 나가시는 거면 치료부터 받으세요.",
+    "많이 다치셨어요! 나가시기 전에 치료부터 받으세요."
+   ]
+  },
+  {
+   "id": "leaving_10",
+   "event": "leaving",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 위독 · 치료 부스 사용 가능",
+   "lines": [
+    "이든 씨, 나가시기 전에 치료부터 받으세요!",
+    "어떡해요··· 나가시기 전에 치료부터 받으세요!",
+    "그 몸으로 나가시려고요? 얼른 치료부터 받으세요!",
+    "안 돼요, 나가시면 큰일 나요! 얼른 치료부터 받으세요!",
+    "나가시려고요? 지금 당장 치료부터 받으세요!",
+    "어떡해요, 나가시려고요? 지금 바로 치료부터 받으세요!",
+    "어떡해요··· 그 몸으로 나가시려고요? 얼른 치료부터 받으세요!",
+    "그 몸으로 나가시려고요? 어서 치료부터 받으세요!"
+   ]
+  },
+  {
+   "id": "leaving_11",
+   "event": "leaving",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "ready",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 위독 · 치료 부스 대기 중 · 보관대 물약 있음",
+   "lines": [
+    "어떡해요··· 나가시기 전에 치료부터 받으세요!",
+    "이든 씨, 나가시기 전에 치료부터 받으세요!",
+    "어떡해요··· 나가시려면 먼저 치료부터 받으세요!",
+    "나가시면 안 돼요! 보관대 물약부터 얼른 챙기세요!",
+    "어떡해요··· 그 몸으로는 안 돼요! 보관대 물약부터 챙기세요!"
+   ]
+  },
+  {
+   "id": "leaving_12",
+   "event": "leaving",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "none",
+   "map": "any",
+   "gear": "any",
+   "description": "필드로 나감 · 위독 · 치료 부스 대기 중 · 보관대 물약 없음",
+   "lines": [
+    "어떡해요··· 나가시기 전에 치료부터 받으세요!"
+   ]
+  },
+  {
+   "id": "tired_01",
+   "event": "tired",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "tired"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 건강 · 조금 지침",
+   "lines": [
+    "지치셨네요. 숨이 좀 차 보이니 잠깐 쉬세요.",
+    "숨이 좀 차 보여요. 앉아서 쉬세요.",
+    "조금 지치셨네요. 숨을 돌리면 괜찮아지실 거예요.",
+    "숨이 좀 차 보여요. 쉬세요, 무리하지 마세요.",
+    "좀 쉬세요. 숨이 좀 차 보여요.",
+    "좀 쉬세요. 숨이 차 보여요, 가만히 앉아 계세요.",
+    "숨이 좀 차 보여요. 잠깐 앉아서 쉬세요.",
+    "조금 지치셨네요. 숨을 고르고 잠깐 쉬세요."
+   ]
+  },
+  {
+   "id": "tired_02",
+   "event": "tired",
+   "health": [
+    "healthy"
+   ],
+   "stamina": [
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 건강 · 많이 지침",
+   "lines": [
+    "많이 지치셨네요. 숨을 좀 돌리세요.",
+    "많이 지치셨네요. 숨도 많이 차 보여요, 가만히 쉬세요.",
+    "많이 지치셨네요. 숨을 돌리고 잠깐 쉬세요.",
+    "많이 지치셨네요. 숨을 돌리면 좋겠어요.",
+    "많이 지치셨네요. 숨부터 돌리세요.",
+    "많이 지치셨네요. 숨을 돌리세요.",
+    "많이 지치셨네요. 숨도 많이 차 보여요, 잠깐 쉬세요.",
+    "많이 지치셨네요. 숨을 돌리면서 잠깐 쉬세요."
+   ]
+  },
+  {
+   "id": "tired_03",
+   "event": "tired",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "tired"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 가볍게 다침 · 조금 지침",
+   "lines": [
+    "조금 다치시고 숨도 차 보여요. 치료부터 받고 쉬세요.",
+    "조금 다치셨는데 숨도 차 보여요. 치료부터 받고 쉬세요."
+   ]
+  },
+  {
+   "id": "tired_04",
+   "event": "tired",
+   "health": [
+    "slightly_hurt"
+   ],
+   "stamina": [
+    "exhausted"
+   ],
+   "clinic": "any",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 가볍게 다침 · 많이 지침",
+   "lines": [
+    "조금 다치셨네요. 숨도 많이 차 보여요, 치료부터 받으세요.",
+    "많이 지치셨네요. 치료부터 받고 푹 쉬세요."
+   ]
+  },
+  {
+   "id": "tired_05",
+   "event": "tired",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "다치셨네요. 치료 부스를 바로 쓸 수 있으니 누우세요.",
+    "다치셨네요. 치료 부스를 바로 쓰실 수 있어요.",
+    "다치셨네요. 치료 부스를 바로 이용하세요.",
+    "다치셨네요. 치료 부스가 준비돼 있으니 누우세요.",
+    "다치셨네요. 치료 부스를 바로 쓸 수 있어요.",
+    "다치셨네요. 치료 부스를 지금 바로 쓸 수 있어요.",
+    "다치셨네요. 치료 부스를 지금 바로 이용하세요."
+   ]
+  },
+  {
+   "id": "tired_06",
+   "event": "tired",
+   "health": [
+    "hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 다침 · 치료 부스 대기 중",
+   "lines": [
+    "다치셨네요. 치료 부스를 다시 쓸 수 있을 때까지 쉬세요.",
+    "다치셨네요··· 치료 부스가 열릴 때까지 쉬세요.",
+    "다치셨네요. 치료 부스가 곧 열리니 조금만 버티세요.",
+    "다치셨네요. 치료 부스가 곧 준비되니 조금만 기다려 주세요."
+   ]
+  },
+  {
+   "id": "tired_07",
+   "event": "tired",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 많이 다침 · 치료 부스 사용 가능",
+   "lines": [
+    "많이 다치셨어요! 치료 부스를 바로 이용하세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 얼른 누우세요.",
+    "많이 다치셨어요! 치료부터 받으세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓰실 수 있어요.",
+    "많이 다치셨어요! 치료 부스가 준비돼 있으니 잠깐 누우세요.",
+    "많이 다치셨어요! 치료 부스를 지금 바로 쓸 수 있으니 치료부터 받으세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 누우세요.",
+    "많이 다치셨어요! 치료 부스를 바로 쓸 수 있으니 잠깐 누우세요."
+   ]
+  },
+  {
+   "id": "tired_08",
+   "event": "tired",
+   "health": [
+    "badly_hurt"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 많이 다침 · 치료 부스 대기 중",
+   "lines": [
+    "많이 다치셨어요! 치료 부스를 다시 쓸 수 있을 때까지 쉬세요.",
+    "많이 다치셨어요! 치료 부스가 열릴 때까지 쉬세요.",
+    "많이 다치셨어요. 치료 부스는 아직이니 조금만 쉬세요.",
+    "많이 다치셨어요! 치료 부스가 곧 열리니 조금만 버티세요.",
+    "많이 다치셨어요! 치료 부스가 곧 열리니 좀 앉아 계세요."
+   ]
+  },
+  {
+   "id": "tired_09",
+   "event": "tired",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "ready",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 위독 · 치료 부스 사용 가능",
+   "lines": [
+    "어떡해요··· 얼른 치료부터 받으세요!",
+    "이든 씨! 지금 바로 치료부터 받으셔야 해요!",
+    "어떡해요··· 이대로는 위험해요! 치료 부스를 바로 이용하세요!",
+    "이든 씨, 지금 당장 치료부터 받으세요! 얼른 누우세요!",
+    "이든 씨, 지금 바로 치료부터 받으세요! 얼른요!"
+   ]
+  },
+  {
+   "id": "tired_10",
+   "event": "tired",
+   "health": [
+    "critical"
+   ],
+   "stamina": [
+    "fresh",
+    "tired",
+    "exhausted"
+   ],
+   "clinic": "wait",
+   "potion": "any",
+   "map": "any",
+   "gear": "any",
+   "description": "지쳐서 방문 · 위독 · 치료 부스 대기 중",
+   "lines": [
+    "조금만 버티세요! 치료 부스는 아직 준비 중이에요, 조금 기다려 주세요!",
+    "조금만 버티세요! 곧 치료를 받을 수 있어요!"
+   ]
+  }
+ ]
+}

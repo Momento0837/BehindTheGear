@@ -164,6 +164,10 @@ namespace BehindTheGear.HideOut
             origin = from; returnPosition = position;
             bridge.State.fieldReturn = FieldReturnState.Capture(bridge.gameObject, from);
             bridge.State.fieldReturn.position = position;
+            // Selena's "returned" line names the map shown by the field location HUD (read before it is dismissed).
+            string selenaLastMap = string.Empty;
+            foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None))
+                if (!string.IsNullOrEmpty(hud.CurrentLocation)) selenaLastMap = hud.CurrentLocation;
             foreach (var hud in UnityEngine.Object.FindObjectsByType<LocationHUD>(FindObjectsSortMode.None)) hud.Dismiss();
             var travelLock = bridge.GetComponent<PlayerControlLock>();
             travelLock?.Acquire();
@@ -207,6 +211,7 @@ namespace BehindTheGear.HideOut
             var baseView = UnityEngine.Object.FindFirstObjectByType<HideOutScene>();
             if (baseView != null) { baseView.ReleasePlayer(); baseView.SuspendPlayer(); }
             RoomDropCache.Clear();
+            SelenaGameState.MarkReturnedFromField(bridge, selenaLastMap);
             travelling = false; finished();
         }
         public static IEnumerator Exit(HideOutPlayerBridge bridge, Scene hideout)

@@ -127,6 +127,9 @@ namespace BehindTheGear.HideOut
         private Facility selected = Facility.Storage;
         private bool hasSelection;
         private float nextRefresh;
+        // Selena pool lines (Scripts/Selena): potion refill while the cabinet screen is open, and the leaving line.
+        private readonly SelenaPotionWatch selenaPotionWatch = new();
+        private bool selenaLeavingLine;
         private Rigidbody2D body;
         private bool bodyWasSimulated;
         private bool released = true;
@@ -302,6 +305,9 @@ namespace BehindTheGear.HideOut
                 ReturnToOverview();
             if (dummyDamagePopup != null && dummyDamagePopup.gameObject.activeSelf
                 && Time.unscaledTime >= dummyDamagePopupUntil) dummyDamagePopup.gameObject.SetActive(false);
+            if (!editorPreview && player != null && player.Initialized)
+                selenaPotionWatch.Tick(this, player, hasSelection && selected == Facility.Potions
+                    && upgradeOverlay != null && upgradeOverlay.activeSelf, transform);
             if (player == null || !player.Initialized || Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + .25f;
             Refresh();
@@ -1196,6 +1202,20 @@ namespace BehindTheGear.HideOut
 
         private void ExitHideOut()
         {
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning || selenaLeavingLine || SelenaBaseDialogue.IsShowing) return;
+            // leaving: Selena says one line first; the exit runs after the player closes it.
+            // When she stays silent (not recruited, no dialogue template) the exit runs immediately as before.
+            if (SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Leaving), transform,
+                    () => { selenaLeavingLine = false; ExitHideOutNow(); }))
+            {
+                selenaLeavingLine = true;
+                return;
+            }
+            ExitHideOutNow();
+        }
+
+        private void ExitHideOutNow()
+        {
             if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
             if (HideOutTravel.CanReturn)
             {
@@ -1373,7 +1393,14 @@ namespace BehindTheGear.HideOut
         {
             if (editorPreview || HideOutModel.IsExhibition(selected) || IsLocked(selected)) return;
             if (selected == Facility.Bed) { if (player.Save()) useFacilityButton.interactable = false; }
-            else if (selected == Facility.Clinic) player.Heal();
+            else if (selected == Facility.Clinic)
+            {
+                double readyBefore = player.State.clinicReadyAt;
+                player.Heal();
+                // after_heal: only when the existing heal transaction actually ran (it moves clinicReadyAt).
+                if (player.State.clinicReadyAt != readyBefore)
+                    SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.AfterHeal), transform);
+            }
             else if (selected == Facility.Potions) player.ReceivePotions();
             Refresh();
         }
@@ -1607,6 +1634,9 @@ namespace BehindTheGear.HideOut
             HideTooltip();
             upgradeOverlay.SetActive(true);
             Refresh();
+            // Clinic panel in the base (treatment room off or unavailable): Selena greets by situation priority.
+            if (facility == Facility.Clinic && !editorPreview && !SelenaBaseDialogue.IsShowing)
+                SelenaBaseDialogue.TrySay(this, player, SelenaGameState.ChooseClinicVisit(player), transform);
         }
 
         private void CloseUpgrade()
