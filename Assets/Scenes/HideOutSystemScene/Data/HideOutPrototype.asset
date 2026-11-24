@@ -347,6 +347,60 @@ MonoBehaviour:
         materials:
         - itemId: hideout_scrap
           amount: 20
+    clinicCooldownReduction: 30
+    minimumClinicCooldown: 60
+    downgradeRefundRate: 0.5
+    clinicSpeedUpgrades:
+    - coins: 10
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 2
+    - coins: 20
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 4
+    - coins: 30
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 6
+    - coins: 40
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 8
+    - coins: 50
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 10
+    - coins: 60
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 12
+    - coins: 70
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 14
+    - coins: 80
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 16
+    - coins: 90
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 18
+    - coins: 100
+      actionPoints: 1
+      materials:
+      - itemId: hideout_scrap
+        amount: 20
   font: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   items:
   - {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}

@@ -12,6 +12,8 @@ namespace BehindTheGear.HideOut
 
         // --- Session memory (not part of HideOutSave) ---
         public static bool ReturnPending { get; private set; }
+        // Set once when 이어하기 (Continue) restored a save into the base; taken by HideOutScene on start.
+        public static bool ContinueGreetingPending { get; private set; }
         public static string LastMap { get; private set; } = string.Empty;
         private static bool gearBaseline;
         private static string seenWeaponId, seenCloakId;
@@ -19,7 +21,7 @@ namespace BehindTheGear.HideOut
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetSession()
         {
-            ReturnPending = false; LastMap = string.Empty;
+            ReturnPending = false; LastMap = string.Empty; ContinueGreetingPending = false;
             gearBaseline = false; seenWeaponId = seenCloakId = null;
         }
 
@@ -32,6 +34,17 @@ namespace BehindTheGear.HideOut
         }
 
         public static void ConsumeReturn() => ReturnPending = false;
+
+        // Called by SaveGameSession only after a Continue load succeeded (the save always opens in the base).
+        public static void MarkContinued() => ContinueGreetingPending = true;
+
+        // Returns the flag once and clears it, so the greeting can never leak into a later booth visit.
+        public static bool TakeContinueGreeting()
+        {
+            bool pending = ContinueGreetingPending;
+            ContinueGreetingPending = false;
+            return pending;
+        }
 
         // --- Bands ---
 

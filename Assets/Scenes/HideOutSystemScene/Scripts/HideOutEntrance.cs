@@ -36,6 +36,16 @@ namespace BehindTheGear.HideOut
         private void Reset() => GetComponent<BoxCollider2D>().isTrigger = true;
     }
 
+    // Facility rooms entered from the base (ScareCrow training, Treatment booth) share one additive travel path.
+    // Each room places the live player, hosts the base's existing facility panel and undoes its changes on leave.
+    public interface IHideOutFacilityRoom
+    {
+        HideOutPlayerBridge Player { get; }
+        void Bind(HideOutPlayerBridge bridge, HideOutScene view);
+        void PrepareToLeave();
+        void RestorePlayerBounds();
+    }
+
     // Additive visit keeps live quests, NPCs and every original scene object intact.
     // Existing PersistentPlayer2D continues to own the player; no second persistent manager.
     public static class HideOutTravel
@@ -58,45 +68,63 @@ namespace BehindTheGear.HideOut
             trainingBase = null; trainingSuspended.Clear();
         }
         public static IEnumerator EnterTraining(HideOutScene view)
+            => EnterRoom<ScareCrowTrainingScene>(view, ScareCrowTrainingScene.ScenePath, "ScareCrowScene", "훈련장 컨트롤러가 없습니다.", null);
+
+        // Clinic: same camera-first, fade-through entry as the training room. If TreatmentScene has not been converted
+        // yet (Tools > HideOut > Build Treatment room), fall back to the existing clinic panel in the base.
+        public static IEnumerator EnterTreatment(HideOutScene view)
+            => EnterRoom<TreatmentRoomScene>(view, TreatmentRoomScene.ScenePath, "TreatmentScene",
+                "치료실 컨트롤러가 없습니다. Tools > HideOut > Build Treatment room을 실행하세요.",
+                v => v.OpenFacilityPanelFallback(Facility.Clinic));
+
+        public static IEnumerator ExitTraining(ScareCrowTrainingScene training) => ExitRoom(training);
+        public static IEnumerator ExitTreatment(TreatmentRoomScene room) => ExitRoom(room);
+
+        private static IEnumerator EnterRoom<T>(HideOutScene view, string scenePath, string sceneLabel, string missingController,
+            Action<HideOutScene> onUnavailable) where T : MonoBehaviour, IHideOutFacilityRoom
         {
             if (travelling || trainingBase != null || view == null) yield break;
             travelling = true;
+            bool entered = false;
             try
             {
-                yield return SceneFadeTransition.FadeThrough(EnterTrainingWhileBlack(view), view.trainingFadeDuration);
+                yield return SceneFadeTransition.FadeThrough(
+                    EnterRoomWhileBlack<T>(view, scenePath, sceneLabel, missingController, () => entered = true), view.trainingFadeDuration);
             }
             finally
             {
                 travelling = false;
                 if (view != null) view.FinishTrainingTransition();
             }
+            if (!entered && view != null) onUnavailable?.Invoke(view);
         }
 
-        private static IEnumerator EnterTrainingWhileBlack(HideOutScene view)
+        private static IEnumerator EnterRoomWhileBlack<T>(HideOutScene view, string scenePath, string sceneLabel, string missingController,
+            Action entered) where T : MonoBehaviour, IHideOutFacilityRoom
         {
             var bridge = view.TrainingPlayer;
             AsyncOperation operation = null;
             try
             {
 #if UNITY_EDITOR
-                operation = UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(ScareCrowTrainingScene.ScenePath,
+                operation = UnityEditor.SceneManagement.EditorSceneManager.LoadSceneAsyncInPlayMode(scenePath,
                     new LoadSceneParameters(LoadSceneMode.Additive));
 #else
-                if (!Application.CanStreamedLevelBeLoaded(ScareCrowTrainingScene.ScenePath))
-                    throw new InvalidOperationException("빌드 Scene List에 ScareCrowScene을 등록하세요.");
-                operation = SceneManager.LoadSceneAsync(ScareCrowTrainingScene.ScenePath, LoadSceneMode.Additive);
+                if (!Application.CanStreamedLevelBeLoaded(scenePath))
+                    throw new InvalidOperationException($"빌드 Scene List에 {sceneLabel}을 등록하세요.");
+                operation = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
 #endif
             }
             catch (Exception e) { bridge.SetMessage(e.Message); Debug.LogWarning(e.Message, view); }
             if (operation == null) yield break;
             while (!operation.isDone) yield return null;
-            var scene = SceneManager.GetSceneByPath(ScareCrowTrainingScene.ScenePath);
-            ScareCrowTrainingScene training = null;
+            var scene = SceneManager.GetSceneByPath(scenePath);
+            T room = null;
             foreach (var root in scene.GetRootGameObjects())
-                if (root.TryGetComponent(out ScareCrowTrainingScene candidate)) { training = candidate; break; }
-            if (training == null)
+                if (root.TryGetComponent(out T candidate)) { room = candidate; break; }
+            if (room == null)
             {
-                bridge.SetMessage("훈련장 컨트롤러가 없습니다.");
+                bridge.SetMessage(missingController);
                 yield return SceneManager.UnloadSceneAsync(scene);
                 yield break;
             }
@@ -107,35 +135,37 @@ namespace BehindTheGear.HideOut
                 if (root.activeSelf && root != bridge.transform.root.gameObject)
                 { trainingSuspended.Add(root); root.SetActive(false); }
             SceneManager.SetActiveScene(scene);
-            training.Bind(bridge, view);
+            room.Bind(bridge, view);
+            entered();
         }
 
-        public static IEnumerator ExitTraining(ScareCrowTrainingScene training)
+        private static IEnumerator ExitRoom<T>(T room) where T : MonoBehaviour, IHideOutFacilityRoom
         {
-            if (travelling || training == null) yield break;
+            if (travelling || room == null) yield break;
             var view = trainingBase;
-            var bridge = training.Player;
+            var bridge = room.Player;
             if (view == null)
             {
-                // Direct training-scene Play still uses the existing persistent player on return (LoadScene fades itself).
+                // Direct room-scene Play still uses the existing persistent player on return (LoadScene fades itself).
                 travelling = true;
-                training.PrepareToLeave();
+                room.PrepareToLeave();
                 if (bridge != null) SceneFadeTransition.LoadScene(bridge.Settings.scenePath, .4f);
                 travelling = false; yield break;
             }
             travelling = true;
             try
             {
-                // Fade out over the training room, swap back to the retained base while opaque, then fade the base in.
+                // Fade out over the room, swap back to the retained base while opaque, then fade the base in.
                 // (Previously the room was unloaded with no fade, so returning cut straight to the base.)
-                yield return SceneFadeTransition.FadeThrough(ExitTrainingWhileBlack(training, view, bridge), view.trainingFadeDuration);
+                yield return SceneFadeTransition.FadeThrough(ExitRoomWhileBlack(room, view, bridge), view.trainingFadeDuration);
             }
             finally { travelling = false; }
         }
 
-        private static IEnumerator ExitTrainingWhileBlack(ScareCrowTrainingScene training, HideOutScene view, HideOutPlayerBridge bridge)
+        private static IEnumerator ExitRoomWhileBlack<T>(T room, HideOutScene view, HideOutPlayerBridge bridge)
+            where T : MonoBehaviour, IHideOutFacilityRoom
         {
-            training.PrepareToLeave();
+            room.PrepareToLeave();
             // Freeze with the existing base policy before yielding to asynchronous unloading.
             // Otherwise gravity can move the restored player for a frame before the base resumes.
             view.SuspendPlayer();
@@ -146,8 +176,8 @@ namespace BehindTheGear.HideOut
                 var body = bridge.GetComponent<Rigidbody2D>();
                 if (body != null) { body.linearVelocity = Vector2.zero; body.angularVelocity = 0; }
             }
-            training.RestorePlayerBounds();
-            var operation = SceneManager.UnloadSceneAsync(training.gameObject.scene);
+            room.RestorePlayerBounds();
+            var operation = SceneManager.UnloadSceneAsync(room.gameObject.scene);
             while (operation != null && !operation.isDone) yield return null;
             foreach (var root in trainingSuspended) if (root != null) root.SetActive(true);
             trainingSuspended.Clear();

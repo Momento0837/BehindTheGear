@@ -11,7 +11,9 @@ namespace BehindTheGear.HideOut
     {
         public const string Returned = "returned", ClinicReady = "clinic_ready", ClinicCooldown = "clinic_cooldown",
             AfterHeal = "after_heal", PotionRefilled = "potion_refilled", NewEquipment = "new_equipment",
-            Leaving = "leaving", Tired = "tired";
+            Leaving = "leaving", Tired = "tired",
+            // Greeting right after 이어하기 (Continue) loads the base; spoken only in the hideout scene.
+            Continued = "continued";
     }
 
     // Already-banded state (see SelenaGameState for how the game values are turned into these bands).

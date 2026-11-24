@@ -35,6 +35,13 @@ namespace BehindTheGear.HideOut
         public string potionId = "health_potion";
         public bool offlineCooldown = true;
         public FacilityDefinition[] facilities = Array.Empty<FacilityDefinition>();
+        // Treatment booth "time reduction" stat: each level shortens the clinic cooldown (applies from the next heal).
+        // Kept outside Facility/levels so the 8-facility save structure and its validation stay unchanged.
+        public double clinicCooldownReduction = 30, minimumClinicCooldown = 60;
+        public UpgradeCost[] clinicSpeedUpgrades = Array.Empty<UpgradeCost>();
+        // Lowering a treatment booth stat by one level returns this share of that level's coins and materials
+        // (rounded down). Action points are not returned.
+        public float downgradeRefundRate = .5f;
     }
     [Serializable] public sealed class ExtensionState { public string key, json; }
     [Serializable] public sealed class WeaponDummyBonus
@@ -73,6 +80,7 @@ namespace BehindTheGear.HideOut
         public int baseInventorySlots = 15;
         public bool selenaRecruited;
         public bool baseTutorialComplete;
+        public int clinicSpeedLevel; // Treatment booth time-reduction level; missing in older saves -> 0.
         public double clinicReadyAt, potionsReadyAt, activeClock;
         public List<ExtensionState> extensions = new();
         // PlayerInventory currently identifies equipment by definition ItemId, not by a per-copy instance ID.
@@ -95,6 +103,7 @@ namespace BehindTheGear.HideOut
             for (int i = 0; i < s.levels.Length; i++) s.levels[i] = Math.Max(0, s.levels[i]);
             s.storage ??= new(); s.inventory ??= new(); s.questInventory ??= new(); s.extensions ??= new();
             s.dummyWeaponBonuses ??= new();
+            s.clinicSpeedLevel = Math.Max(0, s.clinicSpeedLevel);
             Resize(s.storage, rules.baseStorageSlots + s.levels[3] * rules.storageSlotsPerLevel);
             Resize(s.inventory, s.baseInventorySlots + s.levels[3] * rules.inventorySlotsPerLevel);
             if (s.equipment == null) s.equipment = new string[6];
@@ -118,6 +127,12 @@ namespace BehindTheGear.HideOut
         }
         public static int Healing(HideOutSave s, HideOutRules r) => Math.Max(1, (int)Math.Ceiling(r.baseHealing * (1d + s.levels[0] * (double)r.clinicPercentPerLevel)));
         public static int MaxMana(HideOutSave s, HideOutRules r) => s.baseMana + (int)Math.Floor(s.baseMana * s.levels[5] * (double)r.gymPercentPerLevel + .00001d);
+        // Level 0 equals the previous Math.Max(1, clinicCooldown); reductions never go below minimumClinicCooldown.
+        public static double ClinicCooldown(HideOutSave s, HideOutRules r)
+        {
+            double floor = Math.Max(1, Math.Min(r.clinicCooldown, r.minimumClinicCooldown));
+            return Math.Max(floor, r.clinicCooldown - Math.Max(0, s.clinicSpeedLevel) * r.clinicCooldownReduction);
+        }
         public static double PotionCooldown(HideOutSave s, HideOutRules r) => Math.Max(Math.Max(1, r.minimumPotionCooldown), r.potionCooldown - s.levels[4] * r.potionReduction);
         public static bool IsExhibition(Facility facility) => facility == Facility.Dining || facility == Facility.Workshop;
         public static bool Locked(HideOutSave s, Facility facility) => IsExhibition(facility) || facility == Facility.Potions && !s.selenaRecruited;
@@ -182,11 +197,85 @@ namespace BehindTheGear.HideOut
                     return definition.upgrades[s.levels[(int)f]];
             return null;
         }
+        public static UpgradeCost NextClinicSpeed(HideOutSave s, HideOutRules rules) =>
+            rules.clinicSpeedUpgrades != null && s.clinicSpeedLevel < rules.clinicSpeedUpgrades.Length ? rules.clinicSpeedUpgrades[s.clinicSpeedLevel] : null;
         public static bool Upgrade(HideOutSave s, HideOutRules rules, Facility f, out string message)
         {
             if (Locked(s, f)) { message = "잠겨 있거나 추후 구현할 시설입니다."; return false; }
             var cost = Next(s, rules, f);
             if (cost == null) { message = "최대 강화 단계입니다."; return false; }
+            if (!Pay(s, cost, out message)) return false;
+            s.levels[(int)f]++;
+            Normalize(s, rules);
+            message = "강화 완료"; return true;
+        }
+        // Same transaction shape as Upgrade: validate the whole cost, pay once, level +1.
+        public static bool UpgradeClinicSpeed(HideOutSave s, HideOutRules rules, out string message)
+        {
+            var cost = NextClinicSpeed(s, rules);
+            if (cost == null) { message = "최대 강화 단계입니다."; return false; }
+            if (!Pay(s, cost, out message)) return false;
+            s.clinicSpeedLevel++;
+            Normalize(s, rules);
+            message = "강화 완료"; return true;
+        }
+        // Cost paid for the current treatment booth level (null at level 0).
+        public static UpgradeCost PaidClinic(HideOutSave s, HideOutRules rules)
+        {
+            int level = s.levels[(int)Facility.Clinic];
+            foreach (var definition in rules.facilities)
+                if (definition != null && definition.facility == Facility.Clinic && definition.upgrades != null && level > 0 && level <= definition.upgrades.Length)
+                    return definition.upgrades[level - 1];
+            return null;
+        }
+        public static UpgradeCost PaidClinicSpeed(HideOutSave s, HideOutRules rules) =>
+            rules.clinicSpeedUpgrades != null && s.clinicSpeedLevel > 0 && s.clinicSpeedLevel <= rules.clinicSpeedUpgrades.Length
+                ? rules.clinicSpeedUpgrades[s.clinicSpeedLevel - 1] : null;
+        public static int RefundAmount(int paid, HideOutRules rules) =>
+            (int)Math.Floor(Math.Max(0, paid) * (double)Math.Clamp(rules.downgradeRefundRate, 0f, 1f) + 1e-6);
+        // Treatment booth "-": recovery amount level -1 with a partial refund. Runs on a candidate like Upgrade.
+        public static bool DowngradeClinic(HideOutSave s, HideOutRules rules, IHideOutItems items, out string message)
+        {
+            var paid = PaidClinic(s, rules);
+            if (paid == null) { message = "더 낮출 강화 단계가 없습니다."; return false; }
+            if (!Refund(s, rules, paid, items, out message)) return false;
+            s.levels[(int)Facility.Clinic]--;
+            Normalize(s, rules);
+            message = "강화 단계 하향 · " + message; return true;
+        }
+        public static bool DowngradeClinicSpeed(HideOutSave s, HideOutRules rules, IHideOutItems items, out string message)
+        {
+            var paid = PaidClinicSpeed(s, rules);
+            if (paid == null) { message = "더 낮출 강화 단계가 없습니다."; return false; }
+            if (!Refund(s, rules, paid, items, out message)) return false;
+            s.clinicSpeedLevel--;
+            Normalize(s, rules);
+            message = "강화 단계 하향 · " + message; return true;
+        }
+        // Coins and materials only; materials go to the bag first, then storage. When neither has room the
+        // caller's candidate is discarded (nothing is published).
+        private static bool Refund(HideOutSave s, HideOutRules rules, UpgradeCost paid, IHideOutItems items, out string message)
+        {
+            var parts = new List<string>();
+            foreach (var material in paid.materials ?? Array.Empty<MaterialCost>())
+            {
+                if (material == null || string.IsNullOrEmpty(material.itemId)) continue;
+                int amount = RefundAmount(material.amount, rules);
+                if (amount <= 0) continue;
+                int added = Add(s.inventory, material.itemId, amount, items);
+                if (added < amount) added += Add(s.storage, material.itemId, amount - added, items);
+                if (added < amount) { message = "가방과 창고에 돌려받을 공간이 없습니다."; return false; }
+                parts.Add($"{items.Name(material.itemId)} {amount}");
+            }
+            int coins = RefundAmount(paid.coins, rules);
+            s.coins = checked(s.coins + coins);
+            if (coins > 0) parts.Insert(0, $"코인 {coins}");
+            message = parts.Count > 0 ? string.Join(" · ", parts) + " 반환" : "반환 없음";
+            return true;
+        }
+        // Validates the full cost first, then deducts coins, action points and materials exactly once.
+        private static bool Pay(HideOutSave s, UpgradeCost cost, out string message)
+        {
             if (cost.coins < 0 || cost.actionPoints < 0) { message = "강화 비용 설정 오류"; return false; }
             var required = new Dictionary<string, int>();
             foreach (var material in cost.materials ?? Array.Empty<MaterialCost>())
@@ -206,9 +295,8 @@ namespace BehindTheGear.HideOut
                     if (slot.count == 0) slot.id = "";
                 }
             }
-            s.coins -= cost.coins; s.actionPoints -= cost.actionPoints; s.levels[(int)f]++;
-            Normalize(s, rules);
-            message = "강화 완료"; return true;
+            s.coins -= cost.coins; s.actionPoints -= cost.actionPoints;
+            message = null; return true;
         }
         public static bool UpgradeDummy(HideOutSave s, HideOutRules rules, string weaponId, out string message)
         {
@@ -230,7 +318,7 @@ namespace BehindTheGear.HideOut
             if (s.hp <= 0 || s.hp >= maxHP) { message = "회복할 수 없는 상태이거나 HP가 가득 찼습니다."; return false; }
             if (now < s.clinicReadyAt) { message = "치료 부스 쿨타임 중입니다."; return false; }
             int restored = Math.Min(maxHP - s.hp, Healing(s, rules));
-            s.hp += restored; s.clinicReadyAt = now + Math.Max(1, rules.clinicCooldown);
+            s.hp += restored; s.clinicReadyAt = now + ClinicCooldown(s, rules);
             message = $"HP {restored} 회복"; return true;
         }
         public static bool ReceivePotions(HideOutSave s, HideOutRules rules, IHideOutItems items, double now, out string message)

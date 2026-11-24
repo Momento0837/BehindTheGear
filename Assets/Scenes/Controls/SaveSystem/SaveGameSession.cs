@@ -54,6 +54,7 @@ public static class SaveGameSession
             bridge.RestoreSnapshot(snapshot);
             Expedition = true;
             bridge.SetMessage("이어하기 완료 · 기지 내부");
+            SelenaGameState.MarkContinued(); // HideOutScene greets once (Selena "welcome back") after the fade.
         }
         catch (Exception error)
         {

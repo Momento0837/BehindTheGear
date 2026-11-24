@@ -46,6 +46,17 @@ namespace BehindTheGear.HideOut
         private bool trainingPanelOnly;
         private HideOutDummy trainingPanelTarget;
         public bool TrainingUpgradeVisible => trainingPanelParent != null && dummyPanel.activeSelf;
+        [Tooltip("Clinic opens TreatmentScene (fade in, Eden at the booth) instead of the in-base upgrade panel.")]
+        public bool useTreatmentRoom = true;
+        // The existing upgrade panel can be lent to a facility room (TreatmentScene) and returned unchanged.
+        private RectTransform upgradePanel;
+        private TMP_Text upgradeBackLabel;
+        private Transform roomPanelParent;
+        private int roomPanelSibling;
+        private Vector2 roomPanelPosition, roomPanelSize;
+        private Vector3 roomPanelScale;
+        private bool roomPanelOnly;
+        public bool RoomUpgradeVisible => roomPanelParent != null;
         [Tooltip("Show the temporary hideout and HUD in Scene/Game views before Play.")]
         public bool editorAutoPreview = true;
 
@@ -217,6 +228,18 @@ namespace BehindTheGear.HideOut
             player.UpgradeSucceeded += OnFacilityUpgraded;
             player.Inventory.Changed += Refresh;
             Refresh();
+            StartCoroutine(GreetAfterContinue());
+        }
+
+        // 이어하기 (Continue) only: Selena welcomes the player back once, in the base view, after the fade-in.
+        // Other Selena lines stay tied to their booths. Skipped before the base tutorial / recruitment.
+        private System.Collections.IEnumerator GreetAfterContinue()
+        {
+            if (!SelenaGameState.TakeContinueGreeting()) yield break;
+            while (SceneFadeTransition.IsRunning) yield return null;
+            yield return null;
+            if (editorPreview || player == null || !player.Initialized || !player.State.baseTutorialComplete) yield break;
+            SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Continued), transform);
         }
 
         public void SuspendPlayer()
@@ -1142,6 +1165,7 @@ namespace BehindTheGear.HideOut
             upgradeOverlay = Box(ui, "Upgrade Overlay", 0, 0, ReferenceWidth, ReferenceHeight, Color.clear).gameObject;
             Stretch(upgradeOverlay.GetComponent<RectTransform>());
             var panel = Box(upgradeOverlay.transform, "Upgrade Panel", 930, 55, 650, 820, new Color(Panel.r, Panel.g, Panel.b, .985f)).gameObject;
+            upgradePanel = panel.GetComponent<RectTransform>();
             var panelOutline = panel.AddComponent<Outline>();
             panelOutline.effectColor = new Color(Accent.r, Accent.g, Accent.b, .42f);
             panelOutline.effectDistance = new Vector2(1, -1);
@@ -1183,8 +1207,9 @@ namespace BehindTheGear.HideOut
 
             upgradeButton = Button(panel.transform, "Upgrade Button", 220, 738, 406, 58, UpgradeSelected, Accent, 20);
             upgradeButton.GetComponentInChildren<TMP_Text>().text = "업그레이드";
-            Button(panel.transform, "Back Button", 24, 738, 180, 58, CloseUpgrade, new Color(.13f, .15f, .155f), 17)
-                .GetComponentInChildren<TMP_Text>().text = "← 기지 내부로 돌아가기";
+            upgradeBackLabel = Button(panel.transform, "Back Button", 24, 738, 180, 58, CloseUpgrade, new Color(.13f, .15f, .155f), 17)
+                .GetComponentInChildren<TMP_Text>();
+            upgradeBackLabel.text = "← 기지 내부로 돌아가기";
 
             upgradeOverlay.SetActive(false);
         }
@@ -1361,7 +1386,7 @@ namespace BehindTheGear.HideOut
             RefreshHotspots();
             RefreshFacilityInput();
 
-            trainingTransitionPending = facility == Facility.Dummy;
+            trainingTransitionPending = UsesFacilityRoom(facility);
             if (!cameraController.TryFocus(anchor, focus.orthographicSize, () => OpenSelectedFacility(facility)))
             {
                 trainingTransitionPending = false;
@@ -1383,6 +1408,10 @@ namespace BehindTheGear.HideOut
                 case Facility.Dummy:
                     cameraController.enabled = false; // Hold the arrived framing throughout the fade.
                     player.StartCoroutine(HideOutTravel.EnterTraining(this));
+                    break;
+                case Facility.Clinic when useTreatmentRoom:
+                    cameraController.enabled = false; // Same as the dummy: hold the framing, then fade into TreatmentScene.
+                    player.StartCoroutine(HideOutTravel.EnterTreatment(this));
                     break;
                 default: OpenUpgrade(facility); break;
             }
@@ -1641,7 +1670,74 @@ namespace BehindTheGear.HideOut
 
         private void CloseUpgrade()
         {
+            if (roomPanelParent != null) { CloseRoomUpgrade(); return; }
             ReturnToOverview();
+        }
+
+        private bool UsesFacilityRoom(Facility facility) => facility == Facility.Dummy || facility == Facility.Clinic && useTreatmentRoom;
+
+        // TreatmentScene could not be entered (e.g. not converted yet): keep the clinic usable with the in-base panel.
+        public void OpenFacilityPanelFallback(Facility facility)
+        {
+            if (!hasSelection || selected != facility || IsLocked(facility)) return;
+            OpenUpgrade(facility);
+        }
+
+        // Direct TreatmentScene Play hosts only the existing upgrade panel, without a second base or player.
+        public void InitializeRoomPanel(HideOutPlayerBridge bridge)
+        {
+            enabled = false;
+            roomPanelOnly = true;
+            player = bridge; settings = bridge.Settings;
+            circleSprite ??= CreateCircleSprite();
+            ui = transform;
+            BuildUpgradeOverlay();
+            player.Changed += Refresh;
+            player.Inventory.Changed += Refresh;
+        }
+
+        // Lend the actual existing panel to a room canvas; costs, cooldowns and callbacks stay unchanged.
+        public void OpenRoomUpgrade(Transform parent, Facility facility, Vector2 position, float scale)
+        {
+            if (roomPanelParent != null || upgradePanel == null || player == null) return;
+            selected = facility;
+            hasSelection = true;
+            roomPanelParent = upgradePanel.parent;
+            roomPanelSibling = upgradePanel.GetSiblingIndex();
+            roomPanelPosition = upgradePanel.anchoredPosition;
+            roomPanelSize = upgradePanel.sizeDelta;
+            roomPanelScale = upgradePanel.localScale;
+            upgradePanel.SetParent(parent, false);
+            upgradePanel.localScale = Vector3.one * scale;
+            Rect(upgradePanel, position.x, position.y, roomPanelSize.x, roomPanelSize.y);
+            if (upgradeBackLabel != null) upgradeBackLabel.text = "← 패널 닫기";
+            upgradePanel.gameObject.SetActive(true);
+            RefreshUpgrade();
+        }
+
+        public void CloseRoomUpgrade()
+        {
+            if (roomPanelParent == null) return;
+            upgradePanel.SetParent(roomPanelParent, false);
+            upgradePanel.SetSiblingIndex(roomPanelSibling);
+            upgradePanel.localScale = roomPanelScale;
+            upgradePanel.anchoredPosition = roomPanelPosition;
+            upgradePanel.sizeDelta = roomPanelSize;
+            if (upgradeBackLabel != null) upgradeBackLabel.text = "← 기지 내부로 돌아가기";
+            roomPanelParent = null;
+            hasSelection = false;
+        }
+
+        // Rooms call this periodically so the clinic cooldown countdown stays current while the panel is open.
+        public void RefreshRoomUpgrade()
+        {
+            if (roomPanelParent != null && player != null && player.Initialized) RefreshUpgrade();
+        }
+
+        internal static string FormatWait(double seconds)
+        {
+            int total = Math.Max(0, (int)Math.Ceiling(seconds));
+            return $"{total / 60}:{total % 60:00}";
         }
 
         private void UpgradeSelected()
@@ -1803,6 +1899,7 @@ namespace BehindTheGear.HideOut
         private void Refresh()
         {
             if (trainingPanelOnly) { if (dummyPanel != null && dummyPanel.activeSelf) RefreshDummyPanel(); return; }
+            if (roomPanelOnly) { RefreshRoomUpgrade(); return; }
             if (resourceValues[0] == null || player == null || !player.Initialized) return;
             var state = player.State;
             resourceValues[0].text = $"{player.Health.CurrentHealth}/{player.Health.MaxHealth}";
@@ -1819,7 +1916,7 @@ namespace BehindTheGear.HideOut
             RefreshFacilityInput();
             if (storagePanel.activeSelf) RefreshStoragePanel();
             if (dummyPanel.activeSelf) RefreshDummyPanel();
-            if (upgradeOverlay.activeSelf) RefreshUpgrade();
+            if (upgradeOverlay.activeSelf || roomPanelParent != null) RefreshUpgrade();
         }
 
         private void RefreshHotspots()
@@ -2037,6 +2134,15 @@ namespace BehindTheGear.HideOut
             useFacilityButton.GetComponentInChildren<TMP_Text>().text = selected == Facility.Bed ? "저장하기" : selected == Facility.Clinic ? "치료 이용" : "물약 수령";
             bool missingPotion = selected == Facility.Potions && settings.Find(settings.rules.potionId) == null;
             useFacilityButton.interactable = !IsLocked(selected) && !missingPotion && (selected != Facility.Potions || player.Now >= state.potionsReadyAt);
+            if (selected == Facility.Clinic && !IsLocked(selected))
+            {
+                // Show whether treatment is available now, cooling down (clinicReadyAt) or unnecessary (full HP).
+                double clinicWait = Math.Max(0, state.clinicReadyAt - player.Now);
+                bool fullHealth = player.Health.CurrentHealth >= player.Health.MaxHealth;
+                useFacilityButton.interactable = clinicWait <= 0 && !fullHealth && player.Health.CurrentHealth > 0;
+                useFacilityButton.GetComponentInChildren<TMP_Text>().text = clinicWait > 0 ? $"쿨타임  {FormatWait(clinicWait)}"
+                    : fullHealth ? "HP가 가득 찼습니다" : "치료 이용";
+            }
 
             upgradeTitle.text = DisplayName(selected);
             upgradeLevel.text = $"현재 강화 단계  Lv. {level}";
@@ -2044,6 +2150,12 @@ namespace BehindTheGear.HideOut
             progressFill.rectTransform.sizeDelta = new Vector2(602f * (maximum > 0 ? Mathf.Clamp01(level / (float)maximum) : 0f), 22f);
             timerText.text = "강화 시간  ·  즉시 완료";
             if (selected == Facility.Potions) timerText.text = missingPotion ? "물약 정의 설정 누락" : IsLocked(selected) ? "셀레나 영입 필요" : $"수령 대기 {Math.Max(0, state.potionsReadyAt - player.Now):0}초";
+            if (selected == Facility.Clinic && !IsLocked(selected))
+            {
+                double clinicWait = Math.Max(0, state.clinicReadyAt - player.Now);
+                timerText.text = clinicWait > 0 ? $"치료 대기  {FormatWait(clinicWait)}"
+                    : player.Health.CurrentHealth >= player.Health.MaxHealth ? "치료 불필요 · HP 최대" : "지금 치료 가능";
+            }
             facilityImage.sprite = presentation?.facilityImage ?? AppearanceFor(level);
             facilityImage.color = facilityImage.sprite != null ? Color.white : new Color(.13f, .145f, .145f);
 

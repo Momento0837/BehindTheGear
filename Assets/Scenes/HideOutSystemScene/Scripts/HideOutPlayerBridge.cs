@@ -131,6 +131,23 @@ namespace BehindTheGear.HideOut
             });
             if (upgraded) UpgradeSucceeded?.Invoke(f, State.levels[(int)f]);
         }
+        // Treatment booth time-reduction stat (shorter clinic cooldown from the next heal).
+        public bool UpgradeClinicSpeed() => Change(s =>
+        {
+            if (!HideOutModel.UpgradeClinicSpeed(s, Settings.rules, out string message)) throw new InvalidOperationException(message);
+            return message;
+        });
+        // Treatment booth "-": one level down with a partial refund (rules.downgradeRefundRate).
+        public bool DowngradeClinic() => Change(s =>
+        {
+            if (!HideOutModel.DowngradeClinic(s, Settings.rules, Settings, out string message)) throw new InvalidOperationException(message);
+            return message;
+        });
+        public bool DowngradeClinicSpeed() => Change(s =>
+        {
+            if (!HideOutModel.DowngradeClinicSpeed(s, Settings.rules, Settings, out string message)) throw new InvalidOperationException(message);
+            return message;
+        });
         public void UpgradeStorage()
         {
             if (Time.unscaledTime < nextStorageUpgradeTime)
@@ -351,6 +368,7 @@ namespace BehindTheGear.HideOut
                 s.equipment = new string[6];
                 s.quickSlots = new string[3];
                 s.selenaRecruited = false;
+                s.clinicSpeedLevel = 0;
                 s.clinicReadyAt = 0;
                 s.potionsReadyAt = 0;
                 s.activeClock = 0;

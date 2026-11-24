@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 namespace BehindTheGear.HideOut
 {
     [DefaultExecutionOrder(-75)]
-    public sealed class ScareCrowTrainingScene : MonoBehaviour
+    public sealed class ScareCrowTrainingScene : MonoBehaviour, IHideOutFacilityRoom
     {
         public const string ScenePath = "Assets/Scenes/HideOutSystemScene/ScareCrowScene/ScareCrowScene.unity";
         public static bool IsActive { get; private set; }
