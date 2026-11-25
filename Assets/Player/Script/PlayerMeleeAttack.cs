@@ -17,6 +17,21 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     [SerializeField] private int attackEffectSortingOrder = 2;
     [SerializeField, Min(0f)] private float attackEffectBackwardOffset = .2f;
 
+    [Header("Sound")]
+    [Tooltip("콤보 1/2/3단 휘두르기 소리. 비어 있으면 Resources/Audio/SFX/Player_Swing_01~03을 사용합니다.")]
+    [SerializeField] private AudioClip[] swingClips = new AudioClip[3];
+    [Tooltip("몬스터 피격 소리. 비어 있으면 Resources/Audio/SFX/Monster_Hit을 사용합니다.")]
+    [SerializeField] private AudioClip monsterHitClip;
+    // Hit is intentionally louder than swings so impacts read clearly over the whoosh.
+    [SerializeField, Range(0f, 1f)] private float swingVolume = .6f;
+    [SerializeField, Range(0f, 1f)] private float hitVolume = 1f;
+    [SerializeField, Range(0f, .5f)] private float pitchJitter = .05f;
+
+    private const string SwingClipResourcePrefix = "Audio/SFX/Player_Swing_0";
+    private const string MonsterHitClipResourcePath = "Audio/SFX/Monster_Hit";
+    private static bool missingSfxWarned;
+    private AudioSource sfxSource;
+
     private BoxCollider2D playerCollider;
     private readonly Collider2D[] hitBuffer = new Collider2D[16];
     private readonly HashSet<MonsterFollowController> hitMonsters = new();
@@ -50,7 +65,10 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     {
         if (target == null || Time.time < nextAttackTime) return false;
         nextAttackTime = Time.time + attackCooldown;
+        // UI-triggered training hit: no animation/ResolveHit runs, so these sounds play exactly once here.
+        PlaySwingSound(1);
         target.ReceiveMeleeDamage(ResolveSwingDamage());
+        PlaySfx(monsterHitClip, hitVolume);
         return true;
     }
 
@@ -58,6 +76,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     {
         playerCollider = GetComponent<BoxCollider2D>();
         movement = GetComponent<PlayerMovement2D>();
+        SetupSound();
         monsterFilter.SetLayerMask(monsterLayers);
         monsterFilter.useTriggers = false;
         PlayerInputReader input = GetComponent<PlayerInputReader>();
@@ -72,6 +91,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         nextAttackTime = Time.time + attackCooldown;
 
         AimSwingAtMouse();
+        PlaySwingSound(1);
         ResolveHit(facingDirection);
     }
 
@@ -89,6 +109,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         if (!comboHitPending) return;
         comboHitPending = false;
         PlayComboEffect(attackIndex);
+        PlaySwingSound(attackIndex);
         ResolveHit(facingDirection);
     }
 
@@ -124,6 +145,53 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
                     }
             }
         }
+        // One hit sound per swing, no matter how many targets were damaged.
+        if (hitMonsters.Count + hitReceivers.Count > 0) PlaySfx(monsterHitClip, hitVolume);
+    }
+
+    private void SetupSound()
+    {
+        if (swingClips == null || swingClips.Length < 3) System.Array.Resize(ref swingClips, 3);
+        bool missing = false;
+        for (int i = 0; i < 3; i++)
+        {
+            if (swingClips[i] != null) continue;
+            swingClips[i] = Resources.Load<AudioClip>(SwingClipResourcePrefix + (i + 1));
+            missing |= swingClips[i] == null;
+        }
+        if (monsterHitClip == null)
+        {
+            monsterHitClip = Resources.Load<AudioClip>(MonsterHitClipResourcePath);
+            missing |= monsterHitClip == null;
+        }
+        if (missing && !missingSfxWarned)
+        {
+            missingSfxWarned = true;
+            Debug.LogWarning("[PlayerMeleeAttack] 일부 공격 효과음이 없어 해당 소리는 생략됩니다. "
+                + "Inspector의 Sound 항목 또는 Resources/Audio/SFX/Player_Swing_01~03, Monster_Hit을 확인하세요.", this);
+        }
+
+        sfxSource = GetComponent<AudioSource>();
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.playOnAwake = false;
+            sfxSource.spatialBlend = 0f;
+        }
+    }
+
+    private void PlaySwingSound(int attackIndex)
+    {
+        int index = attackIndex - 1;
+        if (swingClips != null && index >= 0 && index < swingClips.Length)
+            PlaySfx(swingClips[index], swingVolume);
+    }
+
+    private void PlaySfx(AudioClip clip, float volume)
+    {
+        if (clip == null || sfxSource == null) return;
+        sfxSource.pitch = 1f + Random.Range(-pitchJitter, pitchJitter);
+        sfxSource.PlayOneShot(clip, volume);
     }
 
     private int ResolveSwingDamage()
