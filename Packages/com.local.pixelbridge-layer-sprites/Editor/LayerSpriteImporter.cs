@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
@@ -9,7 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace PixelBridge.LayerSprites
 {
-    [ScriptedImporter(1, "pblayers")]
+    [ScriptedImporter(2, "pblayers")]
     public sealed class LayerSpriteImporter : ScriptedImporter
     {
         private const string ScriptGuid = "5faab248ec39495cbb01a152c0f0ece0";
@@ -67,6 +68,9 @@ namespace PixelBridge.LayerSprites
                 foreach (var item in pending) ctx.AddObjectToAsset(item.Key, item.Value);
                 ctx.SetMainObject(index);
                 pending.Clear();
+                // Publish only complete exports. Project PNGs are written outside the import worker.
+                ZipFile.CreateFromDirectory(output, ctx.GetOutputArtifactFilePath(LayerSpriteFiles.ArtifactName),
+                    System.IO.Compression.CompressionLevel.NoCompression, false);
             }
             catch (Exception error)
             {

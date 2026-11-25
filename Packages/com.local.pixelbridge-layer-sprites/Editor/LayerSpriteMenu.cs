@@ -42,8 +42,7 @@ namespace PixelBridge.LayerSprites
                 File.WriteAllText(link, guid);
             }
             AssetDatabase.ImportAsset(link, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
-            Selection.activeObject = AssetDatabase.LoadMainAssetAtPath(link);
-            EditorGUIUtility.PingObject(Selection.activeObject);
+            LayerSpriteFiles.Queue(link, selectFolder: true);
         }
 
         [MenuItem(SetExecutableMenu)]
