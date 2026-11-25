@@ -1,0 +1,1906 @@
+[
+  {
+    "Path": "Assets/!Animation/Selena/Selena_Walk.png",
+    "Existed": true,
+    "SHA256": "F68A4FB56EEC5C7367FF8A795B10D07EB8B3CAE7D7164508231F95CDE3F10A66",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!Animation/Selena/Selena_Walk.png.meta",
+    "Existed": true,
+    "SHA256": "9E2354D6990B3A2FF7FB7721286B756CDFF49C5534BB67FF1A95B4FA2C9BDAC4",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Curser.png",
+    "Existed": true,
+    "SHA256": "D7BC77039E297ED655DB5DAB16FA6D5E431EB8CBAE7C28FD7D0018AC3C43E1DA",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Inventory_Tutorial.gif",
+    "Existed": true,
+    "SHA256": "C90A7BE8CE55A5A31E8DAFEA90394D4A9C7B3437C9E5B8C2BF489C2048F6AAE5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Inventory_Tutorial.gif.meta",
+    "Existed": true,
+    "SHA256": "4DF887A6BFA565D6A83D34064FFE6FF2006AC18177B08005391C022A545BACA8",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Red_Cloth.png",
+    "Existed": true,
+    "SHA256": "79F10C31FA9F5079660ABC3DFE2FBFBB4F9790194E1E764BD06FA4D04D6C929B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Red_Cloth.png.meta",
+    "Existed": true,
+    "SHA256": "BB1834445DB93B4E3D09CC284FB931FCBD10B70B1044E73753D58E7200525651",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Team_Logo_A_Clear.png",
+    "Existed": true,
+    "SHA256": "B38D9F453368C88568F3FCDA6EF10563DCFCA17DC80F33FA681F2C4E8F9C21F5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/Team_Logo.prefab",
+    "Existed": true,
+    "SHA256": "F605E3BAD3DFBBC30EAAAA783CC25BFEDE96269CBF73A8BE9297A7115F42DD4D",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/W.gif",
+    "Existed": true,
+    "SHA256": "9D4D43581B2286027BF9BEB94C4F78858CF0ECDD91DC91CDD13B8F31759E07D3",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/!UI/Other/W.gif.meta",
+    "Existed": true,
+    "SHA256": "468665863636E4D6E2B787F56A7690CC155CA9D2B944C35BB6A6DFCBC2246CA7",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/BaseConnectionBuildCheck.cs",
+    "Existed": true,
+    "SHA256": "2CF8A0155B1DA3EBAE99E67A1CE01D902893CEE55E2F98F1042FD0E634A860AC",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/BaseConnectionBuildCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "77174EC49BED280C9A62B0151C96B4241F523B0135B200FAAF70F09543EB8192",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/BaseSelenaRenderCheck.cs",
+    "Existed": true,
+    "SHA256": "8846474313632958A4393889B75BD72034A90D4A96A1AE263794A998C80B9216",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/BaseSelenaRenderCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "A7695E1FBACEB26804250E6E0E12A44162EBB88CF8203E7C65428624DBFA2A64",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/CloakIconBuildGuard.cs",
+    "Existed": true,
+    "SHA256": "F2415F27A2E134AF63503078268BE97C0BCE65AB0A11C18EA083290C145690F6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/CloakIconBuildGuard.cs.meta",
+    "Existed": true,
+    "SHA256": "2A7FC6A2CFE03A77611C0D514D5C0AA7DB7425B1EE2AE837E0A7A2D7F63C83F5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/ConvertPortalTutorialGif.ps1",
+    "Existed": true,
+    "SHA256": "76DFA7938BC3B0B62669ABDA1F4C078A53C2C84EBA8F418048B251B581AA6CB8",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/ConvertPortalTutorialGif.ps1.meta",
+    "Existed": true,
+    "SHA256": "FE7697923F61ED955270C3B06F245C872BA8A925BF56E81276BABACE6D9A9FAB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/DialogueCameraReturnCheck.cs",
+    "Existed": true,
+    "SHA256": "98A98A6E1EE9F99C72599EE6083F1E94CC889CD80D4C82C844A426D72EAB3B49",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/DialogueCameraReturnCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "E7E69563483501028AC78424BD2312D5B892AC1D5FB2A8038B47A38C22861511",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/DialogueExpressionImporter.cs",
+    "Existed": true,
+    "SHA256": "3DF2DC3310360E3437C46763516288538D4F832F6CD288B2E0E63D44F9650A16",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/DialogueExpressionImporter.cs.meta",
+    "Existed": true,
+    "SHA256": "688ED1E6A633993DC1FE795A753504847BFBD6F55EBBC12EE485153538EE0E53",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/EditorAudioDiagnostic.cs",
+    "Existed": true,
+    "SHA256": "AE2B3B0AD551B6137F58926798A7BDF658CEA0664E82227490ADAB5C764A3B59",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/EditorAudioDiagnostic.cs.meta",
+    "Existed": true,
+    "SHA256": "A1F7F79A1F1EF374DAF05CEC2948F105CED34E512677F1B200E3207A23558DB5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/GarbageBallisticCheck.cs",
+    "Existed": true,
+    "SHA256": "CCBF48BF6D3F16EA149D07405377A8207952FAB48DC853BDB74E31A45FBD5510",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/GarbageBallisticCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "A366C84841755451800997879FD96C92C596DAF3FE223C3D205D1680442AD095",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/GarbageEquipmentSequenceCheck.cs",
+    "Existed": true,
+    "SHA256": "CE8E954F2F0151F9FAAB3C58E62CD62BF02D33FB83175B8C30869B63444F0795",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/GarbageEquipmentSequenceCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "A59411BD01F56C1FCF58A3D0E2DA2E05CB724D041F9425DFE8563AE0E5AA14B7",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/InventoryTutorialGifImporter.cs",
+    "Existed": true,
+    "SHA256": "73F018CAEB3B44D7DAFADA3A5A702E26DD4CD75485624F1720D678EEC3E144DE",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/InventoryTutorialGifImporter.cs.meta",
+    "Existed": true,
+    "SHA256": "015E7DC9BE06AF427F8070EAAC04B43F0309CDC9FF32C1CA4FBB9D81DD75C35F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/MarketDialogueCheck.cs",
+    "Existed": true,
+    "SHA256": "DC32F563237C5744336203BBAAA93994E49F2A7F4A773A1771EF5517317DF475",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/NovemberPolishCheck.cs",
+    "Existed": true,
+    "SHA256": "8DACE977E51B31974A4450C5413F203F6394D1CE5BCE5315950DA795CB9BCED3",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/NovemberPolishCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "18F2C77AA8322F357898D9FEB0E31DCD4DB0BEA36359A8EC13FC07385094937E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/PortalArrivalCheck.cs",
+    "Existed": true,
+    "SHA256": "4F1B91ECFBE5F7B5F20DEE2A2A1B71660BFC1F21C6EAA2CF724B771EFBF83359",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/PortalArrivalCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "B62E2C698F22EA20A5D825DD061160FF8C9CF1637962409BB31507A76F45BF28",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/PortalTutorialGifImporter.cs",
+    "Existed": true,
+    "SHA256": "E8EB749713D3F3EF6611764663287310CEEAD9A0903F09B41162C9767B996F7C",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/PortalTutorialGifImporter.cs.meta",
+    "Existed": true,
+    "SHA256": "522A45989F4BD3DB92220040B2501030BFF21C68A33721A2F4A23479579017EA",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/RedClothIconImporter.cs",
+    "Existed": true,
+    "SHA256": "DC44E77F2FA60903DF4B13B88AEB0051FA262F396B8436508F27BAB9F81BBC36",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/RedClothIconImporter.cs.meta",
+    "Existed": true,
+    "SHA256": "F2A00661E27D1FBCAB96C940A714904384A0F89B346492A00B2592A9DD32137E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaDialogueRenderCheck.cs",
+    "Existed": true,
+    "SHA256": "38763AF3FEA98B57AC52A28E79566244C0A55E50F30743CE5FB01E379DEA492F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaDialogueRenderCheck.cs.meta",
+    "Existed": true,
+    "SHA256": "773925D822BBE872765A3DCDB5C2A63A11F560006D79865BF5F9091FD76C7D9E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaDialogueSetup.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Editor/SelenaDialogueSetup.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Editor/SelenaFontBuildSetup.cs",
+    "Existed": true,
+    "SHA256": "A880A7A112732AFF23E90F727AF763CA1C7900FF2A504638E7D2FC97552E1E13",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaFontBuildSetup.cs.meta",
+    "Existed": true,
+    "SHA256": "C18CE4B607BEECE03FDA2E52119D661C19552067FF3EE3E52C7931DADB9426D4",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaWalkSetup.cs",
+    "Existed": true,
+    "SHA256": "47C9BCCAD3C17F81A0E960969C1F378206977B693628E792AA9584DB4AF93DD6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/SelenaWalkSetup.cs.meta",
+    "Existed": true,
+    "SHA256": "969BA974BCF66BAA4B41A49D178347F49EE7185BFF0DCA81EA16A61F780D29B8",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/TreatmentRoomSetup.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Editor/TreatmentRoomSetup.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Editor/V004BuildRequest.cs",
+    "Existed": true,
+    "SHA256": "29BDD8ADB1546D0B02AF15B71B58395F3B9CFDF6353A192FECC2FE7A8E0BFE6D",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V004BuildRequest.cs.meta",
+    "Existed": true,
+    "SHA256": "8DF3E8C91F2D68D8F181A7A10A004DA38A714411460E02068437E8AACE7141AF",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005AspectBuildRequest.cs",
+    "Existed": true,
+    "SHA256": "5C15E1C43478B451B483BC94087EF204FE35BB4C6A8ADC945C1F18B584F55E4B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005AspectBuildRequest.cs.meta",
+    "Existed": true,
+    "SHA256": "76EE3D34013B74BBCAB97343711CABF1B15280775DB875EFF14B568C0331E747",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005BuildRequest.cs",
+    "Existed": true,
+    "SHA256": "5944EF066C8B19B92A3B317271E18DC5B3B36E992D2D66E2128C4159F3C48065",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005BuildRequest.cs.meta",
+    "Existed": true,
+    "SHA256": "DA5DD1322987BCE21CE60E085A8039056CAF58180398B0CC7CE3B4A6AEA84306",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005SelenaBuildRequest.cs",
+    "Existed": true,
+    "SHA256": "9AE54B5B1D2722D9E9473B1196E2D5632CEEA2E8B09D18A98AB4B9B64C6827B9",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V005SelenaBuildRequest.cs.meta",
+    "Existed": true,
+    "SHA256": "DE26088238D85A20F0D016DEFB3FDBDFEACA3D5E16D10F6BCCB1892A36F8B06E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V006BuildRequest.cs",
+    "Existed": true,
+    "SHA256": "8D595FB0C750505E3A028513779D09C659B981B0E3EF544D469A93EFFFA2ED90",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Editor/V006BuildRequest.cs.meta",
+    "Existed": true,
+    "SHA256": "8B67276EDA1AB119696EBB397560BCD27E1916BC37CD245C72FFD57883884636",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Monster/Scen/MonsterFollowController.cs",
+    "Existed": true,
+    "SHA256": "1F8E8AE66EDE1DE64B6610A92927C5A40BE5EE6E0687D0E3F2A49C9861A2BD90",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/PlayerMovementDemo.unity",
+    "Existed": true,
+    "SHA256": "00723813559ABBEE5994BE52A4388360F92EC20FAB940E5B55395CE1E7768812",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/AutomaticNpcBubble.cs",
+    "Existed": true,
+    "SHA256": "3CE12669D7FD5AED4AD1DABBADB3D0186D13632FF0F3D4EF309C75A73F0ED921",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/BaseArrivalTutorial.cs",
+    "Existed": true,
+    "SHA256": "61DA2ADE0CCE15B1491CC8E87A8CC29A7CFF5ECA0E81907EE1F685D4FC1248C8",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/BlackMarkerNpc.cs",
+    "Existed": true,
+    "SHA256": "A467BBEB0FD3897A5B9680FDDBB756D64C873D0B2B21450AD24613037DF74C78",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/ControlHintAnimation.cs",
+    "Existed": true,
+    "SHA256": "C96F4D23B0F26E6868B559299A717EF88ADA667BD6F8FFDBEA6AEF0788DE7EF8",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/ControlTutorialUI.cs",
+    "Existed": true,
+    "SHA256": "DF00892B2733BB2286228AA36E718AA403C84C0E361C59102985008FB5737454",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/ConversationDialogue.cs",
+    "Existed": true,
+    "SHA256": "039A3393861A8DBB7665243A71A439EA0D48FB989EA39974E2C7EB0BB878BA5E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/DialoguePortraitLibrary.cs",
+    "Existed": true,
+    "SHA256": "439FD618228061A7484A704A993FFA613535914113C61188C44AE98DC5F66252",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/EquipmentTutorialHighlight.cs",
+    "Existed": true,
+    "SHA256": "A52F16A76D816355873FF7F8C21564CEA6A86FFBF8B028DBAC44F5B883F167C6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/GroundSteam.cs",
+    "Existed": true,
+    "SHA256": "4C15DA56CF8A4AB018BDE0C9598936776FD8D7CF5731164463FF15E0CA122377",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/GroundSteam.cs.meta",
+    "Existed": true,
+    "SHA256": "138FA3D4F0189B2CADFA9F823B69493D0B478657BB23F38ABF474C985E8C6601",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/InGameQuestHUD.cs",
+    "Existed": true,
+    "SHA256": "E115708551319007C3228084EC454264DAD4DF897FF465F04DFE98F7DF400E72",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/InGameSkillHUD.cs",
+    "Existed": true,
+    "SHA256": "B39EFD0EABBD0869953799BFD8BE721F483F94E094770637D345B632AD0049CD",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Player/Script/InGameVitalsHUD.cs",
+    "Existed": true,
+    "SHA256": "5D452107B66DCF1D43D81083AB2E122D8000919B136F84E3B1EC788B99250385",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/MarketNpcBubble.cs",
+    "Existed": true,
+    "SHA256": "DC118CC61A8155B8767198D07211F50C31BE0A74E68F0E345F782EC828A39A71",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PersistentPlayer2D.cs",
+    "Existed": true,
+    "SHA256": "A25B036430EE4E778C64637B274CA0D7858D302B2A58D55D5DD2A21F12E1370E",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PlayerCameraFollow2D.cs",
+    "Existed": true,
+    "SHA256": "B80F2FFA61535C982BF3DA8A8E5B917704ACD4DFF9257A5A27FAE104B5420D0A",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PlayerInputReader.cs",
+    "Existed": true,
+    "SHA256": "C98098E27A091C2D69B04DECDD112589831FBC88665405892A53FEFB6AB05A55",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PlayerInteractionController.cs",
+    "Existed": true,
+    "SHA256": "5C785A6D16B32F7065FAB1B679B561EBF6B8BE138322FA2E5C408D2B4A72A670",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PlayerMeleeAttack.cs",
+    "Existed": true,
+    "SHA256": "CF833C68A71A6E54CC57EC67C9BDDB577165160FECA832C356FFD27121DE5567",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PlayerMovement2D.cs",
+    "Existed": true,
+    "SHA256": "59BC9B99A15EFA1C3BEE70B446E5EC8FFC0417864A0A9FC79DCC7423FB0C8857",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalArrival.cs",
+    "Existed": true,
+    "SHA256": "6AB9E83958F8E4D0BD014E4748CCD41734D9916DD781B20C48D2394493AFD6F1",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalArrival.cs.meta",
+    "Existed": true,
+    "SHA256": "B56DD511E9C26C08550C1A8AC9F806C2D044B3A40B2C71E7F27421B5BAD398E1",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalDeparture.cs",
+    "Existed": true,
+    "SHA256": "EBF3FC223503FCFD4AC154E2F6A333EEAB1B6C19276C052AF7BCC0A624036971",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalDeparture.cs.meta",
+    "Existed": true,
+    "SHA256": "F83C365D20B109D8C5F7C6264A6426687DE125CF732D09083313556BE53658B2",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalTutorialVisual.cs",
+    "Existed": true,
+    "SHA256": "DA3AB095DF002D7A53F7E12BC5B149BCE3D61A25838F76BFAB56EEA89B7F27F7",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PortalTutorialVisual.cs.meta",
+    "Existed": true,
+    "SHA256": "74D27838731E3A299459EBB479DB5C135FCCF288765689D5B3B272F6B894D551",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/PrototypeScreenEffects.cs",
+    "Existed": true,
+    "SHA256": "1282B4CA6E00D51F4A79AD4276FA70127157360EC80654B4691CB7BFE4A0C6D5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/ScenePortal2D.cs",
+    "Existed": true,
+    "SHA256": "12FB819641F955B9530265BA5CBC7894EB025979D5798CF78C0EFC596F0216A0",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/SkillSlotIconGraphic.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Player/Script/SkillSlotIconGraphic.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Player/Script/StorySceneFlow.cs",
+    "Existed": true,
+    "SHA256": "876BA16D5278C547189B2E13BBDFDD1585E0A6F3A18DC9AE25BEA00A572A479B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/StorySceneFlow.LaterChapter.cs",
+    "Existed": true,
+    "SHA256": "F74E8F630D1590A5C969D3EEA19401F18ACD4576AC620E6170DCFE663C8D01FC",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/StorySceneFlow.Pursuit.cs",
+    "Existed": true,
+    "SHA256": "62E9E4CBCF6110CE0EBF385F3D9ADF75CFE8E952D8C10E3044684F232BBB310F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/StorySceneFlow.Pursuit.cs.meta",
+    "Existed": true,
+    "SHA256": "52AA07597478538A845130F1D3B0745A23AB7E18BAEE053E202577D54DAC0899",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/StorySceneFlow.Tutorials.cs",
+    "Existed": true,
+    "SHA256": "909D5C0F8423D2A24C8FFFF612E3831F4F2CF3553467DEB7F48A1BA927B3D3C7",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/WindowsWindowAspect.cs",
+    "Existed": true,
+    "SHA256": "8547D282A849994517FF238124C5BA28DE9AE9C2AC020FEE28833E066E20B7A6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/WindowsWindowAspect.cs.meta",
+    "Existed": true,
+    "SHA256": "9BC9753AF7325DE5E0218F1E051E062BE9808A6F35263A0474EB4B83A73612AB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/WindowsWindowedStartup.cs",
+    "Existed": true,
+    "SHA256": "8FFF2686D6CBBE7605FB278F0F4AE81CF5E042721E7B77DED17347FD8B9902ED",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Player/Script/WindowsWindowedStartup.cs.meta",
+    "Existed": true,
+    "SHA256": "256A8310B1FA9EEB493C4028B65607B199C04123E04F9A4DB3906B083F05CF27",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes",
+    "Existed": true,
+    "SHA256": "FD8CDEF6C88064E09C79CB3B0A30967997C26D5166BEFB47C72EE96F0DECB7CE",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes.meta",
+    "Existed": true,
+    "SHA256": "550BB739A6B8C2A59153E75A214BCEF09750A2BAD503039FF68C673C4EF8BB9C",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Inventory_Tutorial.json",
+    "Existed": true,
+    "SHA256": "B74B0CDAD68A4C5840E0C813AFFF6C80D294E9D212D5E1E47680C74A6280C893",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Inventory_Tutorial.json.meta",
+    "Existed": true,
+    "SHA256": "5921453FFF2656ACD263B853C3783532759B979533EF8951EC5CAB4C4EA5EE9A",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Portal_W_Tutorial.prefab",
+    "Existed": true,
+    "SHA256": "18DA1DE50D68CB86673DBC9FE029E006EB525F261FE07A34B1F1E2C1BC89B918",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/Portal_W_Tutorial.prefab.meta",
+    "Existed": true,
+    "SHA256": "C1F00E6CA7C37D8ACC6A9188E3B0C76BA8D88B229954340EFA3CF36F40FEDAD6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/W_Frames.bytes",
+    "Existed": true,
+    "SHA256": "9A87E384A2613C565ADFD6C9E49F7EB58C0094102031C1FB007F03F0A45BD515",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/W_Frames.bytes.meta",
+    "Existed": true,
+    "SHA256": "8971294E941C9B9A0B64415F25976CA7FBE8E827D9D119EDC94E2F783E18C11B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/W.json",
+    "Existed": true,
+    "SHA256": "6518481B20786A80076974FEB74E3E12C027505B001FD030BEFAE0C5DCEFF573",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/ControlHints/W.json.meta",
+    "Existed": true,
+    "SHA256": "67490F0EB60BBC771003686800E159CCA4008065652500D791DA82F64B525031",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/base_upgrade_tutorial.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/cutscene_conversation.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/cutscene_conversation.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/equipment_complete.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/equipment_complete.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/equipment_tutorial.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/equipment_tutorial.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Expressions.meta",
+    "Existed": true,
+    "SHA256": "6C3A6643E1AB61318A06F3A13953E388DE882771E2C2575E59A997EB4AAD3B36",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Expressions/README.txt",
+    "Existed": true,
+    "SHA256": "40FC628FAC6CB9CDAF9852E0156EB90EB7E3688543F2D72D554A92B595E3EADE",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Expressions/README.txt.meta",
+    "Existed": true,
+    "SHA256": "65F3BCA348A3E8E0D4F44433AA57414D642E04B4B3DF5AAF224067126AA2A785",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset",
+    "Existed": true,
+    "SHA256": "862FD0A9AF9C20DDEA0420340066C495D48E843E2376634F1A4313FB36A90DBB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset.meta",
+    "Existed": true,
+    "SHA256": "7153D96701BF78AFE56189D5A399D2D848D31A619F9DCED11231F65BB62C25D7",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest_4.meta",
+    "Existed": true,
+    "SHA256": "F2593D00F6C1F9D4D0B2438A1695BA9EFAAB9B1B43AA9FC153245DBE5529D654",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest_4/selena.json",
+    "Existed": true,
+    "SHA256": "F5BC5B43FBF6BB115A8A4CF5D1AC064C53E333C935932403486A64F21B2691B9",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest_4/selena.json.meta",
+    "Existed": true,
+    "SHA256": "0E39522EE134ABB5FE914054265EB6C11AAA1B6D47C82A2C0A4750983CA4555C",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/forest_clear.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/forest_clear.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest.meta",
+    "Existed": true,
+    "SHA256": "8E3C5F5E60ABDE9F4AEE39FF7EAAD22764FAED3841091C5DEB8D4238B715A82B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest/cutscene_conversation.json",
+    "Existed": true,
+    "SHA256": "676DA53FFB52566FC2D50D905331DB967BF3BEC4AD2DE2B6A1A8F591590DB022",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Forest/cutscene_conversation.json.meta",
+    "Existed": true,
+    "SHA256": "BA58C5167BBE25E125853FF8919222B188B5387D92EBF71A0E495F46FF46C4CE",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/garbage_monologue.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/garbage_monologue.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage.meta",
+    "Existed": true,
+    "SHA256": "B0DCB24997FCB67D4F419C523117BE7BED28A92D27EED0AB9DB66AD282D0C1AB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_monologue.json",
+    "Existed": true,
+    "SHA256": "A28F134AAA261F706457533B2F94C610FC7CAB30843EEBF18EBDD371EB69AD87",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_monologue.json.meta",
+    "Existed": true,
+    "SHA256": "7441A669DB1322094A29253EC8283B5E676934031072A27AE448096A51660094",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pickup_monologue.json",
+    "Existed": true,
+    "SHA256": "D2C80689D7994C7FE64AB21E96AD2E2F7762CAE85D670CC2C9DC960AA69BBA4F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pickup_monologue.json.meta",
+    "Existed": true,
+    "SHA256": "E81076D4A0F3F7A2862C7EE6E99D5DCEC372FF38BB6F90FBEAEB2D886C2AA923",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_monologue.json",
+    "Existed": true,
+    "SHA256": "35AFED8D1BF9AFA3B8A16EACF898897697990CF8AF9DD1183CDF92F806EDDB3F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_monologue.json.meta",
+    "Existed": true,
+    "SHA256": "33BC2AA0410C2540077E17F27FDB203F81A2618CC25A8EA73D6A61CBC0F7074F",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_shout.json",
+    "Existed": true,
+    "SHA256": "428E661A29F01C54A7B3DDB3BA89FB24CD9BEACAA114003890F79D7BAABD04C5",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_shout.json.meta",
+    "Existed": true,
+    "SHA256": "F53E47A9C934A1F36E0C916043D7FC0144B4D22277503A09F59AC1403079976B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/PursuitTiming.txt",
+    "Existed": true,
+    "SHA256": "5E0372E79DAA0603DB37F13201A8400492F981CECF7754B1D24102ACE55E779C",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Garbage/PursuitTiming.txt.meta",
+    "Existed": true,
+    "SHA256": "43B12AAFC77ADE42F27D860496EA38ABAAAA6C20E84431FAFF90ABF72B10CE7D",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Hideout.meta",
+    "Existed": true,
+    "SHA256": "7138FE25690AB1D336A8BFB3C6E3CA8D85C83BCC314CD7240594B18223C4A8E6",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Hideout/base_upgrade_tutorial.json",
+    "Existed": true,
+    "SHA256": "A573EEC900DE9932A7D42F2B4AB6422F3C1F679DA37D4F0E27AC1352C11E2E9B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Hideout/base_upgrade_tutorial.json.meta",
+    "Existed": true,
+    "SHA256": "8B1497F251FAAEDAB85A931CBFFCC260D097AB3FFDC28D2A8B5B96C773195EAA",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_monologue.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_monologue.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_npc.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_npc.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_talk_reminder.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/market_talk_reminder.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market.meta",
+    "Existed": true,
+    "SHA256": "2A8DEAF167C495ED6E5B81D96EA7DC32846CBE8484851FAF2DA5A1024B427F0A",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/market_monologue.json",
+    "Existed": true,
+    "SHA256": "9A069778B1689B58BC55E0F0EB69395B71C8809E53A6640DF5F7C13159D2A0DB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/market_monologue.json.meta",
+    "Existed": true,
+    "SHA256": "AE22582350CE0B292142F842D8DFEF6F442CD45CDC527716C918F799CD7DB0B0",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/market_talk_reminder.json",
+    "Existed": true,
+    "SHA256": "C585525B250E8872FB4BA25627D815510B5C6755FFAD6502E68743B1213EB249",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/market_talk_reminder.json.meta",
+    "Existed": true,
+    "SHA256": "63B35D7A02718C051605CB8D847D0EB37B0F29E6D8757BCE9A29AC5A0FDC8A07",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_accepted.json",
+    "Existed": true,
+    "SHA256": "44A20F57B3EACB18F427A41D65D9385D0E85B5F5DD40DCFAA4E9C896FF733AF4",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_accepted.json.meta",
+    "Existed": true,
+    "SHA256": "8CAE83A5A1C945E47F99095B549E39F74DB72EB50E44C5197CA3F4695E5B9356",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_completed.json",
+    "Existed": true,
+    "SHA256": "749C50B2B428FECE1816AC4D3AB1254F60C1EDC55C398EAAEEF7545A5813192B",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_completed.json.meta",
+    "Existed": true,
+    "SHA256": "E69B2F907C0BE17B55858EE804E48A868E5A9DDBADCD0BB56D560B9C2677A730",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_offer.json",
+    "Existed": true,
+    "SHA256": "A96EFFAF65DD8C0EB8DC3467271322810D0023E8D89DEC87353173F611CF11FA",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_offer.json.meta",
+    "Existed": true,
+    "SHA256": "C6BCC7533697139DF3B353C4F6377091EA7D2B98539AC174107712B42E46A774",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_rejected.json",
+    "Existed": true,
+    "SHA256": "59DCA80318389D7E8F2CBE82E06C35EEBE2D040B46B1DB820A82232FE71F3893",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Market/quest_rejected.json.meta",
+    "Existed": true,
+    "SHA256": "DAF40F70C52C3E9EF1F871B0DBB3779E441AEF88911D55DBD3CCD3B2CE4BA586",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/neighborhood_conversation.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/neighborhood_conversation.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Neighborhood.meta",
+    "Existed": true,
+    "SHA256": "6C1FA7CD22764FECCA9F4C227C0A4C9179F6648258647CBE4A0106BEA24C8930",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Neighborhood/neighborhood_conversation.json",
+    "Existed": true,
+    "SHA256": "4948FFC592FAA16EBA8F97DE4D8E6FF477363A78A20036E1CEBAFA42D138E931",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Neighborhood/neighborhood_conversation.json.meta",
+    "Existed": true,
+    "SHA256": "52DD6F7890C12719D7494609B06B8DDEB378E6E9C66168204450AF221830AB19",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Portraits.asset",
+    "Existed": true,
+    "SHA256": "552AD3F5C1E265E934C62FCAEC95191016F2E866C0FF69B076710D870F163574",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_accepted.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_accepted.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_completed.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_completed.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_offer.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_offer.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_rejected.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/quest_rejected.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/selena.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/selena.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Selena.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Selena/selena_lines_pool.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Resources/Dialogue/Selena/selena_lines_pool.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Resources/Effects/HealthHeartbeatRipple.shader",
+    "Existed": true,
+    "SHA256": "52DC87C81D1556B0DF1365B9A35B30A80E3259814520758D9263834C2DA74372",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Effects/HealthHeartbeatRipple.shader.meta",
+    "Existed": true,
+    "SHA256": "8C188269E0441296B13290CE4BE6EED495FDA07EE905FC5213E7FC85E57BAA53",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Effects/WorldItemForeground.mat",
+    "Existed": true,
+    "SHA256": "F2C210A1FA0D9483948D7CDB5224C34C0FBF01AF66D25DC23BC470C29FF9E374",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Effects/WorldItemForeground.mat.meta",
+    "Existed": true,
+    "SHA256": "31F74181622E23A42E93B9E3490C69A137F2D47B9EA67A1B091733280182EAF3",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Effects/WorldItemForeground.shader",
+    "Existed": true,
+    "SHA256": "813CDA967BBD207D0C094B9498B304407CC64260E64A07D06B1A6256E28C6884",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Effects/WorldItemForeground.shader.meta",
+    "Existed": true,
+    "SHA256": "01821D5069D981978F550975100360A128C73A64FE9BBE6D6DAD10320BE27257",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Inventory/inventory_ui_text.json",
+    "Existed": true,
+    "SHA256": "80B1E98D75C57F699EB450A9581ACDC822239F5845A17EB795288C777C7E604D",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/RedCloth.asset",
+    "Existed": true,
+    "SHA256": "3FF4E9D1C1E8FDA333739F4E56D9E48036A7E44A0BB556E6F8790BA87D85ACBD",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/RedCloth.asset.meta",
+    "Existed": true,
+    "SHA256": "2241F33556CD8FAA7E3D2F6E1172BA7C9E369F6BA99D546180F0BF1BCA50AADE",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/Selena_Walk.anim",
+    "Existed": true,
+    "SHA256": "F8CD32C93247B7CECA8C26283017D7E4E4260231CD969E2A9D3F646F22A63724",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/Selena_Walk.anim.meta",
+    "Existed": true,
+    "SHA256": "1468A2E377C99AF5D5F5C997037ECEAD1DADBFBC3D21CEDCD1CC804D97C1DC20",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/Selena.controller",
+    "Existed": true,
+    "SHA256": "29D0DFA6556ED70AAC546DF912ED70D6B0F2EF3728929CEDF7F28C4B860DFE5D",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Resources/Story/TutorialGear.asset",
+    "Existed": true,
+    "SHA256": "02EE8822EECABEBBC70C87A6CCE9A6935DD31E5CAD21AE28572F0B6DD3D1C4FD",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/ManualSaveMenu.cs",
+    "Existed": true,
+    "SHA256": "198ED1FF7607B4AC55B86B59CE0C493B6974646C96091AC8FA500309FB458CC0",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/SaveConfirmButtonStyle.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/SaveConfirmButtonStyle.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/SaveConfirmGraphic.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/SaveConfirmGraphic.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Controls/SaveSystem/SaveGameSession.cs",
+    "Existed": true,
+    "SHA256": "5D3960DA772837E902A537DB2DEDF3E5D384DB1ABD4C1ED256D3F18B9F30E83F",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset",
+    "Existed": true,
+    "SHA256": "60D3EC0C8382FCC196C078FD819507A35984C8E2D36DDE2A84AF65A5FFF1B147",
+    "LocalChange": true,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity",
+    "Existed": true,
+    "SHA256": "FF80F6275A2E6ACA11593E8134DAB0710B76F92C168B758A9A8D1A811A245E84",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/ScareCrowScene/ScareCrowTrainingScene.cs",
+    "Existed": true,
+    "SHA256": "24718A5C4FDDFF074A355B5C9DDBC9CBABFE2E8870EECC4F854187C2161400E9",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutEntrance.cs",
+    "Existed": true,
+    "SHA256": "9434A2FDDDD974859FDE7BF5C71F233EAFB4365C95AE1704BF6B52C6D453B201",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutHoverRelay.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutHoverRelay.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutModel.cs",
+    "Existed": true,
+    "SHA256": "623ADFA82DE4281FC1B63AE2932C77B04DFEB8D57771C32C25EF15DD4C4D6841",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutPlayerBridge.cs",
+    "Existed": true,
+    "SHA256": "E8BDB70588F8BA258E5509108422C216918235C1B0E7C8D583C8541CF85B925A",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutScene.cs",
+    "Existed": true,
+    "SHA256": "BC403BC3ADFF835A590A52344D67F07D452BAC1413CFED1A50371D572E7D4959",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaBaseDialogue.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaBaseDialogue.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaGameState.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaGameState.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaLinePool.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaLinePool.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaPotionWatch.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Scripts/Selena/SelenaPotionWatch.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/Tests/Editor/HideOutPreviewEditor.cs",
+    "Existed": true,
+    "SHA256": "CECB1AE4ACF11DFD0C1EBABDB4744E5BCF75C56D340FDA12E11D9C6CC6EC3DC7",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentBed.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentBed.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentBooth.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentBooth.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCabinet.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCabinet.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCrate.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCrate.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCurtain.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentCurtain.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentDoor.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentDoor.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentFloor.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentFloor.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentGlow.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentGlow.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentIV.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentIV.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLamp.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLamp.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLampOn.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLampOn.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLightCone.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentLightCone.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentWall.png",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/Art/TreatmentWall.png.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/SelenaPoolTreatmentLines.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/SelenaPoolTreatmentLines.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentDialogue.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentDialogue.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentRoomScene.cs",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentRoomScene.cs.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentScene.unity",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/HideOutSystemScene/TreatmentScene/TreatmentScene.unity.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "Assets/Scenes/Inventory/QuestRewardExample.json",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Inventory/QuestRewardExample.json.meta",
+    "Existed": false,
+    "SHA256": null,
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Inventory/README.md",
+    "Existed": true,
+    "SHA256": "1ED6A9822761B259EEAAF33E8215EE828720D794772ADC6C0098028523FC4552",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Inventory/Scripts/InventoryUI.cs",
+    "Existed": true,
+    "SHA256": "793ED181BFCBA7611881D11504482BA0C7E7D5295994D0F032037F6D61DAC1BB",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs",
+    "Existed": true,
+    "SHA256": "38F8D5EAD7758F2416B5E7FB458B744DE904989AFD710220EF6937D9E8317A61",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Main/Forest.unity",
+    "Existed": true,
+    "SHA256": "BF4FE2204CD2EE08666B52CCA12BD1EACF1D55A58D51071BBE3ADA5146B36300",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Scenes/Main/Market.unity",
+    "Existed": true,
+    "SHA256": "E2A32057E096ECB6F5DD64801FBEFF0AC19513489C5E886A77BAC1F0A62AB3EC",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Settings/Renderer2D.asset",
+    "Existed": true,
+    "SHA256": "77F54E0F6B31E41250A02F648F8A87BBD155BC8120F9013C085E26815EEA4BF0",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Settings/WorldMotionEffects.shader",
+    "Existed": true,
+    "SHA256": "326B332F985E24DCBCB44B268531251A4BAE6A779DB01027598D9337478A9B20",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "Assets/Settings/WorldMotionEffectsFeature.cs",
+    "Existed": true,
+    "SHA256": "C1732D453B9EFC71F6F54F13C5D544BCC4E099EEB6D289FD5413E6683F920A09",
+    "LocalChange": true,
+    "Incoming": false
+  },
+  {
+    "Path": "ProjectSettings/EditorBuildSettings.asset",
+    "Existed": true,
+    "SHA256": "6E08575DBF82978625CACFA2547AD0AA8A8B4DD090B1A2BA83A44F65CE15D5E0",
+    "LocalChange": false,
+    "Incoming": true
+  },
+  {
+    "Path": "ProjectSettings/ProjectSettings.asset",
+    "Existed": true,
+    "SHA256": "29C4674872A0E8CFC834F840CB9FEDEFC16C2B62A33C5FBB0A1F923577B6C286",
+    "LocalChange": true,
+    "Incoming": false
+  }
+]

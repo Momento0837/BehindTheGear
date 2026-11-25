@@ -1,0 +1,2037 @@
+[
+  {
+    "path": "Assets/!Animation/Selena/Selena_Walk.png",
+    "exists": true,
+    "sha256": "F68A4FB56EEC5C7367FF8A795B10D07EB8B3CAE7D7164508231F95CDE3F10A66"
+  },
+  {
+    "path": "Assets/!Animation/Selena/Selena_Walk.png.meta",
+    "exists": true,
+    "sha256": "9E2354D6990B3A2FF7FB7721286B756CDFF49C5534BB67FF1A95B4FA2C9BDAC4"
+  },
+  {
+    "path": "Assets/!UI/Base.meta",
+    "exists": true,
+    "sha256": "C4A55B9C7858F6EDF79CD122ECB864E4AC9F3F32E6A25B84C035269968C9E82D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite",
+    "exists": true,
+    "sha256": "E0BA2E0CDB200DA54F726E22F28E3FDC700DF1AA622F8F9063D0AFF564E45F0C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.meta",
+    "exists": true,
+    "sha256": "850B7CE0777B6789CB73D77E9295877FF8B325213E4A321D5A4C680AE1AFD0E8"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.pblayers",
+    "exists": true,
+    "sha256": "4F4A40A2CE6A61B04C76BC84D7672EE25346CF010DBA0446EB79979D25F79538"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.pblayers.meta",
+    "exists": true,
+    "sha256": "DA62663AEF52986303A0A0722B3B4FCBFA7364EEF2BFAA6659D0339BA5C60424"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites.meta",
+    "exists": true,
+    "sha256": "3C7AB20283B09E9718374FC2BA0006F2E0A1DDE7DE54727EF8F087BC84EA64BF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Anvil.png",
+    "exists": true,
+    "sha256": "98CD545074FDFF0AB8BFCB84880E9BED19302EAE6490556FE5C97F5BD03866AC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Anvil.png.meta",
+    "exists": true,
+    "sha256": "137895E08627EDC2514329CED7C9B98A744F332A96256B2B2F4D5A7E0A938F69"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Back Chair.png",
+    "exists": true,
+    "sha256": "75CD9A8128B142C051C6C614D25AA25FEB3404E42BF3F5158425F345EC1905E5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Back Chair.png.meta",
+    "exists": true,
+    "sha256": "1185DC26018C03FA2116B188AD50660BD59DA7FE910FD92FD2AC86001633B0CE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bed.png",
+    "exists": true,
+    "sha256": "3D5D96BF558ED3A9D1059870FD4FC7DFE3F3F7F612165033FD84449050FD5CE1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bed.png.meta",
+    "exists": true,
+    "sha256": "6C4AAB31DFBAA13D54613BD081AAEF2A0C344554A100D4308C100BC6F399249F"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding (2).png",
+    "exists": true,
+    "sha256": "DADCB4E6EABD163229ED20634AB6855477B45D6B986B46766E16B0A1841E3F89"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding (2).png.meta",
+    "exists": true,
+    "sha256": "4C80EEDCFBB038905E98FC3A9843DAB1310ADADEA3B9A7D20CCBD46C8AACEF9C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding.png",
+    "exists": true,
+    "sha256": "40B60831C1DE2494EAF5B215221B081A699284C2A9D363CC437A2B1A0A974F71"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding.png.meta",
+    "exists": true,
+    "sha256": "773C6F006633214FEA4079D4FF787733141BA99F8A1FEE167AE147AFF6B60273"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Box.png",
+    "exists": true,
+    "sha256": "14CDE0B4E4C54B1564F7AC2635D1CDB47F7300F1FF017D3C2000AC970221163A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Box.png.meta",
+    "exists": true,
+    "sha256": "BF6E7F64ABE83A8A42138B5F718A7A4FCD577B0B48577866D52845D68A7BD642"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Cart.png",
+    "exists": true,
+    "sha256": "00A3EB3780AE1E86B7E5720C7C9E68FD3B47EFFF7E59003AE189A37FD653B9AA"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Cart.png.meta",
+    "exists": true,
+    "sha256": "B6FA0BCE33CEB43BC3C5050CCBD68AF11E47F7A175050AD9772E357F4D6571CC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair (2).png",
+    "exists": true,
+    "sha256": "51A637C259A7102AE95308D078928601C053353A8FF49D4E529E44AB82173B6B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair (2).png.meta",
+    "exists": true,
+    "sha256": "DE2B3DA268B35904331E6972C888106E6F2DED33C3F6FABA80D8C0C5C39F1EA5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair.png",
+    "exists": true,
+    "sha256": "46B952817F32B8568437460E15E1F3C397FE40A019AF2E42E7D3B7DD7F2455E8"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair.png.meta",
+    "exists": true,
+    "sha256": "7CBF960730EF7D23650209936245115F4C246438FEAF95013FAA3E585ECA05E2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (10).png",
+    "exists": true,
+    "sha256": "D4ADA300CF5E46C13055F8050F91CB157B056D357FAA86C468226C27C7D4A2B1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (10).png.meta",
+    "exists": true,
+    "sha256": "D71E954295425E01959C6B3375E7595E73D44FB8C77AF1E1917975725C4CE7C0"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (11).png",
+    "exists": true,
+    "sha256": "E76EDC4129DF6C791BE09EBDA5248B0377F60A5A936E8BD6FBCA67FFB3384E9A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (11).png.meta",
+    "exists": true,
+    "sha256": "03F4900F8338252C1D1FA21971DA23FC9E8D90120118124831CD7B4382A49651"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (12).png",
+    "exists": true,
+    "sha256": "3185CCFB846000D0411E430517BAE7E0077FB11C9BF047AB5EE7A501C84F1FC2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (12).png.meta",
+    "exists": true,
+    "sha256": "C7E0080C3A86AA8F67DA21BC7C1C7645DC173E86D06F7B6C150A1F915FEBC514"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (13).png",
+    "exists": true,
+    "sha256": "6C42DDF959D35574264B3788EC7703621C27EA44F84B55747C12B9FF0F472CC5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (13).png.meta",
+    "exists": true,
+    "sha256": "7B1C45ECFFAA1CD4549578C343576398F75C0FBA69EA6DCF17A2C967CA524308"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (14).png",
+    "exists": true,
+    "sha256": "2495E61A3FF20DDB382466D7CA838AC74CCA4DF752C464DC7C32F0C590C41D17"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (14).png.meta",
+    "exists": true,
+    "sha256": "806F517AFBB2BF7B0A795DE0CF2578418F684A0A1031FA5E24FBAD3AA5D9F156"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (15).png",
+    "exists": true,
+    "sha256": "03CE52928E81EEED7F3D0DB75C2921DD2456323A431F243DBDEE297797A5083C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (15).png.meta",
+    "exists": true,
+    "sha256": "EDB5E823EA5002E4F45386B9FA31D51A26F2B487090D578F71C76EA8FE4CF0A5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (16).png",
+    "exists": true,
+    "sha256": "A539093290881A58B484854DD6CD6E39F744C9490C35FD446DE747A3B59061EB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (16).png.meta",
+    "exists": true,
+    "sha256": "93F96D16D92B54FB6D5D40877C7E0AEE66C81CACE3DFC5128722AAFA2761D2FA"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (17).png",
+    "exists": true,
+    "sha256": "143DE49AC8BB5745FDDBB411FD7CD2CEBDEDFF8E57B1D11CAF38C6F7D41F2E25"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (17).png.meta",
+    "exists": true,
+    "sha256": "E1A998040C004EE8AA46F5164A3D2006ECAB64C854F726D4D9CFE785E7D7C0EF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (2).png",
+    "exists": true,
+    "sha256": "618CC0043A6E4AA1E9205F8236CA00B08B7EBE9A5CD51FB9DB31C08670C929BC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (2).png.meta",
+    "exists": true,
+    "sha256": "BF0661BB520E3413008F4DB874C92F6B781D7A37E477ED332F1F5155D3A017DD"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (3).png",
+    "exists": true,
+    "sha256": "0F5313EC7203C3A78D1E48766B514B9CA116DDBDDEF18E46516C97C166E47075"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (3).png.meta",
+    "exists": true,
+    "sha256": "74F8516A219D1EB41EEE1B3EFD63DA6BD05B2C7AF3D0703E1EC8742E7BE9FBE3"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (4).png",
+    "exists": true,
+    "sha256": "B1BD445F3424C0E17769A40D527B4A193C1E5FB9DFED9130A274DE52E2DDDB82"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (4).png.meta",
+    "exists": true,
+    "sha256": "CC724F1EA2E71C8EC6E76F2B75E50A45C5B9BD84ACA574592F30101DBDD27D4F"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (5).png",
+    "exists": true,
+    "sha256": "779A146156F82BB9357E63CCCDBC9B3E705C6B646D2FA178A3BB5E5196E135C1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (5).png.meta",
+    "exists": true,
+    "sha256": "9FA6FA9EBA2DB1446A970FD19578B5E14C70F62D41B6DEF47A5446F2487ABD10"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (6).png",
+    "exists": true,
+    "sha256": "541FD574B0B24CE071C3CEFE5A07FCF6B90E512FEFA5D69E886CDE34DC0CAEC2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (6).png.meta",
+    "exists": true,
+    "sha256": "AC44303C20B3B0794DDE1BC3C928F27AB651730B44B8751212113B1335BA6428"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (7).png",
+    "exists": true,
+    "sha256": "19BE9F32B962090D5F13E1235995AC4A41BCD9BA3C6DF55F2B876CC4D8EDEBDD"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (7).png.meta",
+    "exists": true,
+    "sha256": "EA0154A3DF49A419E70C171A82053DEE8F590E50B64FA219D894E9F717ADF441"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (8).png",
+    "exists": true,
+    "sha256": "0F5EFD36FB36635BFE951256F3D37D375068B6407CE593AA0756F89A8C42D1F6"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (8).png.meta",
+    "exists": true,
+    "sha256": "E86E7DDA228DEB71011BA862E13B9ED11288BA4C60B83C3F45CE8EC3197AC5EE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (9).png",
+    "exists": true,
+    "sha256": "383043D4520EECFD79C682D55C36848FB8D51C904FCDA81C54D11C058F203D41"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (9).png.meta",
+    "exists": true,
+    "sha256": "10974D2FA1360F429F0F71DB0E6588FD5ADEB3543BBC1333428968900E9AB396"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color.png",
+    "exists": true,
+    "sha256": "1DA681622F42BE3229238A73946F2EE0798A9B28C9BC54B88C9573588E35139B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color.png.meta",
+    "exists": true,
+    "sha256": "CC83AF446D09E5FB8C0E98EB7CD8393DA2C5D0B9B5C13225C59F6D7D96C954B9"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Covered Object.png",
+    "exists": true,
+    "sha256": "665E1FCDA62C517126333B6B3A66C43CD2EC74B03F5107BCAF7AE5D8D4135399"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Covered Object.png.meta",
+    "exists": true,
+    "sha256": "7C66D07C92B7B3D895D3B573A8B410F3341F53A84FE3DF8770DF73CAAD7A0277"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk (2).png",
+    "exists": true,
+    "sha256": "6E1FFF2E79A2C1294EBA6E8FD7016EFEEE1259CF303B3E5237D4C37EFA7D1638"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk (2).png.meta",
+    "exists": true,
+    "sha256": "3C5206CC22249C785B5DA19BB6C9E9304EC89803CDD452E01F88B8EA53D9E8F2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk and Trash Can.png",
+    "exists": true,
+    "sha256": "109E2C4676073E82838C7099A2E87A279AC498330F4AE5C4B3FFB91BE9B721FC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk and Trash Can.png.meta",
+    "exists": true,
+    "sha256": "75298F7EA802CCE85B54B7E84BF231D65A5F25AFE4EB3D06AE2C5EA254344DD2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk.png",
+    "exists": true,
+    "sha256": "D85A252FB13E1246CE090F30C3FC1205CDE94D03BB1540CB34EDF3227AE92C8D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk.png.meta",
+    "exists": true,
+    "sha256": "517114593683B6B1C980A8A8968DF8E4DE20E828F352EFF6FD26A7C4994554B7"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Dining Table.png",
+    "exists": true,
+    "sha256": "99C8E74051A22C8608B20974C9F5F4C24123FAE2000ED1446C8ADCD83034FCB6"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Dining Table.png.meta",
+    "exists": true,
+    "sha256": "2994CA7E55772D88464BAE6E9E55D25C70D711C737DD73AB603AB733CEAC26AE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Floor.png",
+    "exists": true,
+    "sha256": "5986F4432338821C7464CB1AB52AFEA1962CC599DB1F197EF56BA07DC07CDC7B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Floor.png.meta",
+    "exists": true,
+    "sha256": "25F68887748C3A35C323F61DABF68A3086A2FE4DCC7DB211A6E18AB32352FAAD"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Front Chair.png",
+    "exists": true,
+    "sha256": "C41959E6EC00B56474577936FE101AE5FE659A3B145AC97F26FB4286F83FCF55"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Front Chair.png.meta",
+    "exists": true,
+    "sha256": "8190522385514FC51FC6FBAC2A3A3B9A1D18E15ECA311932D1A5331DA42845B1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Furniture.png",
+    "exists": true,
+    "sha256": "37CDA193CB94EAF6B3786F4D39BAC95BF1A98D4BE240E6EF421EB6184943E207"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Furniture.png.meta",
+    "exists": true,
+    "sha256": "09E558FA82CBE2C8C2CADAB8EDFEF7E1C3B1109297F02372819C6674E9E00D60"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Handset.png",
+    "exists": true,
+    "sha256": "30DF53140F7103D3BD00E2A934464F5947C842430D975DA1839236CC523D3DF2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Handset.png.meta",
+    "exists": true,
+    "sha256": "AF4B3B7EACC283DFAD07D444CDE5858BC1F1CA4F33F47DAF49BF69D93AF34185"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Heating.png",
+    "exists": true,
+    "sha256": "8CA1F301B488DBB399BD9C1482BC7C79D9653AB4D98B85BA28487DD5398C2B6E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Heating.png.meta",
+    "exists": true,
+    "sha256": "AAB66F0EB39FCE604AFED8D09713FA30DE88B866879B33AE407C4C41815C0D3D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Instrument Panel.png",
+    "exists": true,
+    "sha256": "7B3E2B33C60F34FCC105BF7A7C0B15B5D86E599437B61E5157D19FFF3348B0E3"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Instrument Panel.png.meta",
+    "exists": true,
+    "sha256": "31BAC2DC5F3A51EC7D996959D11BB9214CE8E4C00884F64F8729178C26851252"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Kitchen.png",
+    "exists": true,
+    "sha256": "C0BEA505DDF9F8C9285D94BE1531D046DD7761006508EBF69FCECFF8F2D19110"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Kitchen.png.meta",
+    "exists": true,
+    "sha256": "F8B80341F71EE37F97E192E850FC5AD4306BAF0AEC98844CAEFECBEDE9270550"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 3.png",
+    "exists": true,
+    "sha256": "B2CDFD2263AA6FFBAF9D62449729E149D08E3AC7F96075F3DF03643716962A17"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 3.png.meta",
+    "exists": true,
+    "sha256": "8240204F5945A21FE66816123F97AFCF16D0FAF3DF0EE184AC74FCCAC5628CB3"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 4.png",
+    "exists": true,
+    "sha256": "F4CA0902CCDCD52CF0CB3FE358B21EFBE3B4549260CFA6C8BB0D670CC6043900"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 4.png.meta",
+    "exists": true,
+    "sha256": "E19C526649F58CA986E5351DBAACC242AC9AC8F5FD395E1A7FBA1A8ACCE73D2B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Living Room.png",
+    "exists": true,
+    "sha256": "441E68B971ED0FE55D4117729997038E056C9C0777E3BB08FC32F23313A1D192"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Living Room.png.meta",
+    "exists": true,
+    "sha256": "97E5DCB59AECCC54847BF767F6ADBAD66A05F1AFB00B418CEE8C6A911BB20844"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Merged.png",
+    "exists": true,
+    "sha256": "49021B0C4927C61CFAEB5F89AD59D6EA166E296EBCCFE00EDB51D22D263F7FB5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Merged.png.meta",
+    "exists": true,
+    "sha256": "6F2F32966B86312B26F71F2EE2764E08B3A7D95A60297EB474663D1528514872"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Path.png",
+    "exists": true,
+    "sha256": "704BAEB5ED88DD049D2C7F17B2B89B946CC07CB9C6488A0AC07077EC8A03E34C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Path.png.meta",
+    "exists": true,
+    "sha256": "B771539DBD462BF7F2A75F0A3F17E65D3D4EC954C714A70E18CE867E37B0DE24"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Potions.png",
+    "exists": true,
+    "sha256": "C35D4AF44FB7DF5FC3E26EA698AAA90BA06638904FA3C45B4772960442CEAE9B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Potions.png.meta",
+    "exists": true,
+    "sha256": "A161902D8EF375D815522F2C0EC15DA8456A914AF474AD02278085EEFC5FAEAF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Punching Bag.png",
+    "exists": true,
+    "sha256": "6EE149FAD4AB2C1E1A2EBEF3BCC35D263244ECA3229629ACB5ED471B4A1EAC6C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Punching Bag.png.meta",
+    "exists": true,
+    "sha256": "816DB8CFEC527C42BA17193DC75DB8FA85338B0F452B5BD7604EEFF411300F5B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (2).png",
+    "exists": true,
+    "sha256": "976FFCDC8178C04C925833BFE00CD9CCA6026DBBB97863B3B94B0C8CE97C5BDA"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (2).png.meta",
+    "exists": true,
+    "sha256": "63E7102F5D77B871514AB1EF45A8330F84BCC8FA98726DCC9D1D00020FACC3B5"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (3).png",
+    "exists": true,
+    "sha256": "102C80C2243C2B47BC7C1FB53D2DDF3966F6A4621E1A1E6F3F6C05A6659E8011"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (3).png.meta",
+    "exists": true,
+    "sha256": "97F0BC4BF8CAD11B620B26CE3E13E455430406763D6FB2CE2EB6807AB6A5F864"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (4).png",
+    "exists": true,
+    "sha256": "E1E33DE94F81CE6FE772F27F18EA48FEC1723D5B4E5B4AE095BADBB37A76077E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (4).png.meta",
+    "exists": true,
+    "sha256": "D4D182CB2AAF38E04810C1B6E4C582408BBF325EE4A0F2C835C2735ECEB7084C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (5).png",
+    "exists": true,
+    "sha256": "9395763414AC8447CF0A3EB10C9A1701DDC1D7316F575FC1E923795D76AD37CE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (5).png.meta",
+    "exists": true,
+    "sha256": "86A88275B6914AB172AFCC36C1A2FAE5DED1560BDE0BB5692333771C7D3FBE17"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (6).png",
+    "exists": true,
+    "sha256": "39B1066A141ED9C3136C40EBF87145BC4DB2506AA6810B1753A58E22CCCD98F7"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (6).png.meta",
+    "exists": true,
+    "sha256": "ECDE25B1E25007F6E96009E47306DC0F299C6266865081C79A86842EA3893825"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (7).png",
+    "exists": true,
+    "sha256": "574F5CCA0FF06BDCC33EB939C1A3D4317DD1C8DB7F733FBCA34A1953ABBF371E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (7).png.meta",
+    "exists": true,
+    "sha256": "CDB42474826A6939D52A0C97E9421BEE7969579DCCB439133A99EE0A4B32F62F"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (8).png",
+    "exists": true,
+    "sha256": "9EEFBC58966A507DF8F82F76A7E5C7682A0AA6DC2AE00E5E6568BBE648756722"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (8).png.meta",
+    "exists": true,
+    "sha256": "EC388862DF16AC3D43308356410AD3ABD8B198C503145AB44C59539CE23EB185"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room.png",
+    "exists": true,
+    "sha256": "1E3DC4969131A2AD02000DB7BA655F721C9FAB882ABC984321F22CC41EB6B744"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room.png.meta",
+    "exists": true,
+    "sha256": "4F779F4C726B5D01B057D1A3D7FFD94595649030895848CB740AEB8E2C804070"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (10).png",
+    "exists": true,
+    "sha256": "6BD34E8481C97B722494BBD6F56C5AD8631E6FB85CCD78B1C17CDB70EF668BE3"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (10).png.meta",
+    "exists": true,
+    "sha256": "26D18C38D004321ABEAC2096A5533BAFF587418D5CE907DD0A82C110B77B3601"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (11).png",
+    "exists": true,
+    "sha256": "0D54863B0ED6BC92C100911A6E47672E63955EF28BCFBE28D323E00EAB562FF4"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (11).png.meta",
+    "exists": true,
+    "sha256": "1E276B518EF139B18B913D37C1380B18EF72FCDEC52DF8D0C9D863CB79FAC2F7"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (12).png",
+    "exists": true,
+    "sha256": "E249F385EF460C1EED7C2B7566A03D584874AA86E965FF7B69F652B022006DEB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (12).png.meta",
+    "exists": true,
+    "sha256": "C4AF22E9A9956D46C1C35110BE187BD754C6640A0350E3E180167D6F5544F5CF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (2).png",
+    "exists": true,
+    "sha256": "6ADDF03DAEFAD40B8227EB4C033CD9631F3EA3E51B95AF7814AE1A29CF4FBDCC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (2).png.meta",
+    "exists": true,
+    "sha256": "E9F895925B2B1B8D788E888FF92B2AA091FAFAFBAA585564031BB51B634B9F83"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (3).png",
+    "exists": true,
+    "sha256": "5A62B97F43F08B7C2A042A020430ED260A12421BBF66E7A63A7AFDA254C92D82"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (3).png.meta",
+    "exists": true,
+    "sha256": "DC9E474626D28A79316BDD3F56E54547CD2071FBE6EF97102A189FCB56E41278"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (4).png",
+    "exists": true,
+    "sha256": "6AC5AC351B1FD5E741F4682E12361B88F6421D225DF9CC420D45D663DBA61069"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (4).png.meta",
+    "exists": true,
+    "sha256": "CFB080A94CF7C6A4A7EDC90D406F1732AB5BAC2A0295400F1BC133CB6A47D496"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (5).png",
+    "exists": true,
+    "sha256": "BA5595D5E42C0C0A59F762E9235F4404C14D6B76E364B129FA990E12FF2A401E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (5).png.meta",
+    "exists": true,
+    "sha256": "09517F9E0C6D2EA6088065E53FA56783CA1A8705DA4BCE0204F673034B108E7C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (6).png",
+    "exists": true,
+    "sha256": "5BFF8DCA633DF5E70CD6A89CEA5437625BC11D75521C8F79CD7243237C864B4E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (6).png.meta",
+    "exists": true,
+    "sha256": "FB8E74E37EB11F23051EE737FDAC40AC829857873D6A54401C3B01DFE35249E9"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (7).png",
+    "exists": true,
+    "sha256": "1F4519AE7AB694D7843CADA67D0E43402123F3F040CDE58AE6B24E8D245F877D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (7).png.meta",
+    "exists": true,
+    "sha256": "6FBCF589D01FAD865DF35CC47F78E359EECF0308B2E1DC0175D6BC88DA7718E8"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (8).png",
+    "exists": true,
+    "sha256": "F16CB27629BFC86A347D73E392136B515A0D822978E842206183DF94C0E11FAA"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (8).png.meta",
+    "exists": true,
+    "sha256": "DCD2F659C9B76B7811113A2534B126DBBA722AEBC2846D4393821FFD0B8D0BEB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (9).png",
+    "exists": true,
+    "sha256": "C89669CA5D6D1847BBCB243A335391E6837256699E00ACEC6DB7478AA9C686A6"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (9).png.meta",
+    "exists": true,
+    "sha256": "2C14CF6BFE9A53A615845EEA79E26B0343A9E420E865701481AF26E7A00DD62A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow.png",
+    "exists": true,
+    "sha256": "CB4AC0DF28AF0BB322AE235C45C51281EE813B0F7B9D0FFD9DFE08699CA77013"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow.png.meta",
+    "exists": true,
+    "sha256": "381BB4591D0A4FAFDC88CC45E598776BAD4C738FAA098ABB80E7E5BED485579A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf (2).png",
+    "exists": true,
+    "sha256": "D4A89ABC55CF242A80F5C6B9751AD41FB633648426488368C178572313B91077"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf (2).png.meta",
+    "exists": true,
+    "sha256": "87AA5E5B6D53CF80B03573AD9E215BAA5D282C4A73CEC4A7CABE4F050CA0658B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf.png",
+    "exists": true,
+    "sha256": "6FDD46640D7538BACD96EADBB9B736B0066A7817E83157AABE18FADD8414C098"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf.png.meta",
+    "exists": true,
+    "sha256": "4DAA9C730FD456C7802BCF3D5B2AF638F98416F7DBEB094EBC7854C252E26B29"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Training Dummy.png",
+    "exists": true,
+    "sha256": "1E496F8A66FA143AE10E369C2A795A0D94D2E2735367DCDA1280215ABD26DDA8"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Training Dummy.png.meta",
+    "exists": true,
+    "sha256": "88B4D7C913B6E1C8E62499B569C94B18D22D8477E166AEF5D4F767EE8FB6CEC1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Workbench.png",
+    "exists": true,
+    "sha256": "9ACE2C9C6200630215573371435BDE4A36E42505BC5A389F0827C177EE36321D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Workbench.png.meta",
+    "exists": true,
+    "sha256": "84513C695682FBD552C035E28A18E351F016381779513142479B275E30014889"
+  },
+  {
+    "path": "Assets/!UI/Base/Base_Test.unity",
+    "exists": true,
+    "sha256": "15434807A5DFD2F8C6CE6764E13CB1B999C4E14DF10E6F6FCF3537329EE3DE87"
+  },
+  {
+    "path": "Assets/!UI/Base/Base_Test.unity.meta",
+    "exists": true,
+    "sha256": "ECB756D975851FE7E4E045CA0C2C60383E4F53ADD45BF9DF70C22E0EBF086E73"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs.meta",
+    "exists": true,
+    "sha256": "D4EDA66EE81F8469E49158F7C75570301143EA99B72C05B798A93A643809081D"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog1.png",
+    "exists": true,
+    "sha256": "821655E34734892B7FC7724F0BB2EEA70AEE4B07477F510B996FEBCCAD46FE64"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog1.png.meta",
+    "exists": true,
+    "sha256": "2245517B0FFA698520203082188ECBDA832A39655FB83AF82FE3E99ECAB5447E"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog2.png",
+    "exists": true,
+    "sha256": "5E34F4403E24C3BB707EC72A27682A9330B41C49B0A69E0A136F3C012F8BDB80"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog2.png.meta",
+    "exists": true,
+    "sha256": "B1DD897AA87FE3E6C3C27D0AAAF64C5ED3483C55E001ABA8FC26C0329FA6C0CB"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog3.png",
+    "exists": true,
+    "sha256": "1BDEE540CC0FF1E2FDDEC946A25ABE14A315E6DA94C1F6B8E7B02BC06AC79655"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Bigfog3.png.meta",
+    "exists": true,
+    "sha256": "E4DB331D8A13B341E4DA836977303AAF7C2769047D6493ED4B8E804D84FF4453"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog1.png",
+    "exists": true,
+    "sha256": "DEB7ED9997A3F1BC5670C9F52FA80E1F945F5B2C7FE7B0D311EF088420593675"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog1.png.meta",
+    "exists": true,
+    "sha256": "46DD6D15484D02729CFFFECA856443D55A765B109D65A548E04C0BD776DED657"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog2.png",
+    "exists": true,
+    "sha256": "90899D53B5C4D7113A6062819FA3939628658089C2D1102762785D217E64310D"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog2.png.meta",
+    "exists": true,
+    "sha256": "B487B47C25E0145054E4324A0AFBD4A6AD0F7F0005C9477FEF2CB427FC94CC89"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog3.png",
+    "exists": true,
+    "sha256": "DD5CCF5B1D65E2AD609D60D56AB3C3024AB85663FDDC79152D71F477EE071D01"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog3.png.meta",
+    "exists": true,
+    "sha256": "81805993F4E2E396FB98C8C9CCF1A76BE4C52E7045F53E765B0248EE01A96641"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog4.png",
+    "exists": true,
+    "sha256": "950027473DBB95B28D1A8C548BF7C02A6988D2C0B9A3CE66C1F97A1F12A92FD9"
+  },
+  {
+    "path": "Assets/!UI/Base/Fogs/Fog4.png.meta",
+    "exists": true,
+    "sha256": "C93BD3FE0722AE7C974E41F460B69E23F001BF7583C55C3D9EC0D900AC918963"
+  },
+  {
+    "path": "Assets/!UI/Other/Curser.png",
+    "exists": true,
+    "sha256": "D7BC77039E297ED655DB5DAB16FA6D5E431EB8CBAE7C28FD7D0018AC3C43E1DA"
+  },
+  {
+    "path": "Assets/!UI/Other/Inventory_Tutorial.gif",
+    "exists": true,
+    "sha256": "C90A7BE8CE55A5A31E8DAFEA90394D4A9C7B3437C9E5B8C2BF489C2048F6AAE5"
+  },
+  {
+    "path": "Assets/!UI/Other/Inventory_Tutorial.gif.meta",
+    "exists": true,
+    "sha256": "4DF887A6BFA565D6A83D34064FFE6FF2006AC18177B08005391C022A545BACA8"
+  },
+  {
+    "path": "Assets/!UI/Other/Red_Cloth.png",
+    "exists": true,
+    "sha256": "79F10C31FA9F5079660ABC3DFE2FBFBB4F9790194E1E764BD06FA4D04D6C929B"
+  },
+  {
+    "path": "Assets/!UI/Other/Red_Cloth.png.meta",
+    "exists": true,
+    "sha256": "BB1834445DB93B4E3D09CC284FB931FCBD10B70B1044E73753D58E7200525651"
+  },
+  {
+    "path": "Assets/!UI/Other/Team_Logo_A_Clear.png",
+    "exists": true,
+    "sha256": "B38D9F453368C88568F3FCDA6EF10563DCFCA17DC80F33FA681F2C4E8F9C21F5"
+  },
+  {
+    "path": "Assets/!UI/Other/Team_Logo.prefab",
+    "exists": true,
+    "sha256": "F605E3BAD3DFBBC30EAAAA783CC25BFEDE96269CBF73A8BE9297A7115F42DD4D"
+  },
+  {
+    "path": "Assets/!UI/Other/W.gif",
+    "exists": true,
+    "sha256": "9D4D43581B2286027BF9BEB94C4F78858CF0ECDD91DC91CDD13B8F31759E07D3"
+  },
+  {
+    "path": "Assets/!UI/Other/W.gif.meta",
+    "exists": true,
+    "sha256": "468665863636E4D6E2B787F56A7690CC155CA9D2B944C35BB6A6DFCBC2246CA7"
+  },
+  {
+    "path": "Assets/Editor/BaseConnectionBuildCheck.cs",
+    "exists": true,
+    "sha256": "2CF8A0155B1DA3EBAE99E67A1CE01D902893CEE55E2F98F1042FD0E634A860AC"
+  },
+  {
+    "path": "Assets/Editor/BaseConnectionBuildCheck.cs.meta",
+    "exists": true,
+    "sha256": "77174EC49BED280C9A62B0151C96B4241F523B0135B200FAAF70F09543EB8192"
+  },
+  {
+    "path": "Assets/Editor/BaseSelenaRenderCheck.cs",
+    "exists": true,
+    "sha256": "8846474313632958A4393889B75BD72034A90D4A96A1AE263794A998C80B9216"
+  },
+  {
+    "path": "Assets/Editor/BaseSelenaRenderCheck.cs.meta",
+    "exists": true,
+    "sha256": "A7695E1FBACEB26804250E6E0E12A44162EBB88CF8203E7C65428624DBFA2A64"
+  },
+  {
+    "path": "Assets/Editor/CloakIconBuildGuard.cs",
+    "exists": true,
+    "sha256": "F2415F27A2E134AF63503078268BE97C0BCE65AB0A11C18EA083290C145690F6"
+  },
+  {
+    "path": "Assets/Editor/CloakIconBuildGuard.cs.meta",
+    "exists": true,
+    "sha256": "2A7FC6A2CFE03A77611C0D514D5C0AA7DB7425B1EE2AE837E0A7A2D7F63C83F5"
+  },
+  {
+    "path": "Assets/Editor/ConvertPortalTutorialGif.ps1",
+    "exists": true,
+    "sha256": "76DFA7938BC3B0B62669ABDA1F4C078A53C2C84EBA8F418048B251B581AA6CB8"
+  },
+  {
+    "path": "Assets/Editor/ConvertPortalTutorialGif.ps1.meta",
+    "exists": true,
+    "sha256": "FE7697923F61ED955270C3B06F245C872BA8A925BF56E81276BABACE6D9A9FAB"
+  },
+  {
+    "path": "Assets/Editor/DialogueCameraReturnCheck.cs",
+    "exists": true,
+    "sha256": "98A98A6E1EE9F99C72599EE6083F1E94CC889CD80D4C82C844A426D72EAB3B49"
+  },
+  {
+    "path": "Assets/Editor/DialogueCameraReturnCheck.cs.meta",
+    "exists": true,
+    "sha256": "E7E69563483501028AC78424BD2312D5B892AC1D5FB2A8038B47A38C22861511"
+  },
+  {
+    "path": "Assets/Editor/DialogueExpressionImporter.cs",
+    "exists": true,
+    "sha256": "3DF2DC3310360E3437C46763516288538D4F832F6CD288B2E0E63D44F9650A16"
+  },
+  {
+    "path": "Assets/Editor/DialogueExpressionImporter.cs.meta",
+    "exists": true,
+    "sha256": "688ED1E6A633993DC1FE795A753504847BFBD6F55EBBC12EE485153538EE0E53"
+  },
+  {
+    "path": "Assets/Editor/EditorAudioDiagnostic.cs",
+    "exists": true,
+    "sha256": "AE2B3B0AD551B6137F58926798A7BDF658CEA0664E82227490ADAB5C764A3B59"
+  },
+  {
+    "path": "Assets/Editor/EditorAudioDiagnostic.cs.meta",
+    "exists": true,
+    "sha256": "A1F7F79A1F1EF374DAF05CEC2948F105CED34E512677F1B200E3207A23558DB5"
+  },
+  {
+    "path": "Assets/Editor/GarbageBallisticCheck.cs",
+    "exists": true,
+    "sha256": "CCBF48BF6D3F16EA149D07405377A8207952FAB48DC853BDB74E31A45FBD5510"
+  },
+  {
+    "path": "Assets/Editor/GarbageBallisticCheck.cs.meta",
+    "exists": true,
+    "sha256": "A366C84841755451800997879FD96C92C596DAF3FE223C3D205D1680442AD095"
+  },
+  {
+    "path": "Assets/Editor/GarbageEquipmentSequenceCheck.cs",
+    "exists": true,
+    "sha256": "CE8E954F2F0151F9FAAB3C58E62CD62BF02D33FB83175B8C30869B63444F0795"
+  },
+  {
+    "path": "Assets/Editor/GarbageEquipmentSequenceCheck.cs.meta",
+    "exists": true,
+    "sha256": "A59411BD01F56C1FCF58A3D0E2DA2E05CB724D041F9425DFE8563AE0E5AA14B7"
+  },
+  {
+    "path": "Assets/Editor/InventoryTutorialGifImporter.cs",
+    "exists": true,
+    "sha256": "73F018CAEB3B44D7DAFADA3A5A702E26DD4CD75485624F1720D678EEC3E144DE"
+  },
+  {
+    "path": "Assets/Editor/InventoryTutorialGifImporter.cs.meta",
+    "exists": true,
+    "sha256": "015E7DC9BE06AF427F8070EAAC04B43F0309CDC9FF32C1CA4FBB9D81DD75C35F"
+  },
+  {
+    "path": "Assets/Editor/MarketDialogueCheck.cs",
+    "exists": true,
+    "sha256": "DC32F563237C5744336203BBAAA93994E49F2A7F4A773A1771EF5517317DF475"
+  },
+  {
+    "path": "Assets/Editor/NovemberPolishCheck.cs",
+    "exists": true,
+    "sha256": "8DACE977E51B31974A4450C5413F203F6394D1CE5BCE5315950DA795CB9BCED3"
+  },
+  {
+    "path": "Assets/Editor/NovemberPolishCheck.cs.meta",
+    "exists": true,
+    "sha256": "18F2C77AA8322F357898D9FEB0E31DCD4DB0BEA36359A8EC13FC07385094937E"
+  },
+  {
+    "path": "Assets/Editor/PortalArrivalCheck.cs",
+    "exists": true,
+    "sha256": "4F1B91ECFBE5F7B5F20DEE2A2A1B71660BFC1F21C6EAA2CF724B771EFBF83359"
+  },
+  {
+    "path": "Assets/Editor/PortalArrivalCheck.cs.meta",
+    "exists": true,
+    "sha256": "B62E2C698F22EA20A5D825DD061160FF8C9CF1637962409BB31507A76F45BF28"
+  },
+  {
+    "path": "Assets/Editor/PortalTutorialGifImporter.cs",
+    "exists": true,
+    "sha256": "E8EB749713D3F3EF6611764663287310CEEAD9A0903F09B41162C9767B996F7C"
+  },
+  {
+    "path": "Assets/Editor/PortalTutorialGifImporter.cs.meta",
+    "exists": true,
+    "sha256": "522A45989F4BD3DB92220040B2501030BFF21C68A33721A2F4A23479579017EA"
+  },
+  {
+    "path": "Assets/Editor/RedClothIconImporter.cs",
+    "exists": true,
+    "sha256": "DC44E77F2FA60903DF4B13B88AEB0051FA262F396B8436508F27BAB9F81BBC36"
+  },
+  {
+    "path": "Assets/Editor/RedClothIconImporter.cs.meta",
+    "exists": true,
+    "sha256": "F2A00661E27D1FBCAB96C940A714904384A0F89B346492A00B2592A9DD32137E"
+  },
+  {
+    "path": "Assets/Editor/SelenaDialogueRenderCheck.cs",
+    "exists": true,
+    "sha256": "38763AF3FEA98B57AC52A28E79566244C0A55E50F30743CE5FB01E379DEA492F"
+  },
+  {
+    "path": "Assets/Editor/SelenaDialogueRenderCheck.cs.meta",
+    "exists": true,
+    "sha256": "773925D822BBE872765A3DCDB5C2A63A11F560006D79865BF5F9091FD76C7D9E"
+  },
+  {
+    "path": "Assets/Editor/SelenaFontBuildSetup.cs",
+    "exists": true,
+    "sha256": "A880A7A112732AFF23E90F727AF763CA1C7900FF2A504638E7D2FC97552E1E13"
+  },
+  {
+    "path": "Assets/Editor/SelenaFontBuildSetup.cs.meta",
+    "exists": true,
+    "sha256": "C18CE4B607BEECE03FDA2E52119D661C19552067FF3EE3E52C7931DADB9426D4"
+  },
+  {
+    "path": "Assets/Editor/SelenaWalkSetup.cs",
+    "exists": true,
+    "sha256": "47C9BCCAD3C17F81A0E960969C1F378206977B693628E792AA9584DB4AF93DD6"
+  },
+  {
+    "path": "Assets/Editor/SelenaWalkSetup.cs.meta",
+    "exists": true,
+    "sha256": "969BA974BCF66BAA4B41A49D178347F49EE7185BFF0DCA81EA16A61F780D29B8"
+  },
+  {
+    "path": "Assets/Editor/V004BuildRequest.cs",
+    "exists": true,
+    "sha256": "29BDD8ADB1546D0B02AF15B71B58395F3B9CFDF6353A192FECC2FE7A8E0BFE6D"
+  },
+  {
+    "path": "Assets/Editor/V004BuildRequest.cs.meta",
+    "exists": true,
+    "sha256": "8DF3E8C91F2D68D8F181A7A10A004DA38A714411460E02068437E8AACE7141AF"
+  },
+  {
+    "path": "Assets/Editor/V005AspectBuildRequest.cs",
+    "exists": true,
+    "sha256": "5C15E1C43478B451B483BC94087EF204FE35BB4C6A8ADC945C1F18B584F55E4B"
+  },
+  {
+    "path": "Assets/Editor/V005AspectBuildRequest.cs.meta",
+    "exists": true,
+    "sha256": "76EE3D34013B74BBCAB97343711CABF1B15280775DB875EFF14B568C0331E747"
+  },
+  {
+    "path": "Assets/Editor/V005BuildRequest.cs",
+    "exists": true,
+    "sha256": "5944EF066C8B19B92A3B317271E18DC5B3B36E992D2D66E2128C4159F3C48065"
+  },
+  {
+    "path": "Assets/Editor/V005BuildRequest.cs.meta",
+    "exists": true,
+    "sha256": "DA5DD1322987BCE21CE60E085A8039056CAF58180398B0CC7CE3B4A6AEA84306"
+  },
+  {
+    "path": "Assets/Editor/V005SelenaBuildRequest.cs",
+    "exists": true,
+    "sha256": "9AE54B5B1D2722D9E9473B1196E2D5632CEEA2E8B09D18A98AB4B9B64C6827B9"
+  },
+  {
+    "path": "Assets/Editor/V005SelenaBuildRequest.cs.meta",
+    "exists": true,
+    "sha256": "DE26088238D85A20F0D016DEFB3FDBDFEACA3D5E16D10F6BCCB1892A36F8B06E"
+  },
+  {
+    "path": "Assets/Editor/V006BuildRequest.cs",
+    "exists": true,
+    "sha256": "8D595FB0C750505E3A028513779D09C659B981B0E3EF544D469A93EFFFA2ED90"
+  },
+  {
+    "path": "Assets/Editor/V006BuildRequest.cs.meta",
+    "exists": true,
+    "sha256": "8B67276EDA1AB119696EBB397560BCD27E1916BC37CD245C72FFD57883884636"
+  },
+  {
+    "path": "Assets/Monster/Scen/MonsterFollowController.cs",
+    "exists": true,
+    "sha256": "1F8E8AE66EDE1DE64B6610A92927C5A40BE5EE6E0687D0E3F2A49C9861A2BD90"
+  },
+  {
+    "path": "Assets/Player/PlayerMovementDemo.unity",
+    "exists": true,
+    "sha256": "00723813559ABBEE5994BE52A4388360F92EC20FAB940E5B55395CE1E7768812"
+  },
+  {
+    "path": "Assets/Player/Script/AutomaticNpcBubble.cs",
+    "exists": true,
+    "sha256": "3CE12669D7FD5AED4AD1DABBADB3D0186D13632FF0F3D4EF309C75A73F0ED921"
+  },
+  {
+    "path": "Assets/Player/Script/BaseArrivalTutorial.cs",
+    "exists": true,
+    "sha256": "61DA2ADE0CCE15B1491CC8E87A8CC29A7CFF5ECA0E81907EE1F685D4FC1248C8"
+  },
+  {
+    "path": "Assets/Player/Script/BlackMarkerNpc.cs",
+    "exists": true,
+    "sha256": "A467BBEB0FD3897A5B9680FDDBB756D64C873D0B2B21450AD24613037DF74C78"
+  },
+  {
+    "path": "Assets/Player/Script/ControlHintAnimation.cs",
+    "exists": true,
+    "sha256": "C96F4D23B0F26E6868B559299A717EF88ADA667BD6F8FFDBEA6AEF0788DE7EF8"
+  },
+  {
+    "path": "Assets/Player/Script/ControlTutorialUI.cs",
+    "exists": true,
+    "sha256": "DF00892B2733BB2286228AA36E718AA403C84C0E361C59102985008FB5737454"
+  },
+  {
+    "path": "Assets/Player/Script/ConversationDialogue.cs",
+    "exists": true,
+    "sha256": "039A3393861A8DBB7665243A71A439EA0D48FB989EA39974E2C7EB0BB878BA5E"
+  },
+  {
+    "path": "Assets/Player/Script/DialoguePortraitLibrary.cs",
+    "exists": true,
+    "sha256": "439FD618228061A7484A704A993FFA613535914113C61188C44AE98DC5F66252"
+  },
+  {
+    "path": "Assets/Player/Script/EquipmentTutorialHighlight.cs",
+    "exists": true,
+    "sha256": "A52F16A76D816355873FF7F8C21564CEA6A86FFBF8B028DBAC44F5B883F167C6"
+  },
+  {
+    "path": "Assets/Player/Script/GroundSteam.cs",
+    "exists": true,
+    "sha256": "4C15DA56CF8A4AB018BDE0C9598936776FD8D7CF5731164463FF15E0CA122377"
+  },
+  {
+    "path": "Assets/Player/Script/GroundSteam.cs.meta",
+    "exists": true,
+    "sha256": "138FA3D4F0189B2CADFA9F823B69493D0B478657BB23F38ABF474C985E8C6601"
+  },
+  {
+    "path": "Assets/Player/Script/InGameQuestHUD.cs",
+    "exists": true,
+    "sha256": "E115708551319007C3228084EC454264DAD4DF897FF465F04DFE98F7DF400E72"
+  },
+  {
+    "path": "Assets/Player/Script/InGameVitalsHUD.cs",
+    "exists": true,
+    "sha256": "5D452107B66DCF1D43D81083AB2E122D8000919B136F84E3B1EC788B99250385"
+  },
+  {
+    "path": "Assets/Player/Script/MarketNpcBubble.cs",
+    "exists": true,
+    "sha256": "DC118CC61A8155B8767198D07211F50C31BE0A74E68F0E345F782EC828A39A71"
+  },
+  {
+    "path": "Assets/Player/Script/PersistentPlayer2D.cs",
+    "exists": true,
+    "sha256": "A25B036430EE4E778C64637B274CA0D7858D302B2A58D55D5DD2A21F12E1370E"
+  },
+  {
+    "path": "Assets/Player/Script/PlayerCameraFollow2D.cs",
+    "exists": true,
+    "sha256": "B80F2FFA61535C982BF3DA8A8E5B917704ACD4DFF9257A5A27FAE104B5420D0A"
+  },
+  {
+    "path": "Assets/Player/Script/PlayerInputReader.cs",
+    "exists": true,
+    "sha256": "C98098E27A091C2D69B04DECDD112589831FBC88665405892A53FEFB6AB05A55"
+  },
+  {
+    "path": "Assets/Player/Script/PlayerInteractionController.cs",
+    "exists": true,
+    "sha256": "5C785A6D16B32F7065FAB1B679B561EBF6B8BE138322FA2E5C408D2B4A72A670"
+  },
+  {
+    "path": "Assets/Player/Script/PlayerMeleeAttack.cs",
+    "exists": true,
+    "sha256": "CF833C68A71A6E54CC57EC67C9BDDB577165160FECA832C356FFD27121DE5567"
+  },
+  {
+    "path": "Assets/Player/Script/PlayerMovement2D.cs",
+    "exists": true,
+    "sha256": "59BC9B99A15EFA1C3BEE70B446E5EC8FFC0417864A0A9FC79DCC7423FB0C8857"
+  },
+  {
+    "path": "Assets/Player/Script/PortalArrival.cs",
+    "exists": true,
+    "sha256": "6AB9E83958F8E4D0BD014E4748CCD41734D9916DD781B20C48D2394493AFD6F1"
+  },
+  {
+    "path": "Assets/Player/Script/PortalArrival.cs.meta",
+    "exists": true,
+    "sha256": "B56DD511E9C26C08550C1A8AC9F806C2D044B3A40B2C71E7F27421B5BAD398E1"
+  },
+  {
+    "path": "Assets/Player/Script/PortalDeparture.cs",
+    "exists": true,
+    "sha256": "EBF3FC223503FCFD4AC154E2F6A333EEAB1B6C19276C052AF7BCC0A624036971"
+  },
+  {
+    "path": "Assets/Player/Script/PortalDeparture.cs.meta",
+    "exists": true,
+    "sha256": "F83C365D20B109D8C5F7C6264A6426687DE125CF732D09083313556BE53658B2"
+  },
+  {
+    "path": "Assets/Player/Script/PortalTutorialVisual.cs",
+    "exists": true,
+    "sha256": "DA3AB095DF002D7A53F7E12BC5B149BCE3D61A25838F76BFAB56EEA89B7F27F7"
+  },
+  {
+    "path": "Assets/Player/Script/PortalTutorialVisual.cs.meta",
+    "exists": true,
+    "sha256": "74D27838731E3A299459EBB479DB5C135FCCF288765689D5B3B272F6B894D551"
+  },
+  {
+    "path": "Assets/Player/Script/PrototypeScreenEffects.cs",
+    "exists": true,
+    "sha256": "1282B4CA6E00D51F4A79AD4276FA70127157360EC80654B4691CB7BFE4A0C6D5"
+  },
+  {
+    "path": "Assets/Player/Script/ScenePortal2D.cs",
+    "exists": true,
+    "sha256": "12FB819641F955B9530265BA5CBC7894EB025979D5798CF78C0EFC596F0216A0"
+  },
+  {
+    "path": "Assets/Player/Script/StorySceneFlow.cs",
+    "exists": true,
+    "sha256": "876BA16D5278C547189B2E13BBDFDD1585E0A6F3A18DC9AE25BEA00A572A479B"
+  },
+  {
+    "path": "Assets/Player/Script/StorySceneFlow.LaterChapter.cs",
+    "exists": true,
+    "sha256": "F74E8F630D1590A5C969D3EEA19401F18ACD4576AC620E6170DCFE663C8D01FC"
+  },
+  {
+    "path": "Assets/Player/Script/StorySceneFlow.Pursuit.cs",
+    "exists": true,
+    "sha256": "62E9E4CBCF6110CE0EBF385F3D9ADF75CFE8E952D8C10E3044684F232BBB310F"
+  },
+  {
+    "path": "Assets/Player/Script/StorySceneFlow.Pursuit.cs.meta",
+    "exists": true,
+    "sha256": "52AA07597478538A845130F1D3B0745A23AB7E18BAEE053E202577D54DAC0899"
+  },
+  {
+    "path": "Assets/Player/Script/StorySceneFlow.Tutorials.cs",
+    "exists": true,
+    "sha256": "909D5C0F8423D2A24C8FFFF612E3831F4F2CF3553467DEB7F48A1BA927B3D3C7"
+  },
+  {
+    "path": "Assets/Player/Script/WindowsWindowAspect.cs",
+    "exists": true,
+    "sha256": "8547D282A849994517FF238124C5BA28DE9AE9C2AC020FEE28833E066E20B7A6"
+  },
+  {
+    "path": "Assets/Player/Script/WindowsWindowAspect.cs.meta",
+    "exists": true,
+    "sha256": "9BC9753AF7325DE5E0218F1E051E062BE9808A6F35263A0474EB4B83A73612AB"
+  },
+  {
+    "path": "Assets/Player/Script/WindowsWindowedStartup.cs",
+    "exists": true,
+    "sha256": "8FFF2686D6CBBE7605FB278F0F4AE81CF5E042721E7B77DED17347FD8B9902ED"
+  },
+  {
+    "path": "Assets/Player/Script/WindowsWindowedStartup.cs.meta",
+    "exists": true,
+    "sha256": "256A8310B1FA9EEB493C4028B65607B199C04123E04F9A4DB3906B083F05CF27"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes",
+    "exists": true,
+    "sha256": "FD8CDEF6C88064E09C79CB3B0A30967997C26D5166BEFB47C72EE96F0DECB7CE"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes.meta",
+    "exists": true,
+    "sha256": "550BB739A6B8C2A59153E75A214BCEF09750A2BAD503039FF68C673C4EF8BB9C"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Inventory_Tutorial.json",
+    "exists": true,
+    "sha256": "B74B0CDAD68A4C5840E0C813AFFF6C80D294E9D212D5E1E47680C74A6280C893"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Inventory_Tutorial.json.meta",
+    "exists": true,
+    "sha256": "5921453FFF2656ACD263B853C3783532759B979533EF8951EC5CAB4C4EA5EE9A"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Portal_W_Tutorial.prefab",
+    "exists": true,
+    "sha256": "18DA1DE50D68CB86673DBC9FE029E006EB525F261FE07A34B1F1E2C1BC89B918"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/Portal_W_Tutorial.prefab.meta",
+    "exists": true,
+    "sha256": "C1F00E6CA7C37D8ACC6A9188E3B0C76BA8D88B229954340EFA3CF36F40FEDAD6"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/W_Frames.bytes",
+    "exists": true,
+    "sha256": "9A87E384A2613C565ADFD6C9E49F7EB58C0094102031C1FB007F03F0A45BD515"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/W_Frames.bytes.meta",
+    "exists": true,
+    "sha256": "8971294E941C9B9A0B64415F25976CA7FBE8E827D9D119EDC94E2F783E18C11B"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/W.json",
+    "exists": true,
+    "sha256": "6518481B20786A80076974FEB74E3E12C027505B001FD030BEFAE0C5DCEFF573"
+  },
+  {
+    "path": "Assets/Resources/ControlHints/W.json.meta",
+    "exists": true,
+    "sha256": "67490F0EB60BBC771003686800E159CCA4008065652500D791DA82F64B525031"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/base_upgrade_tutorial.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/cutscene_conversation.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/cutscene_conversation.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/equipment_complete.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/equipment_complete.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/equipment_tutorial.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/equipment_tutorial.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Expressions.meta",
+    "exists": true,
+    "sha256": "6C3A6643E1AB61318A06F3A13953E388DE882771E2C2575E59A997EB4AAD3B36"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Expressions/README.txt",
+    "exists": true,
+    "sha256": "40FC628FAC6CB9CDAF9852E0156EB90EB7E3688543F2D72D554A92B595E3EADE"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Expressions/README.txt.meta",
+    "exists": true,
+    "sha256": "65F3BCA348A3E8E0D4F44433AA57414D642E04B4B3DF5AAF224067126AA2A785"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset",
+    "exists": true,
+    "sha256": "862FD0A9AF9C20DDEA0420340066C495D48E843E2376634F1A4313FB36A90DBB"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset.meta",
+    "exists": true,
+    "sha256": "7153D96701BF78AFE56189D5A399D2D848D31A619F9DCED11231F65BB62C25D7"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Fonts/SuhgungDialogue.asset",
+    "exists": true,
+    "sha256": "F3D34973779C9A1463DB0F47E7DC844313773369469CD9E6093E31066C3A6A42"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest_4.meta",
+    "exists": true,
+    "sha256": "F2593D00F6C1F9D4D0B2438A1695BA9EFAAB9B1B43AA9FC153245DBE5529D654"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest_4/selena.json",
+    "exists": true,
+    "sha256": "F5BC5B43FBF6BB115A8A4CF5D1AC064C53E333C935932403486A64F21B2691B9"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest_4/selena.json.meta",
+    "exists": true,
+    "sha256": "0E39522EE134ABB5FE914054265EB6C11AAA1B6D47C82A2C0A4750983CA4555C"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/forest_clear.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/forest_clear.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest.meta",
+    "exists": true,
+    "sha256": "8E3C5F5E60ABDE9F4AEE39FF7EAAD22764FAED3841091C5DEB8D4238B715A82B"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest/cutscene_conversation.json",
+    "exists": true,
+    "sha256": "676DA53FFB52566FC2D50D905331DB967BF3BEC4AD2DE2B6A1A8F591590DB022"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Forest/cutscene_conversation.json.meta",
+    "exists": true,
+    "sha256": "BA58C5167BBE25E125853FF8919222B188B5387D92EBF71A0E495F46FF46C4CE"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/garbage_monologue.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/garbage_monologue.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage.meta",
+    "exists": true,
+    "sha256": "B0DCB24997FCB67D4F419C523117BE7BED28A92D27EED0AB9DB66AD282D0C1AB"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_monologue.json",
+    "exists": true,
+    "sha256": "A28F134AAA261F706457533B2F94C610FC7CAB30843EEBF18EBDD371EB69AD87"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_monologue.json.meta",
+    "exists": true,
+    "sha256": "7441A669DB1322094A29253EC8283B5E676934031072A27AE448096A51660094"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pickup_monologue.json",
+    "exists": true,
+    "sha256": "D2C80689D7994C7FE64AB21E96AD2E2F7762CAE85D670CC2C9DC960AA69BBA4F"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pickup_monologue.json.meta",
+    "exists": true,
+    "sha256": "E81076D4A0F3F7A2862C7EE6E99D5DCEC372FF38BB6F90FBEAEB2D886C2AA923"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_monologue.json",
+    "exists": true,
+    "sha256": "35AFED8D1BF9AFA3B8A16EACF898897697990CF8AF9DD1183CDF92F806EDDB3F"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_monologue.json.meta",
+    "exists": true,
+    "sha256": "33BC2AA0410C2540077E17F27FDB203F81A2618CC25A8EA73D6A61CBC0F7074F"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_shout.json",
+    "exists": true,
+    "sha256": "428E661A29F01C54A7B3DDB3BA89FB24CD9BEACAA114003890F79D7BAABD04C5"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/garbage_pursuit_shout.json.meta",
+    "exists": true,
+    "sha256": "F53E47A9C934A1F36E0C916043D7FC0144B4D22277503A09F59AC1403079976B"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/PursuitTiming.txt",
+    "exists": true,
+    "sha256": "5E0372E79DAA0603DB37F13201A8400492F981CECF7754B1D24102ACE55E779C"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Garbage/PursuitTiming.txt.meta",
+    "exists": true,
+    "sha256": "43B12AAFC77ADE42F27D860496EA38ABAAAA6C20E84431FAFF90ABF72B10CE7D"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Hideout.meta",
+    "exists": true,
+    "sha256": "7138FE25690AB1D336A8BFB3C6E3CA8D85C83BCC314CD7240594B18223C4A8E6"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Hideout/base_upgrade_tutorial.json",
+    "exists": true,
+    "sha256": "A573EEC900DE9932A7D42F2B4AB6422F3C1F679DA37D4F0E27AC1352C11E2E9B"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Hideout/base_upgrade_tutorial.json.meta",
+    "exists": true,
+    "sha256": "8B1497F251FAAEDAB85A931CBFFCC260D097AB3FFDC28D2A8B5B96C773195EAA"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_monologue.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_monologue.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_npc.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_npc.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_talk_reminder.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/market_talk_reminder.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market.meta",
+    "exists": true,
+    "sha256": "2A8DEAF167C495ED6E5B81D96EA7DC32846CBE8484851FAF2DA5A1024B427F0A"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/market_monologue.json",
+    "exists": true,
+    "sha256": "9A069778B1689B58BC55E0F0EB69395B71C8809E53A6640DF5F7C13159D2A0DB"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/market_monologue.json.meta",
+    "exists": true,
+    "sha256": "AE22582350CE0B292142F842D8DFEF6F442CD45CDC527716C918F799CD7DB0B0"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/market_talk_reminder.json",
+    "exists": true,
+    "sha256": "C585525B250E8872FB4BA25627D815510B5C6755FFAD6502E68743B1213EB249"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/market_talk_reminder.json.meta",
+    "exists": true,
+    "sha256": "63B35D7A02718C051605CB8D847D0EB37B0F29E6D8757BCE9A29AC5A0FDC8A07"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_accepted.json",
+    "exists": true,
+    "sha256": "44A20F57B3EACB18F427A41D65D9385D0E85B5F5DD40DCFAA4E9C896FF733AF4"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_accepted.json.meta",
+    "exists": true,
+    "sha256": "8CAE83A5A1C945E47F99095B549E39F74DB72EB50E44C5197CA3F4695E5B9356"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_completed.json",
+    "exists": true,
+    "sha256": "749C50B2B428FECE1816AC4D3AB1254F60C1EDC55C398EAAEEF7545A5813192B"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_completed.json.meta",
+    "exists": true,
+    "sha256": "E69B2F907C0BE17B55858EE804E48A868E5A9DDBADCD0BB56D560B9C2677A730"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_offer.json",
+    "exists": true,
+    "sha256": "A96EFFAF65DD8C0EB8DC3467271322810D0023E8D89DEC87353173F611CF11FA"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_offer.json.meta",
+    "exists": true,
+    "sha256": "C6BCC7533697139DF3B353C4F6377091EA7D2B98539AC174107712B42E46A774"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_rejected.json",
+    "exists": true,
+    "sha256": "59DCA80318389D7E8F2CBE82E06C35EEBE2D040B46B1DB820A82232FE71F3893"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Market/quest_rejected.json.meta",
+    "exists": true,
+    "sha256": "DAF40F70C52C3E9EF1F871B0DBB3779E441AEF88911D55DBD3CCD3B2CE4BA586"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/neighborhood_conversation.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/neighborhood_conversation.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Neighborhood.meta",
+    "exists": true,
+    "sha256": "6C1FA7CD22764FECCA9F4C227C0A4C9179F6648258647CBE4A0106BEA24C8930"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Neighborhood/neighborhood_conversation.json",
+    "exists": true,
+    "sha256": "4948FFC592FAA16EBA8F97DE4D8E6FF477363A78A20036E1CEBAFA42D138E931"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Neighborhood/neighborhood_conversation.json.meta",
+    "exists": true,
+    "sha256": "52DD6F7890C12719D7494609B06B8DDEB378E6E9C66168204450AF221830AB19"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/Portraits.asset",
+    "exists": true,
+    "sha256": "552AD3F5C1E265E934C62FCAEC95191016F2E866C0FF69B076710D870F163574"
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_accepted.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_accepted.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_completed.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_completed.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_offer.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_offer.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_rejected.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/quest_rejected.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/selena.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Dialogue/selena.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Resources/Effects/HealthHeartbeatRipple.shader",
+    "exists": true,
+    "sha256": "52DC87C81D1556B0DF1365B9A35B30A80E3259814520758D9263834C2DA74372"
+  },
+  {
+    "path": "Assets/Resources/Effects/HealthHeartbeatRipple.shader.meta",
+    "exists": true,
+    "sha256": "8C188269E0441296B13290CE4BE6EED495FDA07EE905FC5213E7FC85E57BAA53"
+  },
+  {
+    "path": "Assets/Resources/Effects/WorldItemForeground.mat",
+    "exists": true,
+    "sha256": "F2C210A1FA0D9483948D7CDB5224C34C0FBF01AF66D25DC23BC470C29FF9E374"
+  },
+  {
+    "path": "Assets/Resources/Effects/WorldItemForeground.mat.meta",
+    "exists": true,
+    "sha256": "31F74181622E23A42E93B9E3490C69A137F2D47B9EA67A1B091733280182EAF3"
+  },
+  {
+    "path": "Assets/Resources/Effects/WorldItemForeground.shader",
+    "exists": true,
+    "sha256": "813CDA967BBD207D0C094B9498B304407CC64260E64A07D06B1A6256E28C6884"
+  },
+  {
+    "path": "Assets/Resources/Effects/WorldItemForeground.shader.meta",
+    "exists": true,
+    "sha256": "01821D5069D981978F550975100360A128C73A64FE9BBE6D6DAD10320BE27257"
+  },
+  {
+    "path": "Assets/Resources/Inventory/inventory_ui_text.json",
+    "exists": true,
+    "sha256": "80B1E98D75C57F699EB450A9581ACDC822239F5845A17EB795288C777C7E604D"
+  },
+  {
+    "path": "Assets/Resources/Story/RedCloth.asset",
+    "exists": true,
+    "sha256": "3FF4E9D1C1E8FDA333739F4E56D9E48036A7E44A0BB556E6F8790BA87D85ACBD"
+  },
+  {
+    "path": "Assets/Resources/Story/RedCloth.asset.meta",
+    "exists": true,
+    "sha256": "2241F33556CD8FAA7E3D2F6E1172BA7C9E369F6BA99D546180F0BF1BCA50AADE"
+  },
+  {
+    "path": "Assets/Resources/Story/Selena_Walk.anim",
+    "exists": true,
+    "sha256": "F8CD32C93247B7CECA8C26283017D7E4E4260231CD969E2A9D3F646F22A63724"
+  },
+  {
+    "path": "Assets/Resources/Story/Selena_Walk.anim.meta",
+    "exists": true,
+    "sha256": "1468A2E377C99AF5D5F5C997037ECEAD1DADBFBC3D21CEDCD1CC804D97C1DC20"
+  },
+  {
+    "path": "Assets/Resources/Story/Selena.controller",
+    "exists": true,
+    "sha256": "29D0DFA6556ED70AAC546DF912ED70D6B0F2EF3728929CEDF7F28C4B860DFE5D"
+  },
+  {
+    "path": "Assets/Resources/Story/TutorialGear.asset",
+    "exists": true,
+    "sha256": "02EE8822EECABEBBC70C87A6CCE9A6935DD31E5CAD21AE28572F0B6DD3D1C4FD"
+  },
+  {
+    "path": "Assets/Resources/UI/Fonts/PFStardustBold.asset",
+    "exists": true,
+    "sha256": "75446AE5E5DA48D188D38850F3CFB14C60338C1D4350D02A6B30F230923D8268"
+  },
+  {
+    "path": "Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset",
+    "exists": true,
+    "sha256": "F43649D15B8FDF6AD7E0AC705C22741CE786969404A07D8AEE577F190D876222"
+  },
+  {
+    "path": "Assets/Scenes/Inventory/QuestRewardExample.json",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Scenes/Inventory/QuestRewardExample.json.meta",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "Assets/Scenes/Inventory/README.md",
+    "exists": true,
+    "sha256": "1ED6A9822761B259EEAAF33E8215EE828720D794772ADC6C0098028523FC4552"
+  },
+  {
+    "path": "Assets/Scenes/Inventory/Scripts/InventoryUI.cs",
+    "exists": true,
+    "sha256": "793ED181BFCBA7611881D11504482BA0C7E7D5295994D0F032037F6D61DAC1BB"
+  },
+  {
+    "path": "Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs",
+    "exists": true,
+    "sha256": "38F8D5EAD7758F2416B5E7FB458B744DE904989AFD710220EF6937D9E8317A61"
+  },
+  {
+    "path": "Assets/Scenes/Main/Forest.unity",
+    "exists": true,
+    "sha256": "BF4FE2204CD2EE08666B52CCA12BD1EACF1D55A58D51071BBE3ADA5146B36300"
+  },
+  {
+    "path": "Assets/Scenes/Main/Market.unity",
+    "exists": true,
+    "sha256": "E2A32057E096ECB6F5DD64801FBEFF0AC19513489C5E886A77BAC1F0A62AB3EC"
+  },
+  {
+    "path": "Assets/Settings/Renderer2D.asset",
+    "exists": true,
+    "sha256": "77F54E0F6B31E41250A02F648F8A87BBD155BC8120F9013C085E26815EEA4BF0"
+  },
+  {
+    "path": "Assets/Settings/WorldMotionEffects.shader",
+    "exists": true,
+    "sha256": "326B332F985E24DCBCB44B268531251A4BAE6A779DB01027598D9337478A9B20"
+  },
+  {
+    "path": "Assets/Settings/WorldMotionEffectsFeature.cs",
+    "exists": true,
+    "sha256": "C1732D453B9EFC71F6F54F13C5D544BCC4E099EEB6D289FD5413E6683F920A09"
+  },
+  {
+    "path": "Assets/vHierarchy.meta",
+    "exists": true,
+    "sha256": "863F294EAB5971E6384CC712FE760F14FB71D6E6DD4FAB6E27103F1EB7EEB01D"
+  },
+  {
+    "path": "Assets/vHierarchy/Read me.pdf",
+    "exists": true,
+    "sha256": "E313DF8E9AB708694487B09C1EA1C7563F1DC989AE6E2304BC75D7C45508FB3D"
+  },
+  {
+    "path": "Assets/vHierarchy/Read me.pdf.meta",
+    "exists": true,
+    "sha256": "3F858DECD29DCD78238E58A2D7A5A7901B0151590D22921BA0423E609EA9B575"
+  },
+  {
+    "path": "Assets/vHierarchy/vHierarchy Data.asset",
+    "exists": true,
+    "sha256": "DD84DA4B9A0AA7E350895B53E77387251F2EBC8B1287215397D899059F33A096"
+  },
+  {
+    "path": "Assets/vHierarchy/vHierarchy Data.asset.meta",
+    "exists": true,
+    "sha256": "5E655CAF1A85A078A7AFE5403B7594B1585AE6B1D84F14B6FC9DA6145FB31282"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchy.asmdef",
+    "exists": true,
+    "sha256": "567F633FA78FCDC4CE763B52F11080E8832A8DDD1EFB898AD73C6E494B204098"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchy.asmdef.meta",
+    "exists": true,
+    "sha256": "82D458C167F58C14F7FFEB27E0D3F74AB12C0551070C08614DE670D4C7DAC217"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchy.cs",
+    "exists": true,
+    "sha256": "5261F7FC021210C93FA6A4EF9309ADE8A3CCBB3A0857D821C4C722BCFFAD868E"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchy.cs.meta",
+    "exists": true,
+    "sha256": "BA69A8B6505D2376C23405D28A8E031E5FA882CA7D35E90F7AC1804CBC78708F"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyCache.cs",
+    "exists": true,
+    "sha256": "81324C3A80CE319CF9B3126808017B397817D6A3D5F13897D6507E293D8F9C9F"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyCache.cs.meta",
+    "exists": true,
+    "sha256": "4E113F911B53290E9367CAA7E59E1412D1867E498114020293DF189563FD1071"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyComponentEditor.cs",
+    "exists": true,
+    "sha256": "B470CAD079DF113A62B60447915C7A8D60832C3DE15D53C18B85542EA64B49C1"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyComponentEditor.cs.meta",
+    "exists": true,
+    "sha256": "63F1AB170E74657C1646AA750B44E4CBD9105859F701F55F373602E7147E5B93"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyComponentWindow.cs",
+    "exists": true,
+    "sha256": "BFE01D434E9B023DC4479E55CA33B3568185189953F4004EFA15C1434075002B"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyComponentWindow.cs.meta",
+    "exists": true,
+    "sha256": "9B51A4FD665105A1F5E5C48375F7BAA65C6C5701C6D74BBC803479FD1D23C029"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyController.cs",
+    "exists": true,
+    "sha256": "6D3F982C4289B19DCAF7745A6DC14B2D14E294494C7968FB023B7C9607B13D2C"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyController.cs.meta",
+    "exists": true,
+    "sha256": "61670CB69F61FBEA52ACFD7FFC27C44C19F358D00EDCF78E8BEB2AC5B8A1BF59"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyData.cs",
+    "exists": true,
+    "sha256": "641AB4244CFB5F00EC41A7F8D218F16B96A12492EF7A5C792F0B724184E3DC11"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyData.cs.meta",
+    "exists": true,
+    "sha256": "DACBF34841A785D7ECA6BC85A4CF12CD5B9CE8E0D42D908A5429982AE086BAE5"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyDataComponent.cs",
+    "exists": true,
+    "sha256": "E8363D8EE80674AA607AD1FA5ACFD5E1E0A32CBDD6D1CE5145198A652AB46AE9"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyDataComponent.cs.meta",
+    "exists": true,
+    "sha256": "737B63E7B3EC88457B44A81A06F2537E06BFDEC278737192B94F5AC9B56CB302"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyGUI.cs",
+    "exists": true,
+    "sha256": "690AACB664C3698B95E1F97659C0E7446C519233AE67C2D34E889C3A87466E6A"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyGUI.cs.meta",
+    "exists": true,
+    "sha256": "2C7511B78FCAAFB337249F5ABBC0DC4B51CB6913AAB9714794F5524C850D0DCE"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyIconEditor.cs",
+    "exists": true,
+    "sha256": "B470CAD079DF113A62B60447915C7A8D60832C3DE15D53C18B85542EA64B49C1"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyIconEditor.cs.meta",
+    "exists": true,
+    "sha256": "292D62526B155B1DB17E53BD8602F0A0873B3EBAAEC3627FECE1B091CE214364"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyLibs.cs",
+    "exists": true,
+    "sha256": "E6A93E39C9B99A18FCA3D63C1BC043CB86321DBF1624D3D96920FD3CBA5D2D50"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyLibs.cs.meta",
+    "exists": true,
+    "sha256": "425AC72003E9EFCF7B66E6E92656847F0208BEA46A565BFF6093EE3D15E5B192"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyLightingWindow.cs",
+    "exists": true,
+    "sha256": "B470CAD079DF113A62B60447915C7A8D60832C3DE15D53C18B85542EA64B49C1"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyLightingWindow.cs.meta",
+    "exists": true,
+    "sha256": "E0080BFB1189633CC28D0896ED707B5B0CB8ABA66BAED6260E4371098D91A399"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyMenu.cs",
+    "exists": true,
+    "sha256": "97E10DBB36B2EABE7B0CEF7817CC05F1A8F665E5EC8A2807EA2DD50DD08E8C10"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyMenu.cs.meta",
+    "exists": true,
+    "sha256": "527EA4DC5873446153E7ED1E380ADDBB1DDC40FF18BFE6D526DC2F45264E547F"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyMenuItems.cs",
+    "exists": true,
+    "sha256": "B470CAD079DF113A62B60447915C7A8D60832C3DE15D53C18B85542EA64B49C1"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyMenuItems.cs.meta",
+    "exists": true,
+    "sha256": "DA371BC255CB1F813870BCA11CFE4AC3C1CCC577E7233322C561F1966CE3F41D"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyNavbar.cs",
+    "exists": true,
+    "sha256": "5980EC4F11176D32DFE76BAD19AC18D50724087C82DE0BBBC6BAF294126BC6E5"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyNavbar.cs.meta",
+    "exists": true,
+    "sha256": "7910870AAC11235288C865BECCEE8F5E3890297F73D67E89B264A9CE1D1698FF"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPalette.cs",
+    "exists": true,
+    "sha256": "E7D09EDBF0D88FF9F69C338A5D9247E78390FE849F195013C25DB57209A4E2C5"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPalette.cs.meta",
+    "exists": true,
+    "sha256": "B7811E7E7AB80BB4B5C3E6E1ABCD7A6BD482BD6FBCF1A30E570F9C9FACD1783D"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPaletteEditor.cs",
+    "exists": true,
+    "sha256": "2F825A4B46367B0C6E8EB08AA6F188455B497E62D6E8ED0A28814F1ABD7F5327"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPaletteEditor.cs.meta",
+    "exists": true,
+    "sha256": "74DBF88AFBFB87CC5EBDF4D07CE32F28448932A3BA59CEEB00DE75DF30D7A2EA"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPaletteWindow.cs",
+    "exists": true,
+    "sha256": "9DF48E0549AABDB1F546A75545ACE70C801519B221729C128AC3DF33E281AE18"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchyPaletteWindow.cs.meta",
+    "exists": true,
+    "sha256": "D2C06DF6062D7EF9C14D87F74E840E8695F03E0DBE900E149257E62C1FC58066"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchySceneSelectorWindow.cs",
+    "exists": true,
+    "sha256": "45CDBD53010A8A228AA9E6FA6515B2CEABE45AFB1855675426EB27CABBA05752"
+  },
+  {
+    "path": "Assets/vHierarchy/VHierarchySceneSelectorWindow.cs.meta",
+    "exists": true,
+    "sha256": "DF74978843A60812F6A2A687BD6EA098923F593C7C0CEC43B80C7C5948E58D06"
+  },
+  {
+    "path": "ProjectSettings/ProjectSettings.asset",
+    "exists": true,
+    "sha256": "29C4674872A0E8CFC834F840CB9FEDEFC16C2B62A33C5FBB0A1F923577B6C286"
+  }
+]

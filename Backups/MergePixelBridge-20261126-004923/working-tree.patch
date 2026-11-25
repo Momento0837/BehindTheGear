@@ -1,0 +1,4362 @@
+diff --git a/Assets/!UI/Other/Curser.png b/Assets/!UI/Other/Curser.png
+index 0f8d865..1285002 100644
+--- a/Assets/!UI/Other/Curser.png
++++ b/Assets/!UI/Other/Curser.png
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:d588db523bd1b82728a3a34bf6a3586c9e8a49c990ac92205488ae34f24b6269
+-size 221
++oid sha256:d7bc77039e297ed655db5dab16fa6d5e431eb8cbae7c28fd7d0018ac3c43e1da
++size 259
+diff --git a/Assets/!UI/Other/Team_Logo.prefab b/Assets/!UI/Other/Team_Logo.prefab
+index c70f2ef..0f38c59 100644
+--- a/Assets/!UI/Other/Team_Logo.prefab
++++ b/Assets/!UI/Other/Team_Logo.prefab
+@@ -35,7 +35,7 @@ RectTransform:
+   m_AnchorMin: {x: 0.5, y: 0.5}
+   m_AnchorMax: {x: 0.5, y: 0.5}
+   m_AnchoredPosition: {x: 0, y: 0}
+-  m_SizeDelta: {x: 480, y: 200}
++  m_SizeDelta: {x: 385, y: 120}
+   m_Pivot: {x: 0.5, y: 0.5}
+ --- !u!222 &2260335408411179689
+ CanvasRenderer:
+diff --git a/Assets/!UI/Other/Team_Logo_A_Clear.png b/Assets/!UI/Other/Team_Logo_A_Clear.png
+index 02ff81c..4b808c3 100644
+--- a/Assets/!UI/Other/Team_Logo_A_Clear.png
++++ b/Assets/!UI/Other/Team_Logo_A_Clear.png
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:4556e325250930033c5c4884cc0bc7ca9ac2ea8797db3fe6f07468b51c7509ed
+-size 626
++oid sha256:b38d9f453368c88568f3fcda6ef10563dcfca17dc80f33fa681f2c4e8f9c21f5
++size 436
+diff --git a/Assets/Editor/MarketDialogueCheck.cs b/Assets/Editor/MarketDialogueCheck.cs
+index 1e0844b..2a6c6c6 100644
+--- a/Assets/Editor/MarketDialogueCheck.cs
++++ b/Assets/Editor/MarketDialogueCheck.cs
+@@ -138,7 +138,7 @@ public static class MarketDialogueCheck
+                     Require(Mathf.Approximately(rect.localScale.x, 1f) && Mathf.Approximately(dialogue.TalkingImage.GetComponent<CanvasGroup>().alpha, 1f), "Entrance reaches full scale and opacity");
+                     Require(Quaternion.Angle(rect.localRotation, Quaternion.identity) < .01f, "Follow through settles at zero");
+                     var label = dialogue.TalkingImage.GetComponentInChildren<TMP_Text>();
+-                    Require(label.text == MarketNpcBubble.FormatBubbleText(ConversationDialogue.GetOpeningText(Resources.Load<TextAsset>("Dialogue/quest_offer"))), "First greeting keeps all text with sentence breaks");
++                    Require(label.text == MarketNpcBubble.FormatBubbleText(ConversationDialogue.GetOpeningText(Resources.Load<TextAsset>("Dialogue/Market/quest_offer"))), "First greeting keeps all text with sentence breaks");
+                     Require(label.textInfo.lineCount > 1 && label.textWrappingMode == TextWrappingModes.Normal, "Greeting wraps at sentence boundaries");
+                     Require(Mathf.Approximately(label.fontSize, 21.6f) && label.rectTransform.offsetMin.x == 26f && label.rectTransform.offsetMax.y == -26f, "90 percent text size and 26 unit body padding");
+                     ScreenCapture.CaptureScreenshot(Output + "/passing.png");
+diff --git a/Assets/Monster/Scen/MonsterFollowController.cs b/Assets/Monster/Scen/MonsterFollowController.cs
+index 4d78b7d..7dd3a71 100644
+--- a/Assets/Monster/Scen/MonsterFollowController.cs
++++ b/Assets/Monster/Scen/MonsterFollowController.cs
+@@ -244,7 +244,7 @@ public sealed class MonsterFollowController : MonoBehaviour
+         child.gameObject.layer = gameObject.layer;
+         var collider = child.GetComponent<BoxCollider2D>();
+         if (collider == null) collider = child.gameObject.AddComponent<BoxCollider2D>();
+-        collider.size = source.size;
++        collider.size = new Vector2(source.size.x, source.size.y * (attack ? .7f : 1f));
+         collider.offset = source.offset;
+         collider.isTrigger = true;
+         source.enabled = false;
+@@ -479,20 +479,23 @@ public sealed class MonsterFollowController : MonoBehaviour
+ 
+     private void CreateDrops()
+     {
+-        int roll = Random.Range(0, 100);
+-        if (roll >= 40) return;
+-        bool equipment = roll == 0;
+-        var pool = loot.Where(item => item != null && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealth
+-            && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealthAndMana
+-            && (equipment ? item.IsEquipment : item.IsConsumable)).ToArray();
+-        if (pool.Length == 0) return;
+-        int count = equipment ? 1 : Random.Range(1, 3);
+-        for (int i = 0; i < count; i++)
+-        {
+-            var drop = new GameObject("Monster Loot");
+-            drop.transform.position = transform.position + new Vector3((i - (count - 1) * .5f) * .4f, .5f, 0f);
+-            drop.AddComponent<WorldItemPickup>().Configure(pool[Random.Range(0, pool.Length)], 1);
+-        }
++        // The basic drop is independent of scene loot and always awards one cloth.
++        var cloth = Resources.Load<InventoryItemDefinition>("Story/RedCloth");
++        if (cloth != null) CreateDrop(cloth, 0f);
++        else Debug.LogError("Missing monster drop: Resources/Story/RedCloth", this);
++
++        // Preserve the existing 1% bonus equipment chance; potions are not monster loot.
++        if (Random.Range(0, 100) != 0) return;
++        var pool = loot.Where(item => item != null && item.IsEquipment
++            && item.Effect == InventoryItemDefinition.ConsumableEffect.None).ToArray();
++        if (pool.Length > 0) CreateDrop(pool[Random.Range(0, pool.Length)], .4f);
++    }
++
++    private void CreateDrop(InventoryItemDefinition item, float offsetX)
++    {
++        var drop = new GameObject("Monster Loot");
++        drop.transform.position = transform.position + new Vector3(offsetX, .5f, 0f);
++        drop.AddComponent<WorldItemPickup>().Configure(item, 1);
+     }
+ 
+     private void CreateTemporaryDrop()
+diff --git a/Assets/Player/PlayerMovementDemo.unity b/Assets/Player/PlayerMovementDemo.unity
+index a432c56..7f0e4f8 100644
+--- a/Assets/Player/PlayerMovementDemo.unity
++++ b/Assets/Player/PlayerMovementDemo.unity
+@@ -20676,7 +20676,7 @@ Transform:
+   serializedVersion: 2
+   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+   m_LocalPosition: {x: 6.29, y: 1.09, z: 0}
+-  m_LocalScale: {x: 1.1696, y: 1.1696, z: 1.1696}
++  m_LocalScale: {x: 1.05264, y: 1.05264, z: 1.05264}
+   m_ConstrainProportionsScale: 0
+   m_Children: []
+   m_Father: {fileID: 0}
+diff --git a/Assets/Player/Script/AutomaticNpcBubble.cs b/Assets/Player/Script/AutomaticNpcBubble.cs
+index 2d0fa2b..52dafc6 100644
+--- a/Assets/Player/Script/AutomaticNpcBubble.cs
++++ b/Assets/Player/Script/AutomaticNpcBubble.cs
+@@ -3,6 +3,7 @@ using TMPro;
+ using UnityEngine;
+ using UnityEngine.UI;
+ using UnityEngine.Rendering;
++using UnityEngine.SceneManagement;
+ 
+ [DefaultExecutionOrder(1100)]
+ public sealed class AutomaticNpcBubble : MonoBehaviour
+@@ -12,14 +13,24 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+     TMP_Text text;
+     Image image;
+     CanvasGroup group;
+-    float entranceElapsed;
++    float entranceElapsed, exitDrop;
++    public bool ScreenRight { get; set; }
++    public bool PlayerReaction { get; set; }
+     float sliceScale = 1f;
+-    float headOffset = 2.8f;
++    Vector3 headAnchor = Vector3.up * 2.55f;
++    bool headAnchorCaptured;
++    const float HeadGap = 12f; // Reference-resolution UI pixels, independent of the camera lens.
++    const float FadeDuration = .5f;
++    float EntranceDuration => ScreenRight || PlayerReaction ? .48f : FadeDuration;
+     public bool IsPlaying { get; private set; }
++    public int RevealedLineCount { get; private set; }
+     public void Begin(Image style, string[] lines)
+     {
+         IsPlaying = true;
+-        var root = new GameObject("Selena Automatic Bubble", typeof(Canvas), typeof(CanvasScaler)); root.transform.SetParent(transform, false);
++        RevealedLineCount = 0;
++        // A scene-root overlay cannot inherit the NPC's world transform or animation scale.
++        var root = new GameObject(PlayerReaction ? "Player Reaction Bubble" : "Selena Automatic Bubble", typeof(Canvas), typeof(CanvasScaler));
++        if (root.scene != gameObject.scene) SceneManager.MoveGameObjectToScene(root, gameObject.scene);
+         canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 20;
+         var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280,720);
+         bubble = new GameObject("Talking", typeof(RectTransform)).GetComponent<RectTransform>();
+@@ -29,7 +40,7 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+         image = new GameObject("Mirrored Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); image.transform.SetParent(bubble,false);
+         image.rectTransform.anchorMin = Vector2.zero; image.rectTransform.anchorMax = Vector2.one;
+         image.rectTransform.offsetMin = image.rectTransform.offsetMax = Vector2.zero;
+-        image.rectTransform.localScale = new Vector3(-1, 1, 1);
++        image.rectTransform.localScale = new Vector3(PlayerReaction ? 1 : -1, 1, 1);
+         image.sprite = style != null ? style.sprite : null; image.type = Image.Type.Sliced; image.raycastTarget = false;
+         if (style != null)
+         {
+@@ -41,9 +52,17 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+         text = new GameObject("Text",typeof(RectTransform),typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>(); text.transform.SetParent(bubble,false);
+         text.rectTransform.anchorMin = Vector2.zero; text.rectTransform.anchorMax = Vector2.one; text.rectTransform.offsetMin = new Vector2(26,26 + 8 * sliceScale); text.rectTransform.offsetMax = new Vector2(-26,-26);
+         UIFontTheme.Apply(text, UIFontTheme.Normal); text.fontSize = 22; text.color = new Color(.12f,.09f,.07f); text.raycastTarget = false;
+-        text.textWrappingMode = TextWrappingModes.Normal;
+-        var sprite = GetComponent<SpriteRenderer>();
+-        if (sprite != null) headOffset = sprite.bounds.max.y - transform.position.y + .25f;
++        if (ScreenRight || PlayerReaction)
++        {
++            var font = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/SuhgungDialogue");
++            if (font != null) { text.font = font; text.fontSharedMaterial = font.material; }
++            text.fontSize = 21.6f;
++            text.alignment = TextAlignmentOptions.Center;
++        }
++        // Enlarge the reaction glyph around its center without resizing the bubble layout.
++        if (PlayerReaction) text.rectTransform.localScale = Vector3.one * 1.7f;
++        text.textWrappingMode = ScreenRight || PlayerReaction ? TextWrappingModes.NoWrap : TextWrappingModes.Normal;
++        CaptureHeadAnchor();
+         RenderPipelineManager.beginCameraRendering += PositionAtRender;
+         StartCoroutine(Play(lines));
+     }
+@@ -51,19 +70,26 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+     {
+         for(int i=0;i<lines.Length;i++)
+         {
+-            text.text=MarketNpcBubble.FormatBubbleText(lines[i]); text.maxVisibleCharacters=0;
++            // Pursuit shouts expand horizontally; only explicit JSON newlines break the line.
++            text.text=ScreenRight ? lines[i] : MarketNpcBubble.FormatBubbleText(lines[i]); text.maxVisibleCharacters=0;
+             float maxWidth = Mathf.Max(50, Mathf.Min(520, ((RectTransform)canvas.transform).rect.width * .7f) - 52);
+-            Vector2 size=text.GetPreferredValues(text.text,maxWidth,Mathf.Infinity);
++            Vector2 size=text.GetPreferredValues(text.text,ScreenRight ? Mathf.Infinity : maxWidth,Mathf.Infinity);
+             float width = Mathf.Max(50, size.x) + 54;
+             float height = Mathf.Max(28,size.y) + 52 + 8 * sliceScale;
+             bubble.sizeDelta=new Vector2(width,height);
+-            bubble.pivot=new Vector2(1 - 6 * sliceScale / width, 3 * sliceScale / height);
++            float tailInset = 6 * sliceScale / width;
++            bubble.pivot=new Vector2(PlayerReaction ? tailInset : 1 - tailInset, 3 * sliceScale / height);
+             ApplyEntrance(0);
+             bubble.gameObject.SetActive(true); text.ForceMeshUpdate();
+-            for(float t=0;t<Mathf.Max(.48f,lines[i].Length*.045f);t+=Time.deltaTime)
++            for(float t=0;t<Mathf.Max(EntranceDuration,lines[i].Length*.045f);t+=Time.deltaTime)
+             { ApplyEntrance(t); text.maxVisibleCharacters=Mathf.FloorToInt(t/.045f);yield return null; }
+-            ApplyEntrance(.48f);
+-            text.maxVisibleCharacters=int.MaxValue; yield return new WaitForSeconds(.5f); bubble.gameObject.SetActive(false);
++            ApplyEntrance(EntranceDuration);
++            text.maxVisibleCharacters=int.MaxValue;
++            RevealedLineCount = i + 1;
++            yield return new WaitForSeconds(.5f);
++            for (float fade = 0; fade < FadeDuration; fade += Time.deltaTime)
++            { float progress = Mathf.Clamp01(fade / FadeDuration); group.alpha = 1 - progress; exitDrop = (ScreenRight ? 18 : 15) * progress; yield return null; }
++            group.alpha = 0; bubble.gameObject.SetActive(false); exitDrop = 0;
+             if(i+1<lines.Length)yield return new WaitForSeconds(1);
+         }
+         IsPlaying = false;
+@@ -71,11 +97,19 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+     void ApplyEntrance(float elapsed)
+     {
+         entranceElapsed = elapsed;
+-        float appear = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / .22f));
++        if (!ScreenRight && !PlayerReaction)
++        {
++            group.alpha = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / FadeDuration));
++            bubble.localScale = Vector3.one;
++            bubble.localRotation = Quaternion.identity;
++            return;
++        }
++        float appear = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / (PlayerReaction ? .42f : .22f)));
+         float settle = Mathf.SmoothStep(0, 1, Mathf.Clamp01((elapsed - .22f) / .16f));
+-        float widthScale = elapsed < .22f ? Mathf.Lerp(0, 1.05f, appear) : Mathf.Lerp(1.05f, 1, settle);
++        float widthScale = elapsed < .22f ? Mathf.Lerp(.8f, 1.05f, appear) : Mathf.Lerp(1.05f, 1, settle);
+         group.alpha = appear;
+-        bubble.localScale = new Vector3(widthScale, Mathf.Lerp(.8f, 1, appear), 1);
++        bubble.localScale = PlayerReaction ? Vector3.one * (.5f * Mathf.Lerp(.8f, 1, appear))
++            : new Vector3(widthScale, Mathf.Lerp(.8f, 1, appear), 1);
+         float angle = elapsed < .2f ? Mathf.Lerp(-5, 5, Mathf.SmoothStep(0, 1, elapsed / .2f))
+             : Mathf.Lerp(5, 0, Mathf.SmoothStep(0, 1, Mathf.Clamp01((elapsed - .2f) / .28f)));
+         bubble.localRotation = Quaternion.Euler(0, 0, angle);
+@@ -91,17 +125,29 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
+     void PositionBubble(Camera camera)
+     {
+         if(bubble==null)return;
+-        var screen=camera.WorldToScreenPoint(transform.position+Vector3.up*headOffset);
++        CaptureHeadAnchor();
++        var screen = ScreenRight ? new Vector3(Screen.width * .96f, Screen.height * .5f, 1)
++            : camera.WorldToScreenPoint(transform.TransformPoint(headAnchor));
+         image.enabled = screen.z > 0;
+         RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)canvas.transform,screen,null,out var local);
+-        local.y -= 18f * (1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01(entranceElapsed / .22f)));
+-        bubble.anchoredPosition=local;
+-        var rect = ((RectTransform)canvas.transform).rect;
+-        local.x = Mathf.Clamp(local.x, rect.xMin + 16 + bubble.pivot.x * bubble.sizeDelta.x,
+-            rect.xMax - 16 - (1 - bubble.pivot.x) * bubble.sizeDelta.x);
+-        local.y = Mathf.Clamp(local.y, rect.yMin + 16 + bubble.pivot.y * bubble.sizeDelta.y,
+-            rect.yMax - 16 - (1 - bubble.pivot.y) * bubble.sizeDelta.y);
++        if (!ScreenRight) local.y += HeadGap;
++        local.y -= exitDrop;
++        float riseDuration = PlayerReaction ? .42f : ScreenRight ? .22f : FadeDuration;
++        float riseDistance = ScreenRight || PlayerReaction ? 18f : 15f;
++        local.y -= riseDistance * (1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01(entranceElapsed / riseDuration)));
++        // Follow the speaker even outside the viewport; edge clamping breaks the head anchor.
+         bubble.anchoredPosition = local;
+     }
++    void CaptureHeadAnchor()
++    {
++        if (headAnchorCaptured || ScreenRight) return;
++        var sprite = GetComponent<SpriteRenderer>();
++        if (sprite == null || sprite.sprite == null) return;
++        // Capture once: walking frames must not make the bubble jitter with changing sprite bounds.
++        headAnchor = transform.InverseTransformPoint(new Vector3(sprite.bounds.center.x, sprite.bounds.max.y, transform.position.z));
++        headAnchorCaptured = true;
++    }
++    void OnEnable() { if (canvas != null) canvas.gameObject.SetActive(true); }
++    void OnDisable() { if (canvas != null) canvas.gameObject.SetActive(false); }
+     void OnDestroy(){RenderPipelineManager.beginCameraRendering -= PositionAtRender;if(canvas!=null)Destroy(canvas.gameObject);}
+ }
+diff --git a/Assets/Player/Script/BaseArrivalTutorial.cs b/Assets/Player/Script/BaseArrivalTutorial.cs
+index 88bd651..4ca61c9 100644
+--- a/Assets/Player/Script/BaseArrivalTutorial.cs
++++ b/Assets/Player/Script/BaseArrivalTutorial.cs
+@@ -31,7 +31,7 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
+         var presentation = template.CreateTutorialPresentation(transform);
+         try
+         {
+-            presentation.Play(Resources.Load<TextAsset>("Dialogue/base_upgrade_tutorial"));
++            presentation.Play(Resources.Load<TextAsset>("Dialogue/Hideout/base_upgrade_tutorial"));
+             while (presentation.IsPlaying) yield return null;
+             bridge.State.baseTutorialComplete = true;
+             bridge.SetSelenaRecruited();
+diff --git a/Assets/Player/Script/BlackMarkerNpc.cs b/Assets/Player/Script/BlackMarkerNpc.cs
+index 3e3b3b9..72d7a85 100644
+--- a/Assets/Player/Script/BlackMarkerNpc.cs
++++ b/Assets/Player/Script/BlackMarkerNpc.cs
+@@ -24,14 +24,7 @@ public sealed class BlackMarkerNpc : MonoBehaviour
+ 
+     private void OnEnable()
+     {
+-        var player = FindFirstObjectByType<PlayerSpriteFacing>();
+-        var playerSprite = player != null ? player.GetComponent<SpriteRenderer>() : null;
+-        var npcSprite = GetComponent<SpriteRenderer>();
+-        if (playerSprite != null && npcSprite != null)
+-        {
+-            npcSprite.sortingLayerID = playerSprite.sortingLayerID;
+-            npcSprite.sortingOrder = playerSprite.sortingOrder - 1;
+-        }
++        // Preserve the sorting layer and order authored in the scene or prefab.
+         if (conversation == null) conversation = GetComponent<ConversationDialogue>();
+         conversation.LineRevealStarted += HandleLineStarted;
+     }
+diff --git a/Assets/Player/Script/ControlHintAnimation.cs b/Assets/Player/Script/ControlHintAnimation.cs
+index 0eb3ffa..0100f12 100644
+--- a/Assets/Player/Script/ControlHintAnimation.cs
++++ b/Assets/Player/Script/ControlHintAnimation.cs
+@@ -6,9 +6,14 @@ using UnityEngine;
+ // GIF frames are composited into generated atlases; timings retain the source GIF delays.
+ public sealed class ControlHintAnimation
+ {
+-    [Serializable] private sealed class Data { public int width, height, columns; public float[] durations; }
++    [Serializable] private sealed class Data
++    {
++        public int width, height, columns;
++        public float[] durations;
++        public Vector2 pivot = new Vector2(.5f, .5f);
++    }
+     private static readonly Dictionary<string, ControlHintAnimation> clips = new();
+-    private static readonly string[] tutorialNames = { "WASDSpace", "MouseL", "F" };
++    private static readonly string[] tutorialNames = { "WASDSpace", "MouseL", "F", "W", "Inventory_Tutorial" };
+     private static bool IsLoaded(string name) => clips.TryGetValue(name, out var clip)
+         && !Array.Exists(clip.frames, frame => frame == null || frame.texture == null);
+     public static bool TutorialsLoaded => Array.TrueForAll(tutorialNames, IsLoaded);
+@@ -27,12 +32,16 @@ public sealed class ControlHintAnimation
+     private readonly Sprite[] frames;
+     private readonly float[] ends;
+     private readonly float duration;
+-    private const float PlaybackSpeed = 1.32f;
+-    private float TrimStart => Mathf.Min(.5f, Mathf.Max(0f, duration - .01f));
++    private readonly float playbackSpeed;
++    private readonly bool inventoryTutorial;
++    private float TrimStart => inventoryTutorial ? 0 : Mathf.Min(.5f, Mathf.Max(0f, duration - .01f));
+     public Vector2 Size { get; }
+-    public float Duration => (duration - TrimStart) / PlaybackSpeed;
++    public Vector2 Pivot { get; }
++    public float Duration => (duration - TrimStart) / playbackSpeed;
+     private ControlHintAnimation(string name)
+     {
++        inventoryTutorial = name == "Inventory_Tutorial";
++        playbackSpeed = inventoryTutorial ? 1f : 1.32f;
+         var data = JsonUtility.FromJson<Data>(Resources.Load<TextAsset>("ControlHints/" + name).text.TrimStart('\uFEFF'));
+         var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+         texture.name = name + " GIF";
+@@ -40,8 +49,10 @@ public sealed class ControlHintAnimation
+             throw new InvalidOperationException("Cannot decode control hint atlas: " + name);
+         texture.wrapMode = TextureWrapMode.Clamp;
+         Size = new Vector2(data.width, data.height);
++        Pivot = data.pivot;
+         frames = new Sprite[data.durations.Length];
+         ends = new float[frames.Length];
++        Color32[] atlasPixels = inventoryTutorial ? texture.GetPixels32() : null;
+         float total = 0;
+         for (int i = 0; i < frames.Length; i++)
+         {
+@@ -49,11 +60,65 @@ public sealed class ControlHintAnimation
+                 texture.height - (i / data.columns + 1) * data.height, data.width, data.height);
+             // UI frames are rectangular; avoid generating an alpha-traced tight mesh
+             // for every large GIF frame during the initial load.
+-            frames[i] = Sprite.Create(texture, rect, new Vector2(.5f, .5f), 100, 0, SpriteMeshType.FullRect);
++            Texture2D frameTexture = texture;
++            if (inventoryTutorial)
++            {
++                // This GIF is displayed much smaller than its source. Isolate each frame
++                // so filtered mip levels cannot sample a neighbouring animation frame.
++                frameTexture = CreateFilteredFrame(atlasPixels, texture.width, rect, name + " " + i);
++                rect = new Rect(0, 0, data.width, data.height);
++            }
++            frames[i] = Sprite.Create(frameTexture, rect, Pivot, 100, 0, SpriteMeshType.FullRect);
+             total += data.durations[i]; ends[i] = total;
+         }
+         duration = total;
++        if (inventoryTutorial) UnityEngine.Object.Destroy(texture);
++    }
++
++    private static Texture2D CreateFilteredFrame(Color32[] atlas, int atlasWidth, Rect rect, string name)
++    {
++        int width = (int)rect.width, height = (int)rect.height;
++        var pixels = new Color32[width * height];
++        for (int y = 0; y < height; y++)
++            Array.Copy(atlas, ((int)rect.y + y) * atlasWidth + (int)rect.x, pixels, y * width, width);
++        var texture = new Texture2D(width, height, TextureFormat.RGBA32, true)
++        { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Point };
++        for (int mip = 0; mip < texture.mipmapCount; mip++)
++        {
++            texture.SetPixels32(pixels, mip);
++            if (mip + 1 == texture.mipmapCount) break;
++            int nextWidth = Mathf.Max(1, width / 2), nextHeight = Mathf.Max(1, height / 2);
++            var next = new Color32[nextWidth * nextHeight];
++            for (int y = 0; y < nextHeight; y++)
++                for (int x = 0; x < nextWidth; x++)
++                {
++                    int alpha = 0, count = 0;
++                    int left = x * width / nextWidth, right = (x + 1) * width / nextWidth;
++                    int bottom = y * height / nextHeight, top = (y + 1) * height / nextHeight;
++                    float centerX = (left + right - 1) * .5f, centerY = (bottom + top - 1) * .5f;
++                    float nearestDistance = float.PositiveInfinity;
++                    Color32 nearest = default;
++                    for (int sy = bottom; sy < top; sy++)
++                        for (int sx = left; sx < right; sx++)
++                        {
++                            Color32 p = pixels[sy * width + sx];
++                            alpha += p.a; count++;
++                            float distance = (sx - centerX) * (sx - centerX) + (sy - centerY) * (sy - centerY);
++                            if (p.a > 0 && distance <= nearestDistance)
++                            { nearest = p; nearestDistance = distance; }
++                        }
++                    // Only average coverage. Keep a nearest visible source colour so the
++                    // GIF's pixel-art palette and hard colour boundaries stay crisp.
++                    if (alpha > 0) next[y * nextWidth + x] = new Color32(
++                        nearest.r, nearest.g, nearest.b,
++                        (byte)((alpha + count / 2) / count));
++                }
++            pixels = next; width = nextWidth; height = nextHeight;
++        }
++        texture.Apply(false, true);
++        return texture;
+     }
++
+     public static ControlHintAnimation Load(string name)
+     {
+         if (!clips.TryGetValue(name, out var clip) || Array.Exists(clip.frames, frame => frame == null || frame.texture == null))
+@@ -63,7 +128,7 @@ public sealed class ControlHintAnimation
+     public Sprite Frame(float time)
+     {
+         // Skip the original first half-second on every loop, not just on first appearance.
+-        float phase = TrimStart + Mathf.Repeat(time * PlaybackSpeed, duration - TrimStart);
++        float phase = TrimStart + Mathf.Repeat(time * playbackSpeed, duration - TrimStart);
+         for (int i = 0; i < ends.Length; i++) if (phase < ends[i]) return frames[i];
+         return frames[0];
+     }
+diff --git a/Assets/Player/Script/ControlTutorialUI.cs b/Assets/Player/Script/ControlTutorialUI.cs
+index d3431d7..6fafdd5 100644
+--- a/Assets/Player/Script/ControlTutorialUI.cs
++++ b/Assets/Player/Script/ControlTutorialUI.cs
+@@ -13,6 +13,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
+     private GameObject portal;
+     private bool portalUsed;
+     private float started;
++    private bool portalPresentation, fromRight;
++    private PortalTutorialVisual portalVisual;
+     public bool IsPortalHintVisible { get; private set; }
+     public GameObject PresentationRoot { get; private set; }
+     private readonly Key[] movementKeys = { Key.W, Key.A, Key.S, Key.D, Key.Space };
+@@ -52,7 +54,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
+     public void CompletePortal() => portalUsed = true;
+     private void Update()
+     {
+-        if (image != null && image.enabled && clip != null) image.sprite = clip.Frame(Time.unscaledTime - started);
++        if (image != null && image.enabled && clip != null)
++            image.sprite = portalPresentation && portalVisual != null ? portalVisual.Frame(Time.unscaledTime - started) : clip.Frame(Time.unscaledTime - started);
+     }
+     private bool CanReadInput => player != null && player.enabled && !SceneFadeTransition.IsRunning
+         && !(player.GetComponent<PlayerControlLock>()?.IsLocked ?? false);
+@@ -77,7 +80,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
+     }
+     private IEnumerator Slide(bool entering)
+     {
+-        float from = rect.anchoredPosition.x, to = entering ? 24f : -rect.sizeDelta.x - 40f;
++        float sign = fromRight ? -1f : 1f;
++        float from = rect.anchoredPosition.x, to = sign * (entering ? 24f : -rect.sizeDelta.x - 40f);
+         float duration = entering ? .9f : .45f;
+         for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+         {
+@@ -89,7 +93,7 @@ public sealed class ControlTutorialUI : MonoBehaviour
+         {
+             // Restart once fully on screen, so no frames are missed during the entrance.
+             started = Time.unscaledTime;
+-            image.sprite = clip.Frame(0);
++            image.sprite = portalPresentation && portalVisual != null ? portalVisual.Frame(0) : clip.Frame(0);
+         }
+         else image.enabled = false;
+     }
+@@ -128,17 +132,45 @@ public sealed class ControlTutorialUI : MonoBehaviour
+         yield return Slide(false);
+         yield return RunPortal();
+     }
++    private bool InPortalRange => portal != null && player != null
++        && portal.GetComponent<ScenePortal2D>() != null && portal.GetComponent<ScenePortal2D>().ContainsPlayer(player.gameObject);
++    private void ShowPortalKey()
++    {
++        portalPresentation = true;
++        fromRight = portal.GetComponent<ScenePortal2D>().ExitDirection > 0;
++        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(fromRight ? 1 : 0, .5f);
++        if (portalVisual == null)
++        {
++            var prefab = Resources.Load<GameObject>("ControlHints/Portal_W_Tutorial");
++            if (prefab == null) throw new System.InvalidOperationException("Missing Portal_W_Tutorial prefab");
++            var visual = Instantiate(prefab, rect.parent);
++            portalVisual = visual.GetComponent<PortalTutorialVisual>();
++            image.enabled = false;
++            image = visual.GetComponent<Image>() ?? visual.AddComponent<Image>();
++            image.raycastTarget = false;
++            var shadow = Resources.Load<Shader>("Effects/TutorialHintShadow");
++            if (shadow != null) visual.AddComponent<MenuImageSoftEffect>().Configure(shadow, 0f, 30f, .5f);
++            rect = image.rectTransform;
++        }
++        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(fromRight ? 1 : 0, .5f);
++        clip = portalVisual.Animation;
++        rect.sizeDelta = portalVisual.Size * (portalVisual.DisplayWidth / portalVisual.Size.x);
++        started = Time.unscaledTime;
++        image.sprite = portalVisual.Frame(0); image.color = Color.white; image.enabled = true;
++        rect.anchoredPosition = new Vector2((fromRight ? 1 : -1) * (rect.sizeDelta.x + 40), 0);
++    }
+     private IEnumerator RunPortal()
+     {
+-        while (!portalUsed && (portal == null || !portal.activeInHierarchy || player == null
+-            || Mathf.Abs(player.transform.position.x - portal.GetComponent<Collider2D>().bounds.ClosestPoint(player.transform.position).x) > 2.5f)) yield return null;
+-        if (portalUsed) yield break;
+-        IsPortalHintVisible = true;
+-        Show("F"); var entry = StartCoroutine(Slide(true));
+-        while (!portalUsed) yield return null;
+-        yield return entry;
+-        yield return FinishVisibleCycle();
+-        yield return Slide(false);
+-        IsPortalHintVisible = false;
++        while (!portalUsed)
++        {
++            while (!portalUsed && !InPortalRange) yield return null;
++            if (portalUsed) yield break;
++            IsPortalHintVisible = true; ShowPortalKey();
++            // Complete each entrance/exit before checking range again. No cancelled lerps.
++            yield return Slide(true);
++            while (!portalUsed && InPortalRange) yield return null;
++            yield return Slide(false);
++            IsPortalHintVisible = false;
++        }
+     }
+ }
+diff --git a/Assets/Player/Script/ConversationDialogue.cs b/Assets/Player/Script/ConversationDialogue.cs
+index 2d223f0..14e4c7f 100644
+--- a/Assets/Player/Script/ConversationDialogue.cs
++++ b/Assets/Player/Script/ConversationDialogue.cs
+@@ -12,6 +12,8 @@ public sealed class ConversationDialogue : MonoBehaviour
+     [Serializable] private class DialogueLine
+     {
+         public string speaker = string.Empty;
++        public string 표정 = "기본 표정";
++        public string 연출 = string.Empty;
+         public bool npcLaugh;
+         [TextArea] public string text = string.Empty;
+         // Kept for a future portrait-address lookup. The portrait UI is safely hidden when null.
+@@ -26,8 +28,7 @@ public sealed class ConversationDialogue : MonoBehaviour
+     [Header("Existing UI references")]
+     [SerializeField] private CanvasGroup dialogueGroup;
+     [SerializeField] private Image portraitImage;
+-    private Sprite ethanPortrait;
+-    private Sprite selenaPortrait;
++    private DialoguePortraitLibrary portraitLibrary;
+     private Image animatedPortrait;
+     private SpriteRenderer portraitSource;
+     [Tooltip("Separate UI text for the speaker name.")]
+@@ -62,6 +63,7 @@ public sealed class ConversationDialogue : MonoBehaviour
+     }
+ 
+     public event Action Finished;
++    public Func<string, IEnumerator> BeforeLineEvent { get; set; }
+     public event Action LineRevealStarted;
+     public event Action<char> CharacterRevealed;
+     public event Action LineRevealCompleted;
+@@ -87,10 +89,12 @@ public sealed class ConversationDialogue : MonoBehaviour
+     private PlayerCameraFollow2D dialogueCamera;
+     private TMP_FontAsset mysterySpeakerFont;
+     private TMP_FontAsset ethanSpeakerFont;
++    private TMP_FontAsset selenaSpeakerFont;
+     private TMP_FontAsset originalBodyFont;
+     private TMP_FontAsset originalSpeakerFont;
+     private Material originalBodyMaterial;
+     private Material originalSpeakerMaterial;
++    private Material selenaBodyMaterial, selenaSpeakerMaterial;
+     private int startingLine;
+     private RectTransform acceptRect, acceptFill;
+     private float acceptHeld;
+@@ -108,11 +112,11 @@ public sealed class ConversationDialogue : MonoBehaviour
+             overAccept = RectTransformUtility.RectangleContainsScreenPoint(acceptRect, mouse.position.ReadValue(),
+                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera);
+         }
+-        if (mouse?.leftButton.wasPressedThisFrame == true && overAccept) { holdSource = 2; acceptHeld = 0; }
++        if (mouse?.leftButton.wasPressedThisFrame == true && overAccept) { SelectChoice(true); return; }
+         bool held = holdSource == 1 ? keyboard?.fKey.isPressed == true : holdSource == 2 && overAccept && mouse?.leftButton.isPressed == true;
+         if (!held) { acceptHeld = 0; holdSource = 0; }
+         else acceptHeld += Time.unscaledDeltaTime;
+-        float progress = Mathf.Clamp01(acceptHeld / (holdSource == 2 ? .5f : 1f));
++        float progress = Mathf.Clamp01(acceptHeld / .5f);
+         if (acceptFill != null) acceptFill.anchorMax = new Vector2(progress, 1);
+         if (progress >= 1) SelectChoice(true);
+     }
+@@ -147,19 +151,47 @@ public sealed class ConversationDialogue : MonoBehaviour
+             if (ethanSpeakerFont == null) ethanSpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/TangbaDialogue");
+             font = ethanSpeakerFont;
+         }
+-        ApplyFont(bodyText, font != null ? font : originalBodyFont, font != null ? font.material : originalBodyMaterial);
++        bool isSelena = string.Equals(name, "Selena", StringComparison.OrdinalIgnoreCase) || name == "셀레나";
++        // Same authored Tangba face, with padded glyphs and a build-referenced transparent TMP material.
++        if (isSelena && selenaSpeakerFont == null)
++            selenaSpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/SelenaDialogue");
++        var bodyFont = isSelena && selenaSpeakerFont != null ? selenaSpeakerFont : font;
++        ApplyFont(bodyText, bodyFont != null ? bodyFont : originalBodyFont, bodyFont != null ? bodyFont.material : originalBodyMaterial);
+         ApplyFont(speakerText, font != null ? font : originalSpeakerFont, font != null ? font.material : originalSpeakerMaterial);
++        if (isSelena)
++        {
++            ApplyCleanSelenaMaterial(bodyText, ref selenaBodyMaterial);
++            ApplyCleanSelenaMaterial(speakerText, ref selenaSpeakerMaterial);
++        }
+         SetPortrait(name, null);
+     }
+ 
+-    private void SetPortrait(string speaker, Sprite overrideSprite)
++    private static void ApplyCleanSelenaMaterial(TMP_Text label, ref Material clean)
+     {
+-        if (portraitImage == null) return;
+-        if (ethanPortrait == null)
++        if (label == null || label.font == null) return;
++        if (clean == null)
+         {
+-            var portraits = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
+-            if (portraits != null) { ethanPortrait = portraits.ethan; selenaPortrait = portraits.selena; }
++            clean = new Material(label.font.material);
++            clean.DisableKeyword("UNDERLAY_ON"); clean.DisableKeyword("UNDERLAY_INNER"); clean.DisableKeyword("GLOW_ON");
++            if (clean.HasProperty("_UnderlayColor")) clean.SetColor("_UnderlayColor", Color.clear);
+         }
++        // Dynamic atlas contents can change between speakers; never retain a stale texture binding.
++        clean.CopyPropertiesFromMaterial(label.font.material);
++        clean.DisableKeyword("UNDERLAY_ON"); clean.DisableKeyword("UNDERLAY_INNER"); clean.DisableKeyword("GLOW_ON");
++        if (clean.HasProperty("_UnderlayColor")) clean.SetColor("_UnderlayColor", Color.clear);
++        clean.mainTexture = label.font.atlasTexture;
++        label.fontSharedMaterial = clean;
++    }
++    private void OnDestroy()
++    {
++        if (selenaBodyMaterial != null) Destroy(selenaBodyMaterial);
++        if (selenaSpeakerMaterial != null) Destroy(selenaSpeakerMaterial);
++    }
++
++    private void SetPortrait(string speaker, Sprite overrideSprite, string expression = null)
++    {
++        if (portraitImage == null) return;
++        if (portraitLibrary == null) portraitLibrary = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
+         if (animatedPortrait == null)
+         {
+             if (portraitImage.GetComponent<RectMask2D>() == null) portraitImage.gameObject.AddComponent<RectMask2D>();
+@@ -175,8 +207,7 @@ public sealed class ConversationDialogue : MonoBehaviour
+         bool mystery = speaker.Trim() == "???" && overrideSprite == null;
+         animatedPortrait.gameObject.SetActive(mystery);
+         portraitImage.sprite = overrideSprite != null ? overrideSprite
+-            : string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) ? ethanPortrait
+-            : string.Equals(speaker.Trim(), "Selena", StringComparison.OrdinalIgnoreCase) || speaker.Trim() == "셀레나" ? selenaPortrait : null;
++            : portraitLibrary != null ? portraitLibrary.Resolve(speaker, expression) : null;
+         portraitImage.preserveAspect = true;
+         portraitImage.enabled = portraitImage.sprite != null;
+         UpdatePortraitFrame();
+@@ -529,11 +560,17 @@ public sealed class ConversationDialogue : MonoBehaviour
+         for (int i = startingLine; i < lines.Length; i++)
+         {
+             DialogueLine line = lines[i];
++            if (!string.IsNullOrWhiteSpace(line.연출) && BeforeLineEvent != null)
++            {
++                SetVisible(false);
++                yield return BeforeLineEvent(line.연출);
++                SetVisible(true);
++            }
+             CurrentLineNpcLaugh = line.npcLaugh && line.speaker?.Trim() == "???";
+             SetSpeaker(line.speaker);
+ 
+             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
+-            SetPortrait(line.speaker ?? string.Empty, line.portrait);
++            SetPortrait(line.speaker ?? string.Empty, line.portrait, line.표정);
+             if (bodyText != null) bodyText.text = string.Empty;
+             if (continueIndicator != null) continueIndicator.SetActive(false);
+ 
+diff --git a/Assets/Player/Script/DialoguePortraitLibrary.cs b/Assets/Player/Script/DialoguePortraitLibrary.cs
+index b3ace0f..051f0e9 100644
+--- a/Assets/Player/Script/DialoguePortraitLibrary.cs
++++ b/Assets/Player/Script/DialoguePortraitLibrary.cs
+@@ -2,6 +2,36 @@ using UnityEngine;
+ 
+ public sealed class DialoguePortraitLibrary : ScriptableObject
+ {
++    [System.Serializable]
++    public sealed class Expression
++    {
++        public string 표정;
++        public Sprite image;
++    }
+     public Sprite ethan;
+     public Sprite selena;
++    public Expression[] ethanExpressions;
++    public Expression[] selenaExpressions;
++
++    public Sprite Resolve(string speaker, string expression)
++    {
++        string name = (speaker ?? string.Empty).Trim();
++        bool isEthan = string.Equals(name, "Ethan", System.StringComparison.OrdinalIgnoreCase) || name == "이든";
++        bool isSelena = string.Equals(name, "Selena", System.StringComparison.OrdinalIgnoreCase) || name == "셀레나";
++        if (!isEthan && !isSelena) return null;
++        var entries = isEthan ? ethanExpressions : selenaExpressions;
++        string key = string.IsNullOrWhiteSpace(expression) ? "기본 표정" : expression.Trim();
++        if (entries != null)
++            foreach (var entry in entries)
++                if (entry != null && entry.표정 == key)
++                {
++                    if (entry.image != null) return entry.image;
++                    // Add the named Sprite later; Resources keeps the connection in builds as well.
++                    var named = Resources.Load<Sprite>("Dialogue/Expressions/" + (isEthan ? "이든_" : "셀레나_") + key);
++                    if (named != null) return named;
++                    break;
++                }
++        // Old JSON and not-yet-assigned expression art retain the existing portrait.
++        return isEthan ? ethan : selena;
++    }
+ }
+diff --git a/Assets/Player/Script/EquipmentTutorialHighlight.cs b/Assets/Player/Script/EquipmentTutorialHighlight.cs
+index 11d0edb..37bdb6f 100644
+--- a/Assets/Player/Script/EquipmentTutorialHighlight.cs
++++ b/Assets/Player/Script/EquipmentTutorialHighlight.cs
+@@ -10,6 +10,7 @@ public sealed class EquipmentTutorialHighlight : MonoBehaviour
+     GameObject dim;
+     Image border, mouse;
+     ControlHintAnimation mouseClip;
++    float animationStarted;
+     readonly List<GameObject> layers = new();
+     readonly List<Component> added = new();
+     Transform target;
+@@ -35,18 +36,22 @@ public sealed class EquipmentTutorialHighlight : MonoBehaviour
+             var socket = owner.FindTutorialSocket(item); if (socket != null) Raise(socket.gameObject, order + 1);
+             border = Image("Cloak White Border", target);
+             border.sprite = Resources.Load<InventoryOpeningHintStyle>("UI/InventoryOpeningHintStyle")?.border;
+-            mouse = Image("MouseL Equipment Tutorial", target); mouse.preserveAspect = true;
++            mouseClip = ControlHintAnimation.Load("Inventory_Tutorial");
++            mouse = Image("Inventory Equipment Tutorial", target); mouse.preserveAspect = true;
++            mouse.maskable = false;
+             mouse.rectTransform.anchorMin = mouse.rectTransform.anchorMax = new Vector2(.5f, 0);
+-            mouse.rectTransform.sizeDelta = source.rectTransform.rect.size * .65f;
++            mouse.rectTransform.pivot = mouseClip.Pivot;
++            float height = source.rectTransform.rect.height * .65f * .7f;
++            mouse.rectTransform.sizeDelta = new Vector2(height * mouseClip.Size.x / mouseClip.Size.y, height);
+             mouse.rectTransform.anchoredPosition = Vector2.zero;
+-            mouseClip = ControlHintAnimation.Load("MouseL");
++            animationStarted = Time.unscaledTime;
+         }
+         if (border != null)
+         {
+             float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * 4f);
+             border.color = new Color(1, 1, 1, .4f + .6f * pulse);
+             border.transform.localScale = Vector3.one * Mathf.Lerp(1, 1.08f, pulse);
+-            mouse.sprite = mouseClip.Frame(Time.unscaledTime);
++            mouse.sprite = mouseClip.Frame(Time.unscaledTime - animationStarted);
+         }
+     }
+     void Raise(GameObject go, int order)
+diff --git a/Assets/Player/Script/InGameQuestHUD.cs b/Assets/Player/Script/InGameQuestHUD.cs
+index d0e90d9..bea8a10 100644
+--- a/Assets/Player/Script/InGameQuestHUD.cs
++++ b/Assets/Player/Script/InGameQuestHUD.cs
+@@ -172,7 +172,9 @@ public sealed class InGameQuestHUD : MonoBehaviour
+         questText.enableAutoSizing = false;
+         questText.fontSize = authoredFontSize;
+         questText.textWrappingMode = TextWrappingModes.Normal;
+-        questText.alignment = TextAlignmentOptions.TopRight;
++        // Keep the first row vertically centered beside the exclamation icon.
++        // The rect still grows downward for wrapped titles and descriptions.
++        questText.alignment = TextAlignmentOptions.Right;
+         if (questText.text.Length == 0)
+         {
+             rect.sizeDelta = authoredTextSize;
+@@ -580,6 +582,25 @@ public sealed class InGameQuestHUD : MonoBehaviour
+ 
+     private void HandleTextRebuilt(TMP_TextInfo info)
+     {
++        // Center the actual first-row glyphs, not the font's ascender/descender box.
++        // Extra wrapped rows extend below the icon without shifting the first row upward.
++        if (questRoot != null && questRoot.TryGetComponent<RectTransform>(out var icon))
++        {
++            float bottom = float.PositiveInfinity, top = float.NegativeInfinity;
++            for (int i = 0; i < info.characterCount; i++)
++            {
++                var character = info.characterInfo[i];
++                if (!character.isVisible || character.lineNumber != 0) continue;
++                bottom = Mathf.Min(bottom, character.bottomLeft.y);
++                top = Mathf.Max(top, character.topRight.y);
++            }
++            if (!float.IsInfinity(bottom))
++            {
++                Vector3 center = icon.InverseTransformPoint(questText.transform.TransformPoint(new Vector3(0, (bottom + top) * .5f, 0)));
++                float offset = icon.rect.center.y - center.y;
++                if (Mathf.Abs(offset) > .001f) questText.transform.position += icon.TransformVector(Vector3.up * offset);
++            }
++        }
+         originalMesh = info.CopyMeshInfoVertexData();
+         glyphOrder.Clear();
+         if (glyphRanks.Length != info.characterCount) glyphRanks = new int[info.characterCount];
+diff --git a/Assets/Player/Script/InGameVitalsHUD.cs b/Assets/Player/Script/InGameVitalsHUD.cs
+index 1ed4760..bf03667 100644
+--- a/Assets/Player/Script/InGameVitalsHUD.cs
++++ b/Assets/Player/Script/InGameVitalsHUD.cs
+@@ -2,7 +2,7 @@ using System;
+ using UnityEngine;
+ using UnityEngine.UI;
+ 
+-/// <summary>Updates only image fill/opacity. Never writes to a RectTransform.</summary>
++/// <summary>Updates vitals and heartbeat visuals without moving or resizing authored HUD elements.</summary>
+ [DisallowMultipleComponent]
+ public sealed class InGameVitalsHUD : MonoBehaviour
+ {
+@@ -85,12 +85,46 @@ public sealed class InGameVitalsHUD : MonoBehaviour
+     private Material healthPulseMaterial, originalHealthMaterial;
+     private Color originalHealthTint;
+     private float heartbeatTime;
++    private RawImage healthRipple;
++    private Material healthRippleMaterial;
++    private bool rippleShaderUnavailable;
++    private const float HeartbeatThreshold = .4f;
+     private static readonly int TintId = Shader.PropertyToID("_Color");
++    private static readonly int RipplePhaseId = Shader.PropertyToID("_Phase");
++    private static readonly int RippleStrengthId = Shader.PropertyToID("_Strength");
++    private static readonly int RippleRectId = Shader.PropertyToID("_RectSize");
++    private static readonly int RippleBarId = Shader.PropertyToID("_Bar");
++    private static InGameVitalsHUD rippleOwner;
++    private readonly Vector3[] rippleCorners = new Vector3[4];
++    private float ripplePhase, rippleStrength;
++
++    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
++    private static void ResetRippleOwner() => rippleOwner = null;
++
++    // The world shader refracts scenery under the smooth UI wave; HUD text/fill stay crisp.
++    public static bool TryGetRipple(out Vector4 bar, out Vector4 parameters)
++    {
++        bar = parameters = Vector4.zero;
++        var owner = rippleOwner;
++        if (owner == null || !owner.isActiveAndEnabled || owner.healthRipple == null || !owner.healthRipple.isActiveAndEnabled) return false;
++        var rect = owner.hp.foreground.rectTransform;
++        rect.GetWorldCorners(owner.rippleCorners);
++        var canvas = owner.hp.foreground.canvas;
++        var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
++        var a = RectTransformUtility.WorldToScreenPoint(camera, owner.rippleCorners[0]);
++        var b = RectTransformUtility.WorldToScreenPoint(camera, owner.rippleCorners[2]);
++        float width = (b.x - a.x) * owner.hp.foreground.fillAmount;
++        bar = new Vector4((a.x + width * .5f) / Screen.width, (a.y + b.y) * .5f / Screen.height,
++            width * .5f / Screen.width, (b.y - a.y) * .5f / Screen.height);
++        float scale = Mathf.Abs(b.y - a.y) / Mathf.Max(.01f, rect.rect.height);
++        parameters = new Vector4(owner.ripplePhase, owner.rippleStrength, scale, 1);
++        return true;
++    }
+ 
+     private void UpdateHealthPulse()
+     {
+-        bool critical = playerHealth != null && !playerHealth.IsDead
+-            && (float)playerHealth.CurrentHealth / Mathf.Max(1, playerHealth.MaxHealth) <= .15f;
++        float ratio = playerHealth != null ? (float)playerHealth.CurrentHealth / Mathf.Max(1, playerHealth.MaxHealth) : 1f;
++        bool critical = playerHealth != null && !playerHealth.IsDead && ratio <= HeartbeatThreshold;
+         if (!critical || hp.foreground == null) { ResetHealthPulse(); return; }
+         if (healthPulseMaterial == null)
+         {
+@@ -107,17 +141,59 @@ public sealed class InGameVitalsHUD : MonoBehaviour
+         float phase = Mathf.Repeat(heartbeatTime, 1.2f);
+         float pulse = phase < .24f ? Mathf.Pow(Mathf.Sin(Mathf.PI * phase / .24f), 2)
+             : phase >= .32f && phase < .54f ? .55f * Mathf.Pow(Mathf.Sin(Mathf.PI * (phase - .32f) / .22f), 2) : 0;
+-        Color tint = originalHealthTint * (1f + .45f * pulse);
++        float strength = Mathf.Clamp01(1f - ratio / HeartbeatThreshold);
++        Color tint = originalHealthTint * (1f + Mathf.Lerp(.2f, .95f, strength) * pulse);
+         tint.a = originalHealthTint.a;
+         healthPulseMaterial.SetColor(TintId, tint);
+         // Masked UI may render a stencil copy of this private material.
+         var renderedMaterial = hp.foreground.materialForRendering;
+         if (renderedMaterial != healthPulseMaterial && renderedMaterial.HasProperty(TintId))
+             renderedMaterial.SetColor(TintId, tint);
++        UpdateHealthRipple(phase, strength);
++    }
++
++    private void UpdateHealthRipple(float phase, float strength)
++    {
++        if (healthRipple == null && !rippleShaderUnavailable)
++        {
++            var shader = Resources.Load<Shader>("Effects/HealthHeartbeatRipple");
++            if (shader == null || !shader.isSupported) { rippleShaderUnavailable = true; return; }
++            healthRippleMaterial = new Material(shader) { name = "HP Heartbeat Ripple" };
++            healthRipple = new GameObject("HP Heartbeat Ripple", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage)).GetComponent<RawImage>();
++            healthRipple.transform.SetParent(hp.foreground.transform, false);
++            healthRipple.gameObject.layer = hp.foreground.gameObject.layer;
++            // The HUD is screen-space overlay, after the world's low-health post effect.
++            // Keep the wave inside that canvas, below menus and scene fades, with no input interception.
++            healthRipple.raycastTarget = false;
++            healthRipple.maskable = false;
++            healthRipple.material = healthRippleMaterial;
++            var rect = healthRipple.rectTransform;
++            rect.anchorMin = Vector2.zero;
++            rect.anchorMax = Vector2.one;
++            rect.offsetMin = new Vector2(-36, -36);
++            rect.offsetMax = new Vector2(36, 36);
++        }
++        if (healthRipple == null) return;
++        healthRipple.enabled = hp.foreground.isActiveAndEnabled;
++        var size = hp.foreground.rectTransform.rect.size;
++        float fill = hp.foreground.fillAmount;
++        healthRippleMaterial.SetVector(RippleRectId, new Vector4(size.x + 72, size.y + 72, 0, 0));
++        // Follow the remaining red fill rather than illuminating the empty part of the gauge.
++        healthRippleMaterial.SetVector(RippleBarId, new Vector4((fill - 1f) * size.x * .5f, 0, size.x * fill * .5f, size.y * .5f));
++        healthRippleMaterial.SetFloat(RipplePhaseId, phase);
++        healthRippleMaterial.SetFloat(RippleStrengthId, strength);
++        rippleOwner = this;
++        ripplePhase = phase;
++        rippleStrength = strength;
+     }
+ 
+     private void ResetHealthPulse()
+     {
++        if (rippleOwner == this) rippleOwner = null;
++        if (healthRipple != null) { healthRipple.gameObject.SetActive(false); Destroy(healthRipple.gameObject); }
++        if (healthRippleMaterial != null) Destroy(healthRippleMaterial);
++        healthRipple = null;
++        healthRippleMaterial = null;
+         if (healthPulseMaterial == null) return;
+         if (hp.foreground != null && hp.foreground.material == healthPulseMaterial)
+             hp.foreground.material = originalHealthMaterial;
+diff --git a/Assets/Player/Script/MarketNpcBubble.cs b/Assets/Player/Script/MarketNpcBubble.cs
+index 979c3e1..ef8bd21 100644
+--- a/Assets/Player/Script/MarketNpcBubble.cs
++++ b/Assets/Player/Script/MarketNpcBubble.cs
+@@ -108,7 +108,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
+     private void Update()
+     {
+         if (dismissed || player == null || image == null) return;
+-        if (!HasPresented && player.position.x >= 70f &&
++        if (!HasPresented && !PortalArrival.IsEntering && player.position.x >= 70f &&
+             Mathf.Abs(player.position.y - transform.position.y) < 2.5f && !conversation.IsPlaying)
+         {
+             HasPresented = true;
+diff --git a/Assets/Player/Script/PersistentPlayer2D.cs b/Assets/Player/Script/PersistentPlayer2D.cs
+index c7bc485..68548d4 100644
+--- a/Assets/Player/Script/PersistentPlayer2D.cs
++++ b/Assets/Player/Script/PersistentPlayer2D.cs
+@@ -1,3 +1,4 @@
++using System.Collections;
+ using UnityEngine;
+ using UnityEngine.SceneManagement;
+ 
+@@ -12,6 +13,8 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+ 
+     private Rigidbody2D body;
+     private bool isChangingScene;
++    private PortalArrival portalArrival;
++    private bool foundTravelSpawn;
+ 
+     private void Awake()
+     {
+@@ -27,7 +30,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+         SceneManager.sceneLoaded += OnSceneLoaded;
+     }
+ 
+-    public bool TravelTo(string sceneName, string spawnPointId)
++    public bool TravelTo(string sceneName, string spawnPointId, bool animatePortalArrival = false)
+     {
+         if (isChangingScene || string.IsNullOrWhiteSpace(sceneName) || string.IsNullOrWhiteSpace(spawnPointId))
+             return false;
+@@ -37,7 +40,13 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+         hasPendingTravel = true;
+         isChangingScene = true;
+ 
+-        SceneFadeTransition.LoadScene(sceneName, .8f, OnTravelLoadFinished);
++        foundTravelSpawn = false;
++        SceneFadeTransition.LoadScene(sceneName, .8f, OnTravelLoadFinished, readyToReveal: () =>
++        {
++            if (animatePortalArrival && foundTravelSpawn && portalArrival == null)
++                portalArrival = PortalArrival.Prepare(GetComponent<PlayerMovement2D>());
++            return true;
++        });
+         return true;
+     }
+ 
+@@ -62,6 +71,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+         }
+         else
+         {
++            foundTravelSpawn = true;
+             transform.position = destination.transform.position;
+             if (body != null)
+             {
+@@ -76,7 +86,14 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+ 
+     private void OnTravelLoadFinished(bool succeeded)
+     {
+-        if (!succeeded) ClearPendingTravel();
++        if (!succeeded) { portalArrival?.Dispose(); portalArrival = null; ClearPendingTravel(); }
++    }
++
++    public IEnumerator CompletePortalArrival()
++    {
++        var arrival = portalArrival;
++        try { if (arrival != null) yield return arrival.Enter(); }
++        finally { arrival?.Dispose(); portalArrival = null; }
+     }
+ 
+     private void ClearPendingTravel()
+@@ -89,6 +106,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
+ 
+     private void OnDestroy()
+     {
++        portalArrival?.Dispose();
+         if (instance != this) return;
+         SceneManager.sceneLoaded -= OnSceneLoaded;
+         instance = null;
+diff --git a/Assets/Player/Script/PlayerCameraFollow2D.cs b/Assets/Player/Script/PlayerCameraFollow2D.cs
+index 0a89e2f..6b51952 100644
+--- a/Assets/Player/Script/PlayerCameraFollow2D.cs
++++ b/Assets/Player/Script/PlayerCameraFollow2D.cs
+@@ -44,6 +44,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+     private float normalFieldOfView;
+     private float lensVelocity;
+     private Transform deathTarget;
++    private Transform walkingCompanion;
++    private float walkingFocusWeight;
+     private readonly List<Vector2> focusFloorPlanes = new();
+ 
+     private void CaptureFocusFloor()
+@@ -122,13 +124,36 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+     public void EndDialogueFocus(ConversationDialogue owner)
+     {
+         if (dialogueOwner != owner) return;
++        // Return to the actual speaker's player, without the NPC framing's residual motion.
++        if (dialoguePlayer != null) { target = dialoguePlayer; CacheTargetBody(); }
++        lookAhead = lookAheadVelocity = 0f;
++        followVelocity = Vector3.zero;
+         dialogueOwner = null;
+         dialoguePlayer = null;
+     }
+ 
++    public void BeginWalkingFocus(Transform companion)
++    {
++        if (companion == null || attachedCamera == null || !isActiveAndEnabled) return;
++        BeginDialogueFocusForDeath();
++        walkingCompanion = companion;
++        walkingFocusWeight = 0;
++    }
++
++    public void SetWalkingFocusWeight(float weight) => walkingFocusWeight = Mathf.Clamp01(weight);
++
++    public void EndWalkingFocus()
++    {
++        walkingCompanion = null;
++        walkingFocusWeight = 0;
++        if (dialogueOwner == null && deathTarget == null) RestoreDialogueLens();
++    }
++
+     private void RestoreDialogueLens()
+     {
+         deathTarget = null;
++        walkingCompanion = null;
++        walkingFocusWeight = 0;
+         if (hasDialogueLens && attachedCamera != null)
+         {
+             attachedCamera.orthographicSize = normalOrthographicSize;
+@@ -162,6 +187,16 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+             return;
+         }
+         Transform player = dialoguePlayer != null ? dialoguePlayer : target;
++        if (walkingCompanion != null && dialogueOwner == null && player != null)
++        {
++            // Shift the usual player-follow target toward the pair without losing its
++            // smoothed movement look-ahead (including the settling motion when they stop).
++            desiredPosition.x += (walkingCompanion.position.x - player.position.x) * .5f * walkingFocusWeight;
++            float walkingLens = desiredLens * Mathf.Lerp(1f, .9f, walkingFocusWeight);
++            if (attachedCamera.orthographic) attachedCamera.orthographicSize = walkingLens;
++            else attachedCamera.fieldOfView = walkingLens;
++            return;
++        }
+         if (dialogueOwner != null && player != null)
+         {
+             Bounds subjects = dialogueSubjects;
+@@ -251,6 +286,9 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+         RenderPipelineManager.beginCameraRendering += ClampAtRender;
+     }
+ 
++    public float StoryLookOffset { get; set; }
++    public bool CanLookRight => ClampHorizontalPosition(transform.position.x + .7f) > transform.position.x + .1f;
++
+     private void LateUpdate()
+     {
+         if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
+@@ -272,7 +310,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+             Mathf.Infinity,
+             Time.deltaTime);
+ 
+-        Vector3 desiredPosition = target.position + new Vector3(followOffset.x + lookAhead, followOffset.y, 0f);
++        Vector3 desiredPosition = target.position + new Vector3(followOffset.x + lookAhead + StoryLookOffset, followOffset.y, 0f);
+         if (!followVertical)
+         {
+             float verticalSpeed = targetBody != null ? targetBody.linearVelocity.y : 0f;
+@@ -282,13 +320,20 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
+             desiredPosition.y = desiredCameraY;
+         }
+         bool dialogueTransition = hasDialogueLens;
++        bool focusedOnSubject = dialogueOwner != null || deathTarget != null || walkingCompanion != null;
++        // Zoom out gently, but resume responsive player tracking immediately.
++        if (dialogueTransition && !focusedOnSubject)
++            desiredPosition.x = target.position.x + followOffset.x + StoryLookOffset;
+         UpdateDialogueFraming(ref desiredPosition);
+         desiredPosition.z = cameraZ;
++        float trackingSmoothTime = focusedOnSubject ? dialogueSmoothTime : smoothTime;
++        if (walkingCompanion != null && dialogueOwner == null && deathTarget == null)
++            trackingSmoothTime = Mathf.Lerp(smoothTime, dialogueSmoothTime, walkingFocusWeight);
+         Vector3 smoothedPosition = Vector3.SmoothDamp(
+             transform.position,
+             desiredPosition,
+             ref followVelocity,
+-            dialogueTransition ? dialogueSmoothTime : smoothTime,
++            trackingSmoothTime,
+             maxFollowSpeed,
+             dialogueTransition ? Time.unscaledDeltaTime : Time.deltaTime);
+ 
+diff --git a/Assets/Player/Script/PlayerInputReader.cs b/Assets/Player/Script/PlayerInputReader.cs
+index eb48a19..be47ba5 100644
+--- a/Assets/Player/Script/PlayerInputReader.cs
++++ b/Assets/Player/Script/PlayerInputReader.cs
+@@ -48,7 +48,7 @@ public sealed class PlayerInputReader : MonoBehaviour
+         bool dashPressed = shiftHeld && !dashHeld;
+         // Consume the edge even while UI suppresses gameplay; never queue a dash.
+         dashHeld = shiftHeld;
+-        if (gameplaySuppressedFrame == Time.frameCount || SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
++        if (GetComponent<InventoryUI>()?.EquipmentTutorialActive == true || gameplaySuppressedFrame == Time.frameCount || SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
+         {
+             throwWasHeld = IsThrowHeld(keyboard);
+             WalkHeld = false;
+@@ -78,6 +78,11 @@ public sealed class PlayerInputReader : MonoBehaviour
+ 
+         if (dashPressed) DashPressed?.Invoke();
+ 
++        if (keyboard.wKey.wasPressedThisFrame)
++        {
++            var portal = ScenePortal2D.FindInRange(gameObject);
++            if (portal != null) { portal.GetComponent<Interactable2D>().Interact(gameObject); return; }
++        }
+         bool jumpPressed = keyboard.wKey.wasPressedThisFrame
+             || keyboard.spaceKey.wasPressedThisFrame;
+         if (jumpPressed) JumpPressed?.Invoke();
+diff --git a/Assets/Player/Script/PlayerInteractionController.cs b/Assets/Player/Script/PlayerInteractionController.cs
+index 5b135ea..473b7ef 100644
+--- a/Assets/Player/Script/PlayerInteractionController.cs
++++ b/Assets/Player/Script/PlayerInteractionController.cs
+@@ -74,6 +74,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
+             if (hit == null || !hit.isTrigger) continue;
+             Interactable2D interactable = hit.GetComponentInParent<Interactable2D>();
+             if (interactable == null || !interactable.isActiveAndEnabled || interactable.gameObject == gameObject) continue;
++            if (interactable.GetComponent<ScenePortal2D>() != null) continue;
+             if (!interactable.AllowFromEitherSide && !IsInFacingDirection(bounds.center, hit.bounds.center)) continue;
+             if (!HasLineOfSight(bounds.center, hit, interactable)) continue;
+             float distance = ((Vector2)interactable.transform.position - (Vector2)transform.position).sqrMagnitude;
+diff --git a/Assets/Player/Script/PlayerMeleeAttack.cs b/Assets/Player/Script/PlayerMeleeAttack.cs
+index 8fd8f4a..f3f8d69 100644
+--- a/Assets/Player/Script/PlayerMeleeAttack.cs
++++ b/Assets/Player/Script/PlayerMeleeAttack.cs
+@@ -149,7 +149,9 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
+ 
+         SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
+         renderer.sprite = attackEffectReferenceSprite;
+-        renderer.sortingOrder = attackEffectSortingOrder;
++        renderer.sortingLayerName = "ForeGround";
++        renderer.sortingOrder = Mathf.Max(1000, attackEffectSortingOrder);
++        renderer.color = new Color(1, 1, 1, .9f);
+         renderer.flipX = facingDirection < 0f;
+ 
+         Animator effectAnimator = effect.GetComponent<Animator>();
+diff --git a/Assets/Player/Script/PlayerMovement2D.cs b/Assets/Player/Script/PlayerMovement2D.cs
+index f2f3fb3..8349c52 100644
+--- a/Assets/Player/Script/PlayerMovement2D.cs
++++ b/Assets/Player/Script/PlayerMovement2D.cs
+@@ -199,6 +199,10 @@ public sealed class PlayerMovement2D : MonoBehaviour
+ 
+     private void FixedUpdate()
+     {
++        if (GetComponent<InventoryUI>()?.EquipmentTutorialActive == true)
++        {
++            horizontalInput = 0; jumpRequested = false; crouchHeld = false; EndDash();
++        }
+         if (hitStopped && Time.unscaledTime < hitStopUntil)
+         {
+             EndDash();
+@@ -333,6 +337,8 @@ public sealed class PlayerMovement2D : MonoBehaviour
+         bool tookDamage = currentHealth < lastKnownHealth;
+         lastKnownHealth = currentHealth;
+         if (!tookDamage || animator == null) return;
++        // An accepted attack keeps its animation/hit timing; lethal damage still wins.
++        if (currentHealth > 0 && attackAnimationPlaying) return;
+         meleeAttack?.CancelComboSwing();
+ 
+         attackAnimationPlaying = false;
+@@ -463,7 +469,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
+         if (animator == null) return;
+         if (hasAttackTriggerParameter) animator.ResetTrigger(AttackTriggerHash);
+         if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, cinematicWalking);
+-        if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, IsGrounded());
++        if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, cinematicWalking || IsGrounded());
+     }
+ 
+     private bool cinematicWalking;
+diff --git a/Assets/Player/Script/PrototypeScreenEffects.cs b/Assets/Player/Script/PrototypeScreenEffects.cs
+index ada90c0..d21e8ee 100644
+--- a/Assets/Player/Script/PrototypeScreenEffects.cs
++++ b/Assets/Player/Script/PrototypeScreenEffects.cs
+@@ -15,8 +15,8 @@ public static class PrototypeScreenEffects
+         damageFlashStarted = float.NegativeInfinity;
+     }
+     // Separation offset, red overlay, black opacity, monochrome blend.
+-    public static Vector4 HealthEffect(float ratio) => ratio < .15f ? new Vector4(2, .18f, .15f, .20f)
+-        : ratio < .30f ? new Vector4(2, .11f, .05f, 0) : ratio < .50f ? new Vector4(1, .06f, 0, 0) : Vector4.zero;
++    public static Vector4 HealthEffect(float ratio) => ratio < .15f ? new Vector4(2, .28f, .15f, .20f)
++        : ratio < .30f ? new Vector4(2, .21f, .05f, 0) : ratio < .50f ? new Vector4(1, .16f, 0, 0) : Vector4.zero;
+     public static Vector4 CurrentHealthEffect
+     {
+         get
+@@ -30,9 +30,12 @@ public static class PrototypeScreenEffects
+     {
+         // Scripted tutorial bursts retain their authored timing and strength.
+         if (OverridePixels >= 0) return OverridePixels;
+-        float lower = Mathf.Max(0f, offset - 2f);
+-        float upper = Mathf.Max(0f, offset + maximum - 2f);
+-        if (upper <= 0f) upper = 1f;
+-        return Mathf.Lerp(lower, upper, .5f - .5f * Mathf.Cos(seconds * Mathf.PI / 3f));
++        // Health tiers: >=50% 1-2px, <50% 2-4px, <30% 3-5px.
++        float lower = offset >= 2f ? 3f : offset >= 1f ? 2f : 1f;
++        float upper = offset >= 2f ? 5f : offset >= 1f ? 4f : 2f;
++        float pulse = .5f - .5f * Mathf.Cos(seconds * Mathf.PI / 3f);
++        // Keep the existing movement emphasis without exceeding the tier's upper limit.
++        float movement = Mathf.InverseLerp(2f, 5f, maximum);
++        return Mathf.Lerp(lower, upper, Mathf.Lerp(pulse, 1f, movement * .35f));
+     }
+ }
+diff --git a/Assets/Player/Script/ScenePortal2D.cs b/Assets/Player/Script/ScenePortal2D.cs
+index 51448b2..ba9e67a 100644
+--- a/Assets/Player/Script/ScenePortal2D.cs
++++ b/Assets/Player/Script/ScenePortal2D.cs
+@@ -3,7 +3,7 @@ using System.Collections;
+ using System.Collections.Generic;
+ using UnityEngine.Rendering.Universal;
+ 
+-/// <summary>Loads a destination scene when the player presses F on this portal.</summary>
++/// <summary>Loads a destination scene when the player presses W on this portal.</summary>
+ [RequireComponent(typeof(Interactable2D))]
+ public sealed class ScenePortal2D : MonoBehaviour
+ {
+@@ -16,6 +16,27 @@ public sealed class ScenePortal2D : MonoBehaviour
+     private bool presentationReady, hintUsed;
+     private Vector3 hintArea;
+ 
++    public bool ContainsPlayer(GameObject actor)
++    {
++        var area = GetComponent<Collider2D>();
++        var body = actor != null ? actor.GetComponent<Collider2D>() : null;
++        var interaction = GetComponent<Interactable2D>();
++        return isActiveAndEnabled && area != null && area.enabled && body != null
++            && interaction != null && interaction.isActiveAndEnabled && area.bounds.Intersects(body.bounds);
++    }
++    public static ScenePortal2D FindInRange(GameObject actor)
++    {
++        ScenePortal2D nearest = null; float distance = float.MaxValue;
++        foreach (var portal in FindObjectsByType<ScenePortal2D>(FindObjectsSortMode.None))
++            if (portal.ContainsPlayer(actor))
++            {
++                float d = (portal.transform.position - actor.transform.position).sqrMagnitude;
++                if (d < distance) { nearest = portal; distance = d; }
++            }
++        return nearest;
++    }
++    public int ExitDirection => glowFacesRight ? -1 : 1;
++
+     private void Awake()
+     {
+         GetComponent<Interactable2D>().AllowFromEitherSide = true;
+@@ -107,6 +128,14 @@ public sealed class ScenePortal2D : MonoBehaviour
+         }
+ 
+         CompleteHint();
+-        player.TravelTo(destinationSceneName, destinationSpawnPointId);
++        var movement = interactor.GetComponent<PlayerMovement2D>();
++        if (movement != null) movement.StartCoroutine(PortalDeparture.Travel(movement, this, () => TravelAfterDeparture(player)));
++        else player.TravelTo(destinationSceneName, destinationSpawnPointId);
++    }
++    private IEnumerator TravelAfterDeparture(PersistentPlayer2D player)
++    {
++        if (!player.TravelTo(destinationSceneName, destinationSpawnPointId, animatePortalArrival: true)) yield break;
++        while (SceneFadeTransition.IsRunning) yield return null;
++        yield return player.CompletePortalArrival();
+     }
+ }
+diff --git a/Assets/Player/Script/StorySceneFlow.LaterChapter.cs b/Assets/Player/Script/StorySceneFlow.LaterChapter.cs
+index 458f14a..a5f973b 100644
+--- a/Assets/Player/Script/StorySceneFlow.LaterChapter.cs
++++ b/Assets/Player/Script/StorySceneFlow.LaterChapter.cs
+@@ -110,7 +110,10 @@ public sealed partial class StorySceneFlow
+             {
+                 while (SceneFadeTransition.IsRunning)
+                 {
+-                    float speed = player.RunningSpeed;
++                    float speed = player.RunningSpeed * .5f;
++                    var walkAnimator = player.GetComponent<Animator>();
++                    if (walkAnimator != null) walkAnimator.speed = .3f;
++                    if (npcAnimator != null) npcAnimator.speed = .3f;
+                     body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
+                     selena.position = Vector3.MoveTowards(selena.position,
+                         new Vector3(player.transform.position.x - SelenaFollowDistance, selena.position.y, selena.position.z), speed * Time.deltaTime);
+@@ -162,6 +165,7 @@ public sealed partial class StorySceneFlow
+             animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Story/Selena");
+         var action = selena.GetComponent<StoryInteraction2D>();
+         if (action == null) action = selena.gameObject.AddComponent<StoryInteraction2D>();
++        if (selena.GetComponent<WorldInteractionHint>() == null) selena.gameObject.AddComponent<WorldInteractionHint>();
+         action.Activated = user =>
+         {
+             if (!busy && !selenaUsed && user == player.gameObject) StartCoroutine(TalkToSelena());
+@@ -171,6 +175,7 @@ public sealed partial class StorySceneFlow
+     private IEnumerator TalkToSelena()
+     {
+         busy = selenaUsed = true;
++        selena.GetComponent<WorldInteractionHint>()?.Dismiss();
+         var controls = player.GetComponent<PlayerControlLock>();
+         var npcAnimator = selena.GetComponent<Animator>();
+         var body = player.GetComponent<Rigidbody2D>();
+@@ -200,7 +205,7 @@ public sealed partial class StorySceneFlow
+         {
+             // Reuse the scene's authored dialogue canvas, fonts and text effects.
+             dialogue.transform.position = selena.position;
+-            yield return Say("selena");
++            yield return Say("Forest_4/selena");
+             if (events != null) events.enabled = false;
+             if (inventoryUi != null) inventoryUi.enabled = false;
+             player.SetCinematicWalking(true);
+diff --git a/Assets/Player/Script/StorySceneFlow.Tutorials.cs b/Assets/Player/Script/StorySceneFlow.Tutorials.cs
+index 69477b9..0d35128 100644
+--- a/Assets/Player/Script/StorySceneFlow.Tutorials.cs
++++ b/Assets/Player/Script/StorySceneFlow.Tutorials.cs
+@@ -18,25 +18,68 @@ public sealed partial class StorySceneFlow
+     {
+         ReleaseTutorialControls(); PrototypeScreenEffects.OverridePixels = -1;
+     }
++    public static bool GarbageArrivalOwnsMotion { get; private set; }
+     private IEnumerator GarbageArrival()
+     {
+-        var controls = AcquireTutorialControls();
++        GarbageArrivalOwnsMotion = true;
++        AcquireTutorialControls();
+         var animator = player.GetComponent<Animator>();
+         bool animatorEnabled = animator != null && animator.enabled;
++        var body = player.GetComponent<Rigidbody2D>();
++        float damping = body.linearDamping;
++        var mapBounds = player.GetComponent<PlayerMapBounds2D>();
++        // The outgoing portal may still have this disabled; arrival now owns its restoration.
++        bool boundsEnabled = mapBounds != null && (mapBounds.enabled || mapBounds.HasHorizontalBounds);
++        var camera = Camera.main;
++        var follow = camera != null ? camera.GetComponent<PlayerCameraFollow2D>() : null;
++        bool followEnabled = follow != null && follow.enabled;
+         try
+         {
+-            var camera = Camera.main;
+-            Vector3 position = player.transform.position;
++            player.SetCinematicWalking(false);
++            if (mapBounds != null) mapBounds.enabled = false;
++            // Resolve the original landing height before moving outside the camera.
++            body.simulated = true;
++            player.SettleOnGround(40);
++            Vector3 landingPosition = player.transform.position;
++            body.simulated = false;
++            body.linearVelocity = Vector2.zero;
++            // Disabling follow can restore its camera lens/matrix. Compute the spawn AFTER that.
++            if (follow != null) follow.enabled = false;
++            Vector3 position = landingPosition + new Vector3(8, 12, 0);
+             if (camera != null)
+-                position.y = camera.ViewportToWorldPoint(new Vector3(.5f, 1.2f, Mathf.Abs(position.z - camera.transform.position.z))).y + 2f;
+-            else position.y += 12f;
++            {
++                camera.ResetWorldToCameraMatrix();
++                var plane = new Plane(Vector3.forward, landingPosition);
++                var ray = camera.ViewportPointToRay(new Vector3(1.12f, 1.15f, 0));
++                if (plane.Raycast(ray, out float distance)) position = ray.GetPoint(distance);
++            }
++            position.z = landingPosition.z;
+             player.transform.position = position;
+-            var body = player.GetComponent<Rigidbody2D>(); body.position = position; body.linearVelocity = Vector2.zero;
++            body.position = position;
+             Physics2D.SyncTransforms();
++            // Scene startup places the complete character offscreen while the fade is still black.
+             while (SceneFadeTransition.IsRunning) yield return null;
++            // Let the old portal finish releasing its input lock before launching the new motion.
++            yield return null;
++            float gravity = Mathf.Max(.1f, -Physics2D.gravity.y * body.gravityScale);
++            float height = Mathf.Max(.1f, position.y - landingPosition.y);
++            float step = Time.fixedDeltaTime;
++            float flight = (Mathf.Sqrt(step * step + 8f * height / gravity) - step) * .5f;
++            float physicsFlight = Mathf.Ceil(flight / step) * step;
++            body.linearDamping = 0;
++            body.simulated = true;
++            body.linearVelocity = new Vector2((landingPosition.x - position.x) / physicsFlight, 0);
+             float elapsed = 0;
+-            do { elapsed += Time.deltaTime; yield return null; } while (!player.IsGroundedForStory && elapsed < 12);
+-            if (!player.IsGroundedForStory) player.SettleOnGround(40);
++            do
++            {
++                yield return new WaitForFixedUpdate();
++                elapsed += Time.fixedDeltaTime;
++            } while ((elapsed < flight * .5f || !player.IsGroundedForStory) && elapsed < 12);
++            // Horizontal speed is assigned once; Unity gravity drives the entire visible arc.
++            body.linearVelocity = new Vector2(0, body.linearVelocity.y);
++            body.linearDamping = damping;
++            if (mapBounds != null) mapBounds.enabled = boundsEnabled;
++            if (follow != null) follow.enabled = followEnabled;
+             var landing = Resources.Load<AnimationClip>("Story/HardLanding");
+             if (landing != null && animator != null)
+             {
+@@ -44,9 +87,37 @@ public sealed partial class StorySceneFlow
+                 for (float t = 0; t < landing.length; t += Time.deltaTime) { landing.SampleAnimation(player.gameObject, t); yield return null; }
+                 animator.enabled = animatorEnabled;
+             }
+-            yield return Say("garbage_monologue");
++            yield return Say("Garbage/garbage_monologue");
++        }
++        finally
++        {
++            GarbageArrivalOwnsMotion = false;
++            if (body != null) { body.linearDamping = damping; body.simulated = true; }
++            if (mapBounds != null) mapBounds.enabled = boundsEnabled;
++            if (follow != null) follow.enabled = followEnabled;
++            if (animator != null) animator.enabled = animatorEnabled;
++            ReleaseTutorialControls();
++        }
++    }
++
++    private IEnumerator GarbagePickupReaction()
++    {
++        AcquireTutorialControls();
++        var reaction = player.gameObject.AddComponent<AutomaticNpcBubble>();
++        reaction.PlayerReaction = true;
++        try
++        {
++            reaction.Begin(dialogue.TalkingImage, new[] { "?" });
++            while (reaction.IsPlaying) yield return null;
++            Destroy(reaction);
++            reaction = null;
++            yield return Say("Garbage/garbage_pickup_monologue");
++        }
++        finally
++        {
++            if (reaction != null) Destroy(reaction);
++            ReleaseTutorialControls();
+         }
+-        finally { if (animator != null) animator.enabled = animatorEnabled; ReleaseTutorialControls(); }
+     }
+ 
+     private IEnumerator RevealGarbagePoint(Transform point)
+@@ -78,7 +149,7 @@ public sealed partial class StorySceneFlow
+         var body = player.GetComponent<Rigidbody2D>();
+         var npcAnimator = selena.GetComponent<Animator>();
+         var bubble = selena.gameObject.AddComponent<AutomaticNpcBubble>();
+-        var lines = ConversationDialogue.GetGreetingLines(Resources.Load<TextAsset>("Dialogue/neighborhood_conversation"), 3);
++        var lines = ConversationDialogue.GetGreetingLines(Resources.Load<TextAsset>("Dialogue/Neighborhood/neighborhood_conversation"), 3);
+         float ppu = player.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit;
+         float stopDistance = 50f / ppu;
+         // The F hint appears at the automatic stop, so that position must be interactive.
+@@ -91,6 +162,10 @@ public sealed partial class StorySceneFlow
+         }
+         entrance.GetComponent<Interactable2D>().AllowFromEitherSide = true;
+         float direction = Mathf.Sign(entrance.transform.position.x - player.transform.position.x);
++        var walkingCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
++        walkingCamera?.BeginWalkingFocus(selena);
++        float focusElapsed = 0f;
++        float zoomOutDistance = -1f;
+         bubble.Begin(dialogue.TalkingImage, lines);
+         player.SetCinematicWalking(true); npcAnimator?.SetBool("IsMoving", true);
+         player.GetComponent<PlayerSpriteFacing>()?.FaceAttack(direction);
+@@ -99,7 +174,17 @@ public sealed partial class StorySceneFlow
+         {
+             while (direction * (entrance.transform.position.x - body.position.x) > stopDistance)
+             {
+-                float speed = player.RunningSpeed;
++                float remaining = Mathf.Max(0f, direction * (entrance.transform.position.x - body.position.x) - stopDistance);
++                focusElapsed += Time.deltaTime;
++                if (zoomOutDistance < 0f && bubble.RevealedLineCount >= lines.Length)
++                    zoomOutDistance = Mathf.Max(.01f, remaining);
++                float focus = zoomOutDistance < 0f ? Mathf.SmoothStep(0, 1, focusElapsed / .8f)
++                    : Mathf.SmoothStep(0, 1, Mathf.Clamp01(remaining / zoomOutDistance));
++                walkingCamera?.SetWalkingFocusWeight(focus);
++                float speed = player.RunningSpeed * .5f;
++                var walkAnimator = player.GetComponent<Animator>();
++                if (walkAnimator != null) walkAnimator.speed = .3f;
++                if (npcAnimator != null) npcAnimator.speed = .3f;
+                 body.linearVelocity = new Vector2(direction * speed, body.linearVelocity.y);
+                 var target = new Vector3(player.transform.position.x - direction * SelenaFollowDistance, selena.position.y, selena.position.z);
+                 selena.position = Vector3.MoveTowards(selena.position, target, speed * Time.deltaTime);
+@@ -111,17 +196,21 @@ public sealed partial class StorySceneFlow
+             var hint = entrance.GetComponent<WorldInteractionHint>() ?? entrance.gameObject.AddComponent<WorldInteractionHint>();
+             hint.ShowUntilDismissed = true;
+             body.linearVelocity = new Vector2(0, body.linearVelocity.y);
++            walkingCamera?.EndWalkingFocus();
+             player.SetCinematicWalking(false); npcAnimator?.SetBool("IsMoving", false);
++            if (npcAnimator != null) npcAnimator.speed = 1f;
+             ReleaseTutorialControls(); moving = false;
+             // Dialogue timing never changes running speed or delays control at the destination.
+             while (bubble != null && bubble.IsPlaying) yield return null;
+         }
+         finally
+         {
++            walkingCamera?.EndWalkingFocus();
+             if (moving)
+             {
+                 body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+                 player.SetCinematicWalking(false); npcAnimator?.SetBool("IsMoving", false);
++            if (npcAnimator != null) npcAnimator.speed = 1f;
+                 ReleaseTutorialControls();
+             }
+             if (bubble != null) Destroy(bubble);
+diff --git a/Assets/Player/Script/StorySceneFlow.cs b/Assets/Player/Script/StorySceneFlow.cs
+index 0f53b59..934c504 100644
+--- a/Assets/Player/Script/StorySceneFlow.cs
++++ b/Assets/Player/Script/StorySceneFlow.cs
+@@ -29,6 +29,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+     private static void Register()
+     {
+         RestartAtCombat = false;
++        GarbageArrivalOwnsMotion = false;
+         pendingArrival = StoryArrival.None;
+         travellingSelena = null;
+         SceneManager.sceneLoaded -= Attach;
+@@ -302,8 +303,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+             trigger.enabled = false;
+             searchPoint.gameObject.SetActive(false);
+             LocationHUD.ShowAcquired(tutorialGear, 1);
+-            AdvanceGuide("equipment_tutorial");
+-            player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
++            LocationHUD.ShowAcquired(pen, 1);
+         };
+         if (collected)
+         {
+@@ -320,9 +320,16 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         if (!collected) StartCoroutine(RevealGarbagePoint(searchPoint));
+         if (!restoring) ShowGuide("garbage_search");
+         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || !collected) yield return null;
++        if (!resumeCollected)
++        {
++            yield return GarbagePickupReaction();
++            AdvanceGuide("equipment_tutorial");
++            player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
++        }
+         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
+             yield return null;
+         player.GetComponent<InventoryUI>()?.EndEquipmentHint();
++        if (!restoring || currentGuide == "equipment_tutorial") yield return GarbagePursuit();
+         ready = true;
+         portal.SetActive(true);
+         if (currentGuide != "garbage_exit") AdvanceGuide("garbage_exit");
+@@ -339,15 +346,26 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         if (!ready) return;
+         portal.GetComponent<ScenePortal2D>()?.CompleteHint();
+         busy = true;
++        controlTutorial?.CompletePortal();
++        player.StartCoroutine(BeginPortalTravel());
++    }
++
++    private IEnumerator BeginPortalTravel()
++    {
++        if (marketMap) yield return Say("Market/market_monologue");
++        yield return PortalDeparture.Travel(player, portal.GetComponent<ScenePortal2D>(), ContinuePortalTravel);
++    }
++
++    private IEnumerator ContinuePortalTravel()
++    {
+         if (gameObject.scene.name == "Forest")
+         {
+-            controlTutorial?.CompletePortal();
+-            portal.GetComponent<WorldInteractionHint>()?.Dismiss();
+-            // Arrival is owned by the Market flow, so no cross-scene marker is required.
+-            SceneFadeTransition.LoadScene("Market", .8f, success => { if (!success) busy = false; });
++            bool finished = false;
++            SceneFadeTransition.LoadScene("Market", .8f, success => { finished = true; if (!success && this != null) busy = false; });
++            while (!finished) yield return null;
+         }
+-        else if (!marketMap) StartCoroutine(EnterMarket());
+-        else StartCoroutine(FinalCutscene());
++        else if (!marketMap) yield return EnterMarket();
++        else yield return FinalCutscene();
+     }
+ 
+     private IEnumerator EnterMarket()
+@@ -356,14 +374,21 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         portal.SetActive(false);
+         var controlLock = player.GetComponent<PlayerControlLock>();
+         controlLock?.Acquire();
++        PortalArrival arrival = null;
+         try
+         {
+-            yield return SceneFadeTransition.FadeThrough(PrepareMarket);
+-            // Show the arrival objective before the player reaches the NPC greeting trigger.
++            yield return SceneFadeTransition.FadeThrough(() =>
++            {
++                PrepareMarket();
++                arrival = PortalArrival.Prepare(player);
++            });
++            if (arrival != null) yield return arrival.Enter();
++            // Show the arrival objective once the character has entered the map.
+             ShowGuide("market_arrival");
+         }
+         finally
+         {
++            arrival?.Dispose();
+             controlLock?.Release();
+             busy = false;
+         }
+@@ -378,7 +403,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         QuestTracker.Complete(this);
+         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
+         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
+-        marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
++        marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/Market/quest_offer"));
+         marketBubble.Finished += () =>
+         {
+             if (!marketNpcSpoken) ShowGuide("market_talk");
+@@ -399,7 +424,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+     private IEnumerator RemindMarketConversation()
+     {
+         busy = true;
+-        try { yield return Say("market_talk_reminder"); }
++        try { yield return Say("Market/market_talk_reminder"); }
+         finally { busy = false; }
+     }
+ 
+@@ -409,7 +434,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         int startLine = 3;
+         if (marketBubble == null || !marketBubble.HasPresented)
+         {
+-            dialogue.PlayFromLine(Resources.Load<TextAsset>("Dialogue/quest_offer"), startLine);
++            dialogue.PlayFromLine(Resources.Load<TextAsset>("Dialogue/Market/quest_offer"), startLine);
+             while (dialogue.IsPlaying) yield return null;
+             busy = false;
+             yield break;
+@@ -419,7 +444,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         marketNpcSpoken = true;
+         if (marketBubble != null) marketBubble.Dismiss();
+         bool? accepted = null;
+-        var offer = Resources.Load<TextAsset>("Dialogue/quest_offer");
++        var offer = Resources.Load<TextAsset>("Dialogue/Market/quest_offer");
+         if (offer == null)
+         {
+             Debug.LogError("[Story] Missing dialogue: quest_offer", this);
+@@ -432,7 +457,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+             if (choice) AdvanceGuide("market_quest");
+         }, startLine);
+         while (!accepted.HasValue) yield return null;
+-        yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
++        yield return Say(accepted.Value ? "Market/quest_accepted" : "Market/quest_rejected");
+         if (!accepted.Value)
+         {
+             ShowGuide("market_retry");
+@@ -446,7 +471,6 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+ 
+     private IEnumerator FinalCutscene()
+     {
+-        yield return Say("market_monologue");
+         ready = false;
+         portal.SetActive(false);
+         if (cutscene == null)
+@@ -456,7 +480,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
+         }
+         // Natural completion and skip both hold the video frame while this transition runs.
+         cutscene.EndingTransition = LeaveFinalCutscene;
+-        cutscene.PlayFromInteraction();
++        yield return SceneFadeTransition.FadeThrough(() => cutscene.PlayFromInteraction());
+         while (cutscene.IsPlaying) yield return null;
+     }
+ 
+diff --git a/Assets/Resources/Dialogue/Portraits.asset b/Assets/Resources/Dialogue/Portraits.asset
+index 6dc4596..905dfe6 100644
+--- a/Assets/Resources/Dialogue/Portraits.asset
++++ b/Assets/Resources/Dialogue/Portraits.asset
+@@ -14,3 +14,25 @@ MonoBehaviour:
+   m_EditorClassIdentifier: Assembly-CSharp::DialoguePortraitLibrary
+   ethan: {fileID: 21300000, guid: abb33a31c9aa44a4f9d579d3ca20ca12, type: 3}
+   selena: {fileID: 21300000, guid: 75e29a2c3bf13e641b6d47b9d2e5845b, type: 3}
++  ethanExpressions:
++  - 표정: 기본 표정
++    image: {fileID: 21300000, guid: abb33a31c9aa44a4f9d579d3ca20ca12, type: 3}
++  - 표정: 곤란
++    image: {fileID: 0}
++  - 표정: 의아
++    image: {fileID: 0}
++  - 표정: 짜증
++    image: {fileID: 0}
++  - 표정: 눈 돌림
++    image: {fileID: 0}
++  - 표정: 눈 반 감음
++    image: {fileID: 0}
++  - 표정: 눈 감음
++    image: {fileID: 0}
++  selenaExpressions:
++  - 표정: 기본 표정
++    image: {fileID: 21300000, guid: 75e29a2c3bf13e641b6d47b9d2e5845b, type: 3}
++  - 표정: 의아
++    image: {fileID: 0}
++  - 표정: 흘겨봄
++    image: {fileID: 0}
+diff --git a/Assets/Resources/Dialogue/base_upgrade_tutorial.json b/Assets/Resources/Dialogue/base_upgrade_tutorial.json
+deleted file mode 100644
+index 2c92831..0000000
+--- a/Assets/Resources/Dialogue/base_upgrade_tutorial.json
++++ /dev/null
+@@ -1,16 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Selena",
+-      "text": "여기에서는 쉬거나 시설을 이용하실 수 있어요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "치료 부스를 열어 둘게요. 이 회복 물약도 챙기세요."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "고마워. 우선 몸부터 추슬러야겠군."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta b/Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta
+deleted file mode 100644
+index 5285fb8..0000000
+--- a/Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 0406adc732ac8ec4c92cd5782d7b4c33
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/cutscene_conversation.json b/Assets/Resources/Dialogue/cutscene_conversation.json
+deleted file mode 100644
+index 418bd96..0000000
+--- a/Assets/Resources/Dialogue/cutscene_conversation.json
++++ /dev/null
+@@ -1,12 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Ethan",
+-      "text": "아 집가고 싶다"
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "오늘 하루 종일 머릿속에서 떠나지 않는 생각은 단 하나, 집에 가고 싶다는 것이다. 아침에는 분명 괜찮았는데 시간이 지날수록 몸은 점점 무거워지고 집중력도 떨어진다. 시계를 확인할 때마다 시간이 왜 이렇게 느리게 가는지 모르겠다. 지금 당장 가방을 챙겨 집으로 돌아가 편한 옷으로 갈아입고 침대에 누워 아무 생각 없이 쉬고 싶다. 맛있는 것도 먹고 게임이나 유튜브를 보면서 남은 시간을 보내고 싶다. 해야 할 일이 아직 남아 있다는 사실은 알고 있지만 마음만큼은 이미 집에 도착해 있다. 오늘의 가장 큰 목표는 거창한 것이 아니다. 그냥 무사히 모든 일정을 끝내고 최대한 빨리 집에 가는 것이다. "
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/cutscene_conversation.json.meta b/Assets/Resources/Dialogue/cutscene_conversation.json.meta
+deleted file mode 100644
+index 18642cc..0000000
+--- a/Assets/Resources/Dialogue/cutscene_conversation.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 76d197c5130b7fe43b62c66cb03e5751
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/equipment_complete.json b/Assets/Resources/Dialogue/equipment_complete.json
+deleted file mode 100644
+index c41279b..0000000
+--- a/Assets/Resources/Dialogue/equipment_complete.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "text": "장비 장착을 완료했습니다. 왼쪽 포탈과 상호작용해 시장으로 이동하세요.",
+-      "speaker": "안내"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/equipment_complete.json.meta b/Assets/Resources/Dialogue/equipment_complete.json.meta
+deleted file mode 100644
+index d070c72..0000000
+--- a/Assets/Resources/Dialogue/equipment_complete.json.meta
++++ /dev/null
+@@ -1,2 +0,0 @@
+-fileFormatVersion: 2
+-guid: 8eaf20f84b9b4a63bd3caade9c208b13
+diff --git a/Assets/Resources/Dialogue/equipment_tutorial.json b/Assets/Resources/Dialogue/equipment_tutorial.json
+deleted file mode 100644
+index 530edee..0000000
+--- a/Assets/Resources/Dialogue/equipment_tutorial.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "text": "인벤토리를 열어 장비를 선택하고 장착하세요. 장비를 하나 이상 장착하면 왼쪽 포탈이 활성화됩니다.",
+-      "speaker": "안내"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/equipment_tutorial.json.meta b/Assets/Resources/Dialogue/equipment_tutorial.json.meta
+deleted file mode 100644
+index ff79f21..0000000
+--- a/Assets/Resources/Dialogue/equipment_tutorial.json.meta
++++ /dev/null
+@@ -1,2 +0,0 @@
+-fileFormatVersion: 2
+-guid: c2b15d8b23884f6d88ccf961b0d514de
+diff --git a/Assets/Resources/Dialogue/forest_clear.json b/Assets/Resources/Dialogue/forest_clear.json
+deleted file mode 100644
+index 249c014..0000000
+--- a/Assets/Resources/Dialogue/forest_clear.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "text": "주변의 몬스터를 모두 처치했다. 왼쪽 포탈을 통해 다음 구역으로 이동하자.",
+-      "speaker": "안내"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/forest_clear.json.meta b/Assets/Resources/Dialogue/forest_clear.json.meta
+deleted file mode 100644
+index df15173..0000000
+--- a/Assets/Resources/Dialogue/forest_clear.json.meta
++++ /dev/null
+@@ -1,2 +0,0 @@
+-fileFormatVersion: 2
+-guid: 774bdfda326a452e91fa7e6c919a1986
+diff --git a/Assets/Resources/Dialogue/garbage_monologue.json b/Assets/Resources/Dialogue/garbage_monologue.json
+deleted file mode 100644
+index e9ad2c6..0000000
+--- a/Assets/Resources/Dialogue/garbage_monologue.json
++++ /dev/null
+@@ -1,12 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Ethan",
+-      "text": "…간신히 빠져나왔군. 여기는 어디지?"
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "일단 주변을 살펴보자."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/garbage_monologue.json.meta b/Assets/Resources/Dialogue/garbage_monologue.json.meta
+deleted file mode 100644
+index e48b0bc..0000000
+--- a/Assets/Resources/Dialogue/garbage_monologue.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: d4b8feb7da4c3bb4fb2a97da2758d760
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/market_monologue.json b/Assets/Resources/Dialogue/market_monologue.json
+deleted file mode 100644
+index 5bfb456..0000000
+--- a/Assets/Resources/Dialogue/market_monologue.json
++++ /dev/null
+@@ -1,12 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Ethan",
+-      "text": "저 사람의 말을 믿어도 되는 걸까."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "지금은 앞으로 나아갈 수밖에 없다."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/market_monologue.json.meta b/Assets/Resources/Dialogue/market_monologue.json.meta
+deleted file mode 100644
+index 3020957..0000000
+--- a/Assets/Resources/Dialogue/market_monologue.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 8dc3f707e23ba734ca91a6ad9acd2ce1
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/market_npc.json b/Assets/Resources/Dialogue/market_npc.json
+deleted file mode 100644
+index c108d33..0000000
+--- a/Assets/Resources/Dialogue/market_npc.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "text": "시장을 지나려면 오른쪽 포탈을 이용하세요. 준비가 되면 출발하세요.",
+-      "speaker": "안내"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/market_npc.json.meta b/Assets/Resources/Dialogue/market_npc.json.meta
+deleted file mode 100644
+index b95e784..0000000
+--- a/Assets/Resources/Dialogue/market_npc.json.meta
++++ /dev/null
+@@ -1,2 +0,0 @@
+-fileFormatVersion: 2
+-guid: 10d7a63ba5c542f38bb1e75c32b9ea07
+diff --git a/Assets/Resources/Dialogue/market_talk_reminder.json b/Assets/Resources/Dialogue/market_talk_reminder.json
+deleted file mode 100644
+index 3782a37..0000000
+--- a/Assets/Resources/Dialogue/market_talk_reminder.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Ethan",
+-      "text": "(말을 걸고 와야 할 것 같다.)"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/market_talk_reminder.json.meta b/Assets/Resources/Dialogue/market_talk_reminder.json.meta
+deleted file mode 100644
+index 788ce6e..0000000
+--- a/Assets/Resources/Dialogue/market_talk_reminder.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: f721ce1ca122fbe47b01cc05f8773e88
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/neighborhood_conversation.json b/Assets/Resources/Dialogue/neighborhood_conversation.json
+deleted file mode 100644
+index 319d8cf..0000000
+--- a/Assets/Resources/Dialogue/neighborhood_conversation.json
++++ /dev/null
+@@ -1,16 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Selena",
+-      "text": "조금만 더 가면 쉴 수 있는 곳이 있어요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "저쪽에 보이는 곳이에요. 같이 가요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "도착하면 먼저 몸부터 돌보시는 게 좋겠어요."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/neighborhood_conversation.json.meta b/Assets/Resources/Dialogue/neighborhood_conversation.json.meta
+deleted file mode 100644
+index 2970c7f..0000000
+--- a/Assets/Resources/Dialogue/neighborhood_conversation.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: f0b0139b3f2e1ac409334c70bde833bd
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/quest_accepted.json b/Assets/Resources/Dialogue/quest_accepted.json
+deleted file mode 100644
+index 9861756..0000000
+--- a/Assets/Resources/Dialogue/quest_accepted.json
++++ /dev/null
+@@ -1,54 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "???",
+-      "npcLaugh": true,
+-      "text": "금새 겁이라도 먹은 게니? 아이고, 참 웃기구나.\n그렇다고 이상한 정보를 줄 건 아니야. 걱정 말라고······."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "···원하는 게 뭡니까?"
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "글쎄. 제 값 하지 못하면 금새 사라져버리는게 이 바닥이잖니······. 응?"
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "네가 알게 된 정보를 싸그리 가져오렴.\n이 바닥에서 돌아가는 모든 정보를 나에게 들고 와."
+-    },
+-    {
+-      "speaker": "???",
+-      "npcLaugh": true,
+-      "text": "그거면 돼! 키히히, 정말이야······.\n때에 따라 정보가 돈보다 더 큰 부를 가지고 오기도 하지···."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "··· 급히 쫓기는 입장이니 정보를 빠르게 넘기시길."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "그래··· 얼른 본론으로 들어가볼까.\n저 숲에 바보 같은 여자 하나 돌아 다니던데, 너처럼 목적이 같아 보여."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "이를테면 '반동분자?'\n크흐, 흐흐··· 재밌어, 아주 재밌겠구나."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "걱정마··· 아무 데에도 말하지 않을 거란다.\n내가 널 돕는 것은 순전히 재밌으려고 그러는 거거든···."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "그러니 살게 되면 나중에 내 은혜 잊지 말고 꼭 갚아. \"이든.\""
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "······."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "예, 이렇게 된 거 살아서 뵙죠."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/quest_accepted.json.meta b/Assets/Resources/Dialogue/quest_accepted.json.meta
+deleted file mode 100644
+index b64809a..0000000
+--- a/Assets/Resources/Dialogue/quest_accepted.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 6ac981b5f18b460597a79ab2c269c7ae
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/quest_completed.json b/Assets/Resources/Dialogue/quest_completed.json
+deleted file mode 100644
+index 9aa68c3..0000000
+--- a/Assets/Resources/Dialogue/quest_completed.json
++++ /dev/null
+@@ -1,8 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "???",
+-      "text": "퀘스트를 완료해줘서 고마워"
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/quest_completed.json.meta b/Assets/Resources/Dialogue/quest_completed.json.meta
+deleted file mode 100644
+index c412dd0..0000000
+--- a/Assets/Resources/Dialogue/quest_completed.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 904a1ee5278a4d838a630d53d721d3c8
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/quest_offer.json b/Assets/Resources/Dialogue/quest_offer.json
+deleted file mode 100644
+index 4f53ad3..0000000
+--- a/Assets/Resources/Dialogue/quest_offer.json
++++ /dev/null
+@@ -1,20 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "???",
+-      "text": "이런 이런···. 아주 쫓기는 신세가 되었구나 얘야."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "뛰어 나와서 기껏 온 곳이 시장이라니.\n바보 같기도 바보 같아서 안 도와주기에도 참 안쓰러워···."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "이리 와보지 않으련···? 아님, 그냥 가다 쫓겨 죽어도 되고···."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "······."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/quest_offer.json.meta b/Assets/Resources/Dialogue/quest_offer.json.meta
+deleted file mode 100644
+index 5941668..0000000
+--- a/Assets/Resources/Dialogue/quest_offer.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: c6a55fb17af8467d86f4bc2ab7df0c36
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/quest_rejected.json b/Assets/Resources/Dialogue/quest_rejected.json
+deleted file mode 100644
+index b4e6b6a..0000000
+--- a/Assets/Resources/Dialogue/quest_rejected.json
++++ /dev/null
+@@ -1,16 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "???",
+-      "text": "얼씨구··· 현실 부정이라도 하는 거니? 그 고집 어디까지 가나 볼까."
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "악어의 눈물이라도 괜찮다면, 네 시체 앞에서 눈물 한 방울 정도는 흘려주지. 크흐흐···"
+-    },
+-    {
+-      "speaker": "???",
+-      "text": "물론 너라는 재밋거리를 바로 놓을 생각은 없단다. 생각이 있다면 다시 말 걸어. 쯧쯔, 안쓰러운 것···."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/quest_rejected.json.meta b/Assets/Resources/Dialogue/quest_rejected.json.meta
+deleted file mode 100644
+index fd4c21a..0000000
+--- a/Assets/Resources/Dialogue/quest_rejected.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 3a4a04a15d314b6e85b43a2f4d903705
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Dialogue/selena.json b/Assets/Resources/Dialogue/selena.json
+deleted file mode 100644
+index 95ea125..0000000
+--- a/Assets/Resources/Dialogue/selena.json
++++ /dev/null
+@@ -1,36 +0,0 @@
+-{
+-  "lines": [
+-    {
+-      "speaker": "Selena",
+-      "text": "어떻게 하실 생각인 건데요?"
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "···체제를 뒤집어 엎을 겁니다."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "이를테면, '혁명' 이요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "···진심이세요?"
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "저쪽 거지처럼 보이는 사람이, 당신 보고\n'반동분자' 라고 하더군요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "······."
+-    },
+-    {
+-      "speaker": "Ethan",
+-      "text": "더 할 말 없으시면 따라오세요."
+-    },
+-    {
+-      "speaker": "Selena",
+-      "text": "···쳇."
+-    }
+-  ]
+-}
+diff --git a/Assets/Resources/Dialogue/selena.json.meta b/Assets/Resources/Dialogue/selena.json.meta
+deleted file mode 100644
+index 43832b2..0000000
+--- a/Assets/Resources/Dialogue/selena.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 12ffb8f0a69914d4d8c06554df134c19
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Resources/Inventory/inventory_ui_text.json b/Assets/Resources/Inventory/inventory_ui_text.json
+index a73df61..0d9bf4c 100644
+--- a/Assets/Resources/Inventory/inventory_ui_text.json
++++ b/Assets/Resources/Inventory/inventory_ui_text.json
+@@ -1,5 +1,13 @@
+ {
+   "items": [
++    {
++      "id": "red_cloth",
++      "display": {
++        "name": "붉은 천조각",
++        "description": "몬스터가 떨어뜨린 붉은 천조각입니다."
++      },
++      "rarity": "Normal"
++    },
+     {
+       "id": "health_potion",
+       "display": {
+diff --git a/Assets/Resources/Story/Selena.controller b/Assets/Resources/Story/Selena.controller
+index 30e126c..18d7552 100644
+--- a/Assets/Resources/Story/Selena.controller
++++ b/Assets/Resources/Story/Selena.controller
+@@ -101,7 +101,7 @@ AnimatorState:
+   m_MirrorParameterActive: 0
+   m_CycleOffsetParameterActive: 0
+   m_TimeParameterActive: 0
+-  m_Motion: {fileID: 7400000, guid: 7821bc9e620bf344a82accdd7009bced, type: 2}
++  m_Motion: {fileID: 7400000, guid: 7346eca26ab353344823f62c0bf1d2c4, type: 2}
+   m_Tag: 
+   m_SpeedParameter: 
+   m_MirrorParameter: 
+diff --git a/Assets/Resources/Story/TutorialGear.asset b/Assets/Resources/Story/TutorialGear.asset
+index d6dc351..86339c9 100644
+--- a/Assets/Resources/Story/TutorialGear.asset
++++ b/Assets/Resources/Story/TutorialGear.asset
+@@ -15,7 +15,7 @@ MonoBehaviour:
+   itemId: Tattered_Cloak
+   displayName: 망토
+   description: 쓰레기 더미에서 찾은 걸칠 만한 망토입니다.
+-  icon: {fileID: -4854882188765977121, guid: 285c05b335a61d3418ddeb8cb00003bd, type: 3}
++  icon: {fileID: 21300000, guid: 285c05b335a61d3418ddeb8cb00003bd, type: 3}
+   tint: {r: 0.88, g: 0.60, b: 0.22, a: 1}
+   fallbackIcon: 2
+   category: 2
+diff --git a/Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset b/Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset
+index a788a31..f279cb8 100644
+--- a/Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset
++++ b/Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset
+@@ -403,6 +403,7 @@ MonoBehaviour:
+         amount: 20
+   font: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
+   items:
++  - {fileID: 11400000, guid: 100dcf7c1cb74dd299649367a890d35b, type: 2}
+   - {fileID: 11400000, guid: 4eac6226fe704c39b9850261145cf342, type: 2}
+   - {fileID: 11400000, guid: 827c77effb72482181f134b6e55728dd, type: 2}
+   - {fileID: 11400000, guid: a5a85a23e3084a11a6f4ccd7793b1164, type: 2}
+diff --git a/Assets/Scenes/Inventory/QuestRewardExample.json b/Assets/Scenes/Inventory/QuestRewardExample.json
+deleted file mode 100644
+index a608d22..0000000
+--- a/Assets/Scenes/Inventory/QuestRewardExample.json
++++ /dev/null
+@@ -1,7 +0,0 @@
+-{
+-  "rewards": [
+-    { "itemId": "health_potion", "amount": 2 },
+-    { "itemId": "copper_gear", "amount": 1 },
+-    { "itemId": "sky_crystal", "amount": 1 }
+-  ]
+-}
+diff --git a/Assets/Scenes/Inventory/QuestRewardExample.json.meta b/Assets/Scenes/Inventory/QuestRewardExample.json.meta
+deleted file mode 100644
+index de04f3e..0000000
+--- a/Assets/Scenes/Inventory/QuestRewardExample.json.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-fileFormatVersion: 2
+-guid: 9b54c4b6c6724b879a7ec73ef1d44164
+-TextScriptImporter:
+-  externalObjects: {}
+-  userData: 
+-  assetBundleName: 
+-  assetBundleVariant: 
+diff --git a/Assets/Scenes/Inventory/README.md b/Assets/Scenes/Inventory/README.md
+index a87acd3..8163b09 100644
+--- a/Assets/Scenes/Inventory/README.md
++++ b/Assets/Scenes/Inventory/README.md
+@@ -37,7 +37,7 @@ Project 창의 **Create > Behind The Gear > Inventory Item**으로 아이템을
+ - 보스 드랍: `InventoryDropper.DropBossLoot()`
+ - JSON 보상 지급: `InventoryRewardGrant.GrantConfiguredRewards(inventory)`
+ 
+-`QuestRewardExample.json`은 다음 형식의 예시입니다.
++JSON 보상 데이터의 형식은 다음과 같습니다.
+ 
+ ```json
+ {
+diff --git a/Assets/Scenes/Inventory/Scripts/InventoryUI.cs b/Assets/Scenes/Inventory/Scripts/InventoryUI.cs
+index a290e94..fcb0165 100644
+--- a/Assets/Scenes/Inventory/Scripts/InventoryUI.cs
++++ b/Assets/Scenes/Inventory/Scripts/InventoryUI.cs
+@@ -141,9 +141,30 @@ public sealed class InventoryUI : MonoBehaviour
+     public void SetTutorialInventoryUnlocked(bool value)
+     {
+         TutorialInventoryUnlocked = value;
+-        if (!value) CloseAllWindows();
++        if (!value)
++        {
++            tutorialEquipmentItem = null;
++            openingHint?.Dismiss();
++            if (equipmentTutorial != null) equipmentTutorial.enabled = false;
++            CloseAllWindows();
++        }
+         if (shortcutButton != null) shortcutButton.gameObject.SetActive(value);
++        SyncTutorialShortcut();
+     }
++    private readonly System.Collections.Generic.List<GameObject> tutorialShortcutIcons = new();
++    private float nextShortcutScan;
++    private void SyncTutorialShortcut()
++    {
++        if (Time.unscaledTime >= nextShortcutScan)
++        {
++            nextShortcutScan = Time.unscaledTime + .25f;
++            foreach (var image in FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
++                if ((image.name == "Inventory_Icon" || image.name == "Inventory Icon") && !tutorialShortcutIcons.Contains(image.gameObject))
++                    tutorialShortcutIcons.Add(image.gameObject);
++        }
++        foreach (var icon in tutorialShortcutIcons) if (icon != null && icon.activeSelf != TutorialInventoryUnlocked) icon.SetActive(TutorialInventoryUnlocked);
++    }
++
+     public Image FindTutorialItemImage(InventoryItemDefinition item)
+     {
+         foreach (var slot in slots)
+@@ -158,10 +179,16 @@ public sealed class InventoryUI : MonoBehaviour
+             if (GetEquipmentSlotForIndex(i) == item.Slot && equipmentUnequipButtons[i] != null) return equipmentUnequipButtons[i].transform;
+         return null;
+     }
++    private InventoryItemDefinition tutorialEquipmentItem;
++    public bool EquipmentTutorialActive => tutorialEquipmentItem != null;
++    public void CloseForStoryDialogue() => CloseAllWindows();
++
+     public void BeginEquipmentHint(InventoryItemDefinition item)
+     {
+         ResetEquipmentHint(); SetTutorialInventoryUnlocked(true);
+         if (item == null) return;
++        tutorialEquipmentItem = item;
++        GetComponent<PlayerMovement2D>()?.RefreshAnimationWhileControlLocked();
+         if (!IsOpen)
+         {
+             if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
+@@ -173,6 +200,8 @@ public sealed class InventoryUI : MonoBehaviour
+ 
+     public void EndEquipmentHint()
+     {
++        if (tutorialEquipmentItem != null && inventory.GetEquipped(tutorialEquipmentItem.Slot) != tutorialEquipmentItem) return;
++        tutorialEquipmentItem = null;
+         if (equipmentTutorial != null) equipmentTutorial.enabled = false;
+         openingHint?.Dismiss();
+         if (hintedSlot == null || hintReturning) return;
+@@ -191,6 +220,7 @@ public sealed class InventoryUI : MonoBehaviour
+ 
+     private void UpdateEquipmentHint()
+     {
++        if (tutorialEquipmentItem != null && inventory.GetEquipped(tutorialEquipmentItem.Slot) == tutorialEquipmentItem) EndEquipmentHint();
+         if (hintedSlot == null) return;
+         if (!hintReturning && inventory.GetEquipped(hintedItem.Slot) != null) EndEquipmentHint();
+         if (hintReturning)
+@@ -399,6 +429,9 @@ public sealed class InventoryUI : MonoBehaviour
+ 
+     private void OnDisable()
+     {
++        tutorialEquipmentItem = null;
++        openingHint?.Dismiss();
++        if (equipmentTutorial != null) equipmentTutorial.enabled = false;
+         ResetEquipmentHint();
+         SetInventoryModal(false);
+         hoveredDisplaySlot = -1;
+@@ -459,6 +492,7 @@ public sealed class InventoryUI : MonoBehaviour
+     {
+         if (!ready) return;
+         if (shortcutButton != null) shortcutButton.gameObject.SetActive(TutorialInventoryUnlocked);
++        SyncTutorialShortcut();
+         if (Time.unscaledTime >= nextCatalogCheck)
+         {
+             nextCatalogCheck = Time.unscaledTime + .5f;
+@@ -584,6 +618,11 @@ public sealed class InventoryUI : MonoBehaviour
+         CancelDrag();
+         ShowDetails(-1);
+         if (window != null) window.SetActive(false);
++        if (EquipmentTutorialActive && inventory.GetEquipped(tutorialEquipmentItem.Slot) != tutorialEquipmentItem)
++        {
++            if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
++            openingHint.Begin(this);
++        }
+         if (equipmentWindow != null && equipmentWindow.activeSelf) RestoreEquipmentSoloLayout();
+     }
+ 
+@@ -732,7 +771,7 @@ public sealed class InventoryUI : MonoBehaviour
+             slots[i].gameObject.SetActive(visible);
+             if (!visible) continue;
+ 
+-            bool unlocked = i < (currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity);
++            bool unlocked = i < (currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity + (currentFilter == Filter.All ? questUsed : 0));
+             slots[i].SetLocked(!unlocked);
+             slots[i].ResetVisualState();
+             slots[i].Refresh(unlocked ? GetDisplayedSlot(i) : null);
+@@ -811,6 +850,7 @@ public sealed class InventoryUI : MonoBehaviour
+         if (currentFilter == Filter.Quest) return;
+         PlayerInventory.Slot slot = GetDisplayedSlot(index);
+         if (slot == null || slot.IsEmpty) return;
++        if (slot.Item.IsQuestItem) return;
+         dragSource = index;
+         if (usesDesignedCanvas) InventoryHoverReveal.HideAll(window);
+         dragInventorySource = GetInventorySlotIndexForDisplay(index);
+@@ -823,6 +863,13 @@ public sealed class InventoryUI : MonoBehaviour
+         dragIcon.raycastTarget = false;
+         dragIcon.transform.SetAsLastSibling();
+         dragIcon.gameObject.SetActive(true);
++        // Tutorial sockets render at inventory order + 3; sibling order alone cannot cover them.
++        // Configure after activation, which can reset a nested Canvas's sorting override.
++        if (!dragIcon.TryGetComponent<Canvas>(out var dragCanvas))
++            dragCanvas = dragIcon.gameObject.AddComponent<Canvas>();
++        dragCanvas.overrideSorting = true;
++        dragCanvas.sortingLayerID = canvas.sortingLayerID;
++        dragCanvas.sortingOrder = canvas.sortingOrder + 4;
+         slots[index].SetDragging(true);
+         Drag(data);
+     }
+@@ -1545,6 +1592,7 @@ public sealed class InventoryUI : MonoBehaviour
+     {
+         if (index < 0) return null;
+         if (currentFilter == Filter.Quest) return inventory.GetQuestSlot(index);
++        if (currentFilter == Filter.All) return GetAllDisplayedSlot(index, out _);
+         int inventoryIndex = GetInventorySlotIndexForDisplay(index);
+         return inventoryIndex >= 0 ? inventory.GetSlot(inventoryIndex) : null;
+     }
+@@ -1552,7 +1600,7 @@ public sealed class InventoryUI : MonoBehaviour
+     private int GetInventorySlotIndexForDisplay(int displayIndex)
+     {
+         if (displayIndex < 0) return -1;
+-        if (currentFilter == Filter.All) return displayIndex < inventory.Capacity ? displayIndex : -1;
++        if (currentFilter == Filter.All) { GetAllDisplayedSlot(displayIndex, out int source); return source; }
+ 
+         int logicalIndex = 0;
+         for (int i = 0; i < inventory.Capacity; i++)
+@@ -1586,6 +1634,32 @@ public sealed class InventoryUI : MonoBehaviour
+         };
+     }
+ 
++    private PlayerInventory.Slot GetAllDisplayedSlot(int displayIndex, out int generalIndex)
++    {
++        generalIndex = -1;
++        if (displayIndex < 0) return null;
++        int logical = 0;
++        // Include quest items in All, but retain their separate storage and non-draggable behavior.
++        for (int i = 0; i < inventory.Capacity; i++)
++        {
++            var slot = inventory.GetSlot(i);
++            if (slot.IsEmpty) continue;
++            if (logical++ == displayIndex) { generalIndex = i; return slot; }
++        }
++        for (int i = 0; i < inventory.QuestCapacity; i++)
++        {
++            var slot = inventory.GetQuestSlot(i);
++            if (!slot.IsEmpty && logical++ == displayIndex) return slot;
++        }
++        for (int i = 0; i < inventory.Capacity; i++)
++        {
++            var slot = inventory.GetSlot(i);
++            if (!slot.IsEmpty) continue;
++            if (logical++ == displayIndex) { generalIndex = i; return slot; }
++        }
++        return null;
++    }
++
+     private int CountUsed(bool quest)
+     {
+         int count = quest ? inventory.QuestCapacity : inventory.Capacity;
+@@ -1737,7 +1811,7 @@ public sealed class InventoryUI : MonoBehaviour
+     private void MatchSlotCount()
+     {
+         if (usesDesignedCanvas) return;
+-        int count = Mathf.Max(inventory.Capacity, inventory.QuestCapacity);
++        int count = Mathf.Max(inventory.Capacity + CountUsed(true), inventory.QuestCapacity);
+         int previousCount = slots.Length;
+         if (count == previousCount) return;
+         RectTransform content = (RectTransform)slots[0].transform.parent;
+@@ -1762,7 +1836,7 @@ public sealed class InventoryUI : MonoBehaviour
+     private int GetDisplayedSlotCount()
+     {
+         if (usesDesignedCanvas) return slots != null ? slots.Length : 0;
+-        return currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity;
++        return currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity + (currentFilter == Filter.All ? CountUsed(true) : 0);
+     }
+ 
+     private void ApplySlotLayout(int slotCount)
+diff --git a/Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs b/Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs
+index 8e97eff..58cae20 100644
+--- a/Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs
++++ b/Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs
+@@ -14,6 +14,7 @@ public sealed class WorldItemPickup : MonoBehaviour
+ 
+     private PlayerInventory target;
+     private GameObject runtimeHighlight;
++    private SpriteRenderer smallDropVisual;
+     private float nextFullNoticeTime;
+     private bool collecting;
+     public InventoryItemDefinition Definition => item;
+@@ -32,6 +33,8 @@ public sealed class WorldItemPickup : MonoBehaviour
+         RefreshVisual();
+     }
+ 
++    private void OnEnable() => RefreshVisual();
++
+     private void Update()
+     {
+         if (SceneFadeTransition.IsRunning || !isActiveAndEnabled || collecting || item == null || amount <= 0) return;
+@@ -74,11 +77,31 @@ public sealed class WorldItemPickup : MonoBehaviour
+     {
+         if (item == null) return;
+         SpriteRenderer visual = GetComponent<SpriteRenderer>();
++        bool smallDrop = item.ItemId == "red_cloth";
++        if (smallDrop && smallDropVisual == null)
++        {
++            var child = new GameObject("Red Cloth Visual");
++            child.transform.SetParent(transform, false);
++            child.transform.localScale = Vector3.one * .2f;
++            smallDropVisual = child.AddComponent<SpriteRenderer>();
++            smallDropVisual.sortingLayerID = visual.sortingLayerID;
++        }
++        // Scale only the artwork so the pickup/magnet collider keeps its original range.
++        visual.enabled = !smallDrop;
++        if (smallDropVisual != null) smallDropVisual.enabled = smallDrop;
++        if (smallDrop) visual = smallDropVisual;
+         visual.sprite = item.Icon;
+         visual.sortingOrder = 10;
++        ApplyForegroundMaterial(visual);
+         EnsureQuestHighlight();
+     }
+ 
++    private static void ApplyForegroundMaterial(SpriteRenderer visual)
++    {
++        var material = Resources.Load<Material>("Effects/WorldItemForeground");
++        if (material != null) visual.sharedMaterial = material;
++    }
++
+     private void OnTriggerEnter2D(Collider2D other) => TrackTarget(other);
+     private void OnTriggerStay2D(Collider2D other) => TrackTarget(other);
+ 
+@@ -137,6 +160,7 @@ public sealed class WorldItemPickup : MonoBehaviour
+         renderer.sprite = item.Icon;
+         renderer.color = new Color(.65f, .9f, 1f, .32f);
+         renderer.sortingOrder = 9;
++        ApplyForegroundMaterial(renderer);
+         runtimeHighlight = glow;
+     }
+ 
+diff --git a/Assets/Scenes/Main/Forest.unity b/Assets/Scenes/Main/Forest.unity
+index b62423a..f86e4f9 100644
+--- a/Assets/Scenes/Main/Forest.unity
++++ b/Assets/Scenes/Main/Forest.unity
+@@ -603,7 +603,7 @@ Transform:
+   serializedVersion: 2
+   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+   m_LocalPosition: {x: 6.29, y: 1.09, z: 0}
+-  m_LocalScale: {x: 1, y: 1, z: 1}
++  m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
+   m_ConstrainProportionsScale: 1
+   m_Children: []
+   m_Father: {fileID: 0}
+diff --git a/Assets/Scenes/Main/Market.unity b/Assets/Scenes/Main/Market.unity
+index 5583351..ad8b0fe 100644
+--- a/Assets/Scenes/Main/Market.unity
++++ b/Assets/Scenes/Main/Market.unity
+@@ -8248,184 +8248,6 @@ CanvasRenderer:
+   m_PrefabAsset: {fileID: 0}
+   m_GameObject: {fileID: 612762982}
+   m_CullTransparentMesh: 1
+---- !u!43 &642724087
+-Mesh:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_Name: 
+-  serializedVersion: 12
+-  m_SubMeshes:
+-  - serializedVersion: 2
+-    firstByte: 0
+-    indexCount: 0
+-    topology: 0
+-    baseVertex: 0
+-    firstVertex: 0
+-    vertexCount: 0
+-    localAABB:
+-      m_Center: {x: 0, y: 0, z: 0}
+-      m_Extent: {x: 0, y: 0, z: 0}
+-  m_Shapes:
+-    vertices: []
+-    shapes: []
+-    channels: []
+-    fullWeights: []
+-  m_BindPose: []
+-  m_BoneNameHashes: 
+-  m_RootBoneNameHash: 0
+-  m_BonesAABB: []
+-  m_VariableBoneCountWeights:
+-    m_Data: 
+-  m_MeshCompression: 0
+-  m_IsReadable: 1
+-  m_KeepVertices: 1
+-  m_KeepIndices: 1
+-  m_IndexFormat: 0
+-  m_IndexBuffer: 
+-  m_VertexData:
+-    serializedVersion: 3
+-    m_VertexCount: 0
+-    m_Channels:
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 3
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    m_DataSize: 0
+-    _typelessdata: 
+-  m_CompressedMesh:
+-    m_Vertices:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UV:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Normals:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Tangents:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Weights:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_NormalSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_TangentSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_FloatColors:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_BoneIndices:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Triangles:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UVInfo: 0
+-  m_LocalAABB:
+-    m_Center: {x: 0, y: 0, z: 0}
+-    m_Extent: {x: 0, y: 0, z: 0}
+-  m_MeshUsageFlags: 0
+-  m_CookingOptions: 30
+-  m_BakedConvexCollisionMesh: 
+-  m_BakedTriangleCollisionMesh: 
+-  'm_MeshMetrics[0]': 1
+-  'm_MeshMetrics[1]': 1
+-  m_MeshOptimizationFlags: 1
+-  m_StreamData:
+-    serializedVersion: 2
+-    offset: 0
+-    size: 0
+-    path: 
+-  m_MeshLodInfo:
+-    serializedVersion: 2
+-    m_LodSelectionCurve:
+-      serializedVersion: 1
+-      m_LodSlope: 0
+-      m_LodBias: 0
+-    m_NumLevels: 1
+-    m_SubMeshes:
+-    - serializedVersion: 2
+-      m_Levels:
+-      - serializedVersion: 1
+-        m_IndexStart: 0
+-        m_IndexCount: 0
+ --- !u!1 &657419166
+ GameObject:
+   m_ObjectHideFlags: 0
+@@ -8745,89 +8567,267 @@ Transform:
+   - {fileID: 682156884}
+   m_Father: {fileID: 0}
+   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+---- !u!95 &741500001
+-Animator:
+-  serializedVersion: 7
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 741600001}
+-  m_Enabled: 1
+-  m_Avatar: {fileID: 0}
+-  m_Controller: {fileID: 9100000, guid: cb46e49db5ec861459d3aa36695800c4, type: 2}
+-  m_CullingMode: 0
+-  m_UpdateMode: 0
+-  m_ApplyRootMotion: 0
+-  m_LinearVelocityBlending: 0
+-  m_StabilizeFeet: 0
+-  m_AnimatePhysics: 0
+-  m_WarningMessage: 
+-  m_HasTransformHierarchy: 1
+-  m_AllowConstantClipSamplingOptimization: 1
+-  m_KeepAnimatorStateOnDisable: 0
+-  m_WriteDefaultValuesOnDisable: 0
+---- !u!114 &741500002
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 741600001}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: 94dd8fbe02684bfd879a3bf650c7efa8, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::DialogueTextEffects
+-  shakeAmplitude: 1.5
+-  shakeFrequency: 28
+-  dustPerCharacter: 3
+-  dustColor: {r: 0.38, g: 0.29, b: 0.22, a: 0.9}
+-  dustMinSize: 5
+-  dustMaxSize: 8
+-  dustMinLifetime: 0.48
+-  dustMaxLifetime: 0.72
+-  dustGravity: 110
+---- !u!114 &741500003
+-MonoBehaviour:
++--- !u!43 &691274276
++Mesh:
+   m_ObjectHideFlags: 0
+   m_CorrespondingSourceObject: {fileID: 0}
+   m_PrefabInstance: {fileID: 0}
+   m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 741600001}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: 7513cf6852ce4fae9f8fb8c8c3152401, type: 3}
+   m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::BlackMarkerNpc
+---- !u!1 &741600001
+-GameObject:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  serializedVersion: 6
+-  m_Component:
+-  - component: {fileID: 741600002}
+-  - component: {fileID: 741600003}
+-  - component: {fileID: 741600004}
+-  - component: {fileID: 741600005}
+-  - component: {fileID: 741600006}
+-  - component: {fileID: 741600007}
+-  - component: {fileID: 741500001}
+-  - component: {fileID: 741500002}
+-  - component: {fileID: 741500003}
+-  m_Layer: 8
+-  m_Name: BlackMarker
+-  m_TagString: Untagged
+-  m_Icon: {fileID: 0}
+-  m_NavMeshLayer: 0
+-  m_StaticEditorFlags: 0
+-  m_IsActive: 1
+---- !u!4 &741600002
+-Transform:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
++  serializedVersion: 12
++  m_SubMeshes:
++  - serializedVersion: 2
++    firstByte: 0
++    indexCount: 0
++    topology: 0
++    baseVertex: 0
++    firstVertex: 0
++    vertexCount: 0
++    localAABB:
++      m_Center: {x: 0, y: 0, z: 0}
++      m_Extent: {x: 0, y: 0, z: 0}
++  m_Shapes:
++    vertices: []
++    shapes: []
++    channels: []
++    fullWeights: []
++  m_BindPose: []
++  m_BoneNameHashes: 
++  m_RootBoneNameHash: 0
++  m_BonesAABB: []
++  m_VariableBoneCountWeights:
++    m_Data: 
++  m_MeshCompression: 0
++  m_IsReadable: 1
++  m_KeepVertices: 1
++  m_KeepIndices: 1
++  m_IndexFormat: 0
++  m_IndexBuffer: 
++  m_VertexData:
++    serializedVersion: 3
++    m_VertexCount: 0
++    m_Channels:
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 3
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    m_DataSize: 0
++    _typelessdata: 
++  m_CompressedMesh:
++    m_Vertices:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UV:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Normals:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Tangents:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Weights:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_NormalSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_TangentSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_FloatColors:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_BoneIndices:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Triangles:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UVInfo: 0
++  m_LocalAABB:
++    m_Center: {x: 0, y: 0, z: 0}
++    m_Extent: {x: 0, y: 0, z: 0}
++  m_MeshUsageFlags: 0
++  m_CookingOptions: 30
++  m_BakedConvexCollisionMesh: 
++  m_BakedTriangleCollisionMesh: 
++  'm_MeshMetrics[0]': 1
++  'm_MeshMetrics[1]': 1
++  m_MeshOptimizationFlags: 1
++  m_StreamData:
++    serializedVersion: 2
++    offset: 0
++    size: 0
++    path: 
++  m_MeshLodInfo:
++    serializedVersion: 2
++    m_LodSelectionCurve:
++      serializedVersion: 1
++      m_LodSlope: 0
++      m_LodBias: 0
++    m_NumLevels: 1
++    m_SubMeshes:
++    - serializedVersion: 2
++      m_Levels:
++      - serializedVersion: 1
++        m_IndexStart: 0
++        m_IndexCount: 0
++--- !u!95 &741500001
++Animator:
++  serializedVersion: 7
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 741600001}
++  m_Enabled: 1
++  m_Avatar: {fileID: 0}
++  m_Controller: {fileID: 9100000, guid: cb46e49db5ec861459d3aa36695800c4, type: 2}
++  m_CullingMode: 0
++  m_UpdateMode: 0
++  m_ApplyRootMotion: 0
++  m_LinearVelocityBlending: 0
++  m_StabilizeFeet: 0
++  m_AnimatePhysics: 0
++  m_WarningMessage: 
++  m_HasTransformHierarchy: 1
++  m_AllowConstantClipSamplingOptimization: 1
++  m_KeepAnimatorStateOnDisable: 0
++  m_WriteDefaultValuesOnDisable: 0
++--- !u!114 &741500002
++MonoBehaviour:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 741600001}
++  m_Enabled: 1
++  m_EditorHideFlags: 0
++  m_Script: {fileID: 11500000, guid: 94dd8fbe02684bfd879a3bf650c7efa8, type: 3}
++  m_Name: 
++  m_EditorClassIdentifier: Assembly-CSharp::DialogueTextEffects
++  shakeAmplitude: 1.5
++  shakeFrequency: 28
++  dustPerCharacter: 3
++  dustColor: {r: 0.38, g: 0.29, b: 0.22, a: 0.9}
++  dustMinSize: 5
++  dustMaxSize: 8
++  dustMinLifetime: 0.48
++  dustMaxLifetime: 0.72
++  dustGravity: 110
++--- !u!114 &741500003
++MonoBehaviour:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 741600001}
++  m_Enabled: 1
++  m_EditorHideFlags: 0
++  m_Script: {fileID: 11500000, guid: 7513cf6852ce4fae9f8fb8c8c3152401, type: 3}
++  m_Name: 
++  m_EditorClassIdentifier: Assembly-CSharp::BlackMarkerNpc
++--- !u!1 &741600001
++GameObject:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  serializedVersion: 6
++  m_Component:
++  - component: {fileID: 741600002}
++  - component: {fileID: 741600003}
++  - component: {fileID: 741600004}
++  - component: {fileID: 741600005}
++  - component: {fileID: 741600006}
++  - component: {fileID: 741600007}
++  - component: {fileID: 741500001}
++  - component: {fileID: 741500002}
++  - component: {fileID: 741500003}
++  m_Layer: 8
++  m_Name: BlackMarker
++  m_TagString: Untagged
++  m_Icon: {fileID: 0}
++  m_NavMeshLayer: 0
++  m_StaticEditorFlags: 0
++  m_IsActive: 1
++--- !u!4 &741600002
++Transform:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
+   m_PrefabInstance: {fileID: 0}
+   m_PrefabAsset: {fileID: 0}
+   m_GameObject: {fileID: 741600001}
+@@ -8997,8 +8997,8 @@ SpriteRenderer:
+   m_AutoUVMaxAngle: 89
+   m_LightmapParameters: {fileID: 0}
+   m_GlobalIlluminationMeshLod: 0
+-  m_SortingLayerID: 0
+-  m_SortingLayer: 0
++  m_SortingLayerID: 1167604599
++  m_SortingLayer: -1
+   m_SortingOrder: 5
+   m_MaskInteraction: 0
+   m_Sprite: {fileID: 2100584474665898063, guid: aebec4d1c5b5b9b4f9627d5373105895, type: 3}
+@@ -11094,184 +11094,6 @@ CanvasRenderer:
+   m_PrefabAsset: {fileID: 0}
+   m_GameObject: {fileID: 855629188}
+   m_CullTransparentMesh: 1
+---- !u!43 &856150598
+-Mesh:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_Name: 
+-  serializedVersion: 12
+-  m_SubMeshes:
+-  - serializedVersion: 2
+-    firstByte: 0
+-    indexCount: 0
+-    topology: 0
+-    baseVertex: 0
+-    firstVertex: 0
+-    vertexCount: 0
+-    localAABB:
+-      m_Center: {x: 0, y: 0, z: 0}
+-      m_Extent: {x: 0, y: 0, z: 0}
+-  m_Shapes:
+-    vertices: []
+-    shapes: []
+-    channels: []
+-    fullWeights: []
+-  m_BindPose: []
+-  m_BoneNameHashes: 
+-  m_RootBoneNameHash: 0
+-  m_BonesAABB: []
+-  m_VariableBoneCountWeights:
+-    m_Data: 
+-  m_MeshCompression: 0
+-  m_IsReadable: 1
+-  m_KeepVertices: 1
+-  m_KeepIndices: 1
+-  m_IndexFormat: 0
+-  m_IndexBuffer: 
+-  m_VertexData:
+-    serializedVersion: 3
+-    m_VertexCount: 0
+-    m_Channels:
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 3
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    m_DataSize: 0
+-    _typelessdata: 
+-  m_CompressedMesh:
+-    m_Vertices:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UV:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Normals:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Tangents:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Weights:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_NormalSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_TangentSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_FloatColors:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_BoneIndices:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Triangles:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UVInfo: 0
+-  m_LocalAABB:
+-    m_Center: {x: 0, y: 0, z: 0}
+-    m_Extent: {x: 0, y: 0, z: 0}
+-  m_MeshUsageFlags: 0
+-  m_CookingOptions: 30
+-  m_BakedConvexCollisionMesh: 
+-  m_BakedTriangleCollisionMesh: 
+-  'm_MeshMetrics[0]': 1
+-  'm_MeshMetrics[1]': 1
+-  m_MeshOptimizationFlags: 1
+-  m_StreamData:
+-    serializedVersion: 2
+-    offset: 0
+-    size: 0
+-    path: 
+-  m_MeshLodInfo:
+-    serializedVersion: 2
+-    m_LodSelectionCurve:
+-      serializedVersion: 1
+-      m_LodSlope: 0
+-      m_LodBias: 0
+-    m_NumLevels: 1
+-    m_SubMeshes:
+-    - serializedVersion: 2
+-      m_Levels:
+-      - serializedVersion: 1
+-        m_IndexStart: 0
+-        m_IndexCount: 0
+ --- !u!1 &858143825
+ GameObject:
+   m_ObjectHideFlags: 0
+@@ -12153,142 +11975,320 @@ Camera:
+   m_LensShift: {x: 0, y: 0}
+   m_NormalizedViewPortRect:
+     serializedVersion: 2
+-    x: 0
+-    y: 0
+-    width: 1
+-    height: 1
+-  near clip plane: 0.3
+-  far clip plane: 1000
+-  field of view: 20
+-  orthographic: 0
+-  orthographic size: 4.909091
+-  m_Depth: 0
+-  m_CullingMask:
++    x: 0
++    y: 0
++    width: 1
++    height: 1
++  near clip plane: 0.3
++  far clip plane: 1000
++  field of view: 20
++  orthographic: 0
++  orthographic size: 4.909091
++  m_Depth: 0
++  m_CullingMask:
++    serializedVersion: 2
++    m_Bits: 4294967295
++  m_RenderingPath: -1
++  m_TargetTexture: {fileID: 0}
++  m_TargetDisplay: 0
++  m_TargetEye: 3
++  m_HDR: 1
++  m_AllowMSAA: 1
++  m_AllowDynamicResolution: 0
++  m_ForceIntoRT: 0
++  m_OcclusionCulling: 1
++  m_StereoConvergence: 10
++  m_StereoSeparation: 0.022
++--- !u!4 &884109556
++Transform:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 884109550}
++  serializedVersion: 2
++  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
++  m_LocalPosition: {x: 0.48, y: 0.1, z: -27.24}
++  m_LocalScale: {x: 1, y: 1, z: 1}
++  m_ConstrainProportionsScale: 0
++  m_Children: []
++  m_Father: {fileID: 0}
++  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
++--- !u!1 &887368664
++GameObject:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  serializedVersion: 6
++  m_Component:
++  - component: {fileID: 887368665}
++  - component: {fileID: 887368667}
++  - component: {fileID: 887368666}
++  - component: {fileID: 887368668}
++  m_Layer: 0
++  m_Name: Slot 01
++  m_TagString: Untagged
++  m_Icon: {fileID: 0}
++  m_NavMeshLayer: 0
++  m_StaticEditorFlags: 0
++  m_IsActive: 1
++--- !u!224 &887368665
++RectTransform:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 887368664}
++  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
++  m_LocalPosition: {x: 0, y: 0, z: 0}
++  m_LocalScale: {x: 1, y: 1, z: 1}
++  m_ConstrainProportionsScale: 0
++  m_Children:
++  - {fileID: 65123822}
++  - {fileID: 766112503}
++  - {fileID: 819893104}
++  m_Father: {fileID: 1885705153}
++  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
++  m_AnchorMin: {x: 0, y: 0}
++  m_AnchorMax: {x: 0, y: 0}
++  m_AnchoredPosition: {x: 0, y: 0}
++  m_SizeDelta: {x: 0, y: 0}
++  m_Pivot: {x: 0, y: 1}
++--- !u!114 &887368666
++MonoBehaviour:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 887368664}
++  m_Enabled: 1
++  m_EditorHideFlags: 0
++  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
++  m_Name: 
++  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
++  m_Material: {fileID: 0}
++  m_Color: {r: 0.95, g: 0.87, b: 0.69, a: 1}
++  m_RaycastTarget: 1
++  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
++  m_Maskable: 1
++  m_OnCullStateChanged:
++    m_PersistentCalls:
++      m_Calls: []
++  m_Sprite: {fileID: 0}
++  m_Type: 0
++  m_PreserveAspect: 0
++  m_FillCenter: 1
++  m_FillMethod: 4
++  m_FillAmount: 1
++  m_FillClockwise: 1
++  m_FillOrigin: 0
++  m_UseSpriteMesh: 0
++  m_PixelsPerUnitMultiplier: 1
++--- !u!222 &887368667
++CanvasRenderer:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 887368664}
++  m_CullTransparentMesh: 1
++--- !u!114 &887368668
++MonoBehaviour:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_GameObject: {fileID: 887368664}
++  m_Enabled: 1
++  m_EditorHideFlags: 0
++  m_Script: {fileID: 11500000, guid: 6b3d1b11daa64254bf6a99f33a74bff7, type: 3}
++  m_Name: 
++  m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
++  owner: {fileID: 1070967174}
++  index: 0
++  icon: {fileID: 65123823}
++  background: {fileID: 887368666}
++  amount: {fileID: 766112504}
++  itemName: {fileID: 819893105}
++--- !u!43 &891580701
++Mesh:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_Name: 
++  serializedVersion: 12
++  m_SubMeshes:
++  - serializedVersion: 2
++    firstByte: 0
++    indexCount: 0
++    topology: 0
++    baseVertex: 0
++    firstVertex: 0
++    vertexCount: 0
++    localAABB:
++      m_Center: {x: 0, y: 0, z: 0}
++      m_Extent: {x: 0, y: 0, z: 0}
++  m_Shapes:
++    vertices: []
++    shapes: []
++    channels: []
++    fullWeights: []
++  m_BindPose: []
++  m_BoneNameHashes: 
++  m_RootBoneNameHash: 0
++  m_BonesAABB: []
++  m_VariableBoneCountWeights:
++    m_Data: 
++  m_MeshCompression: 0
++  m_IsReadable: 1
++  m_KeepVertices: 1
++  m_KeepIndices: 1
++  m_IndexFormat: 0
++  m_IndexBuffer: 
++  m_VertexData:
++    serializedVersion: 3
++    m_VertexCount: 0
++    m_Channels:
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 3
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    m_DataSize: 0
++    _typelessdata: 
++  m_CompressedMesh:
++    m_Vertices:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UV:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Normals:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Tangents:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Weights:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_NormalSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_TangentSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_FloatColors:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_BoneIndices:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Triangles:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UVInfo: 0
++  m_LocalAABB:
++    m_Center: {x: 0, y: 0, z: 0}
++    m_Extent: {x: 0, y: 0, z: 0}
++  m_MeshUsageFlags: 0
++  m_CookingOptions: 30
++  m_BakedConvexCollisionMesh: 
++  m_BakedTriangleCollisionMesh: 
++  'm_MeshMetrics[0]': 1
++  'm_MeshMetrics[1]': 1
++  m_MeshOptimizationFlags: 1
++  m_StreamData:
++    serializedVersion: 2
++    offset: 0
++    size: 0
++    path: 
++  m_MeshLodInfo:
+     serializedVersion: 2
+-    m_Bits: 4294967295
+-  m_RenderingPath: -1
+-  m_TargetTexture: {fileID: 0}
+-  m_TargetDisplay: 0
+-  m_TargetEye: 3
+-  m_HDR: 1
+-  m_AllowMSAA: 1
+-  m_AllowDynamicResolution: 0
+-  m_ForceIntoRT: 0
+-  m_OcclusionCulling: 1
+-  m_StereoConvergence: 10
+-  m_StereoSeparation: 0.022
+---- !u!4 &884109556
+-Transform:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 884109550}
+-  serializedVersion: 2
+-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+-  m_LocalPosition: {x: 0.48, y: 0.1, z: -27.24}
+-  m_LocalScale: {x: 1, y: 1, z: 1}
+-  m_ConstrainProportionsScale: 0
+-  m_Children: []
+-  m_Father: {fileID: 0}
+-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+---- !u!1 &887368664
+-GameObject:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  serializedVersion: 6
+-  m_Component:
+-  - component: {fileID: 887368665}
+-  - component: {fileID: 887368667}
+-  - component: {fileID: 887368666}
+-  - component: {fileID: 887368668}
+-  m_Layer: 0
+-  m_Name: Slot 01
+-  m_TagString: Untagged
+-  m_Icon: {fileID: 0}
+-  m_NavMeshLayer: 0
+-  m_StaticEditorFlags: 0
+-  m_IsActive: 1
+---- !u!224 &887368665
+-RectTransform:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 887368664}
+-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+-  m_LocalPosition: {x: 0, y: 0, z: 0}
+-  m_LocalScale: {x: 1, y: 1, z: 1}
+-  m_ConstrainProportionsScale: 0
+-  m_Children:
+-  - {fileID: 65123822}
+-  - {fileID: 766112503}
+-  - {fileID: 819893104}
+-  m_Father: {fileID: 1885705153}
+-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+-  m_AnchorMin: {x: 0, y: 0}
+-  m_AnchorMax: {x: 0, y: 0}
+-  m_AnchoredPosition: {x: 0, y: 0}
+-  m_SizeDelta: {x: 0, y: 0}
+-  m_Pivot: {x: 0, y: 1}
+---- !u!114 &887368666
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 887368664}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+-  m_Material: {fileID: 0}
+-  m_Color: {r: 0.95, g: 0.87, b: 0.69, a: 1}
+-  m_RaycastTarget: 1
+-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+-  m_Maskable: 1
+-  m_OnCullStateChanged:
+-    m_PersistentCalls:
+-      m_Calls: []
+-  m_Sprite: {fileID: 0}
+-  m_Type: 0
+-  m_PreserveAspect: 0
+-  m_FillCenter: 1
+-  m_FillMethod: 4
+-  m_FillAmount: 1
+-  m_FillClockwise: 1
+-  m_FillOrigin: 0
+-  m_UseSpriteMesh: 0
+-  m_PixelsPerUnitMultiplier: 1
+---- !u!222 &887368667
+-CanvasRenderer:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 887368664}
+-  m_CullTransparentMesh: 1
+---- !u!114 &887368668
+-MonoBehaviour:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_GameObject: {fileID: 887368664}
+-  m_Enabled: 1
+-  m_EditorHideFlags: 0
+-  m_Script: {fileID: 11500000, guid: 6b3d1b11daa64254bf6a99f33a74bff7, type: 3}
+-  m_Name: 
+-  m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
+-  owner: {fileID: 1070967174}
+-  index: 0
+-  icon: {fileID: 65123823}
+-  background: {fileID: 887368666}
+-  amount: {fileID: 766112504}
+-  itemName: {fileID: 819893105}
++    m_LodSelectionCurve:
++      serializedVersion: 1
++      m_LodSlope: 0
++      m_LodBias: 0
++    m_NumLevels: 1
++    m_SubMeshes:
++    - serializedVersion: 2
++      m_Levels:
++      - serializedVersion: 1
++        m_IndexStart: 0
++        m_IndexCount: 0
+ --- !u!1 &899957618
+ GameObject:
+   m_ObjectHideFlags: 0
+@@ -19364,7 +19364,7 @@ Transform:
+   serializedVersion: 2
+   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+   m_LocalPosition: {x: 6.29, y: 1.09, z: 0}
+-  m_LocalScale: {x: 1, y: 1, z: 1}
++  m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
+   m_ConstrainProportionsScale: 1
+   m_Children: []
+   m_Father: {fileID: 0}
+@@ -26039,6 +26039,184 @@ SpriteRenderer:
+   m_SpriteTileMode: 0
+   m_WasSpriteAssigned: 1
+   m_SpriteSortPoint: 0
++--- !u!43 &2048068142
++Mesh:
++  m_ObjectHideFlags: 0
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_Name: 
++  serializedVersion: 12
++  m_SubMeshes:
++  - serializedVersion: 2
++    firstByte: 0
++    indexCount: 0
++    topology: 0
++    baseVertex: 0
++    firstVertex: 0
++    vertexCount: 0
++    localAABB:
++      m_Center: {x: 0, y: 0, z: 0}
++      m_Extent: {x: 0, y: 0, z: 0}
++  m_Shapes:
++    vertices: []
++    shapes: []
++    channels: []
++    fullWeights: []
++  m_BindPose: []
++  m_BoneNameHashes: 
++  m_RootBoneNameHash: 0
++  m_BonesAABB: []
++  m_VariableBoneCountWeights:
++    m_Data: 
++  m_MeshCompression: 0
++  m_IsReadable: 1
++  m_KeepVertices: 1
++  m_KeepIndices: 1
++  m_IndexFormat: 0
++  m_IndexBuffer: 
++  m_VertexData:
++    serializedVersion: 3
++    m_VertexCount: 0
++    m_Channels:
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 3
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    - stream: 0
++      offset: 0
++      format: 0
++      dimension: 0
++    m_DataSize: 0
++    _typelessdata: 
++  m_CompressedMesh:
++    m_Vertices:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UV:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Normals:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Tangents:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Weights:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_NormalSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_TangentSigns:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_FloatColors:
++      m_NumItems: 0
++      m_Range: 0
++      m_Start: 0
++      m_Data: 
++      m_BitSize: 0
++    m_BoneIndices:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_Triangles:
++      m_NumItems: 0
++      m_Data: 
++      m_BitSize: 0
++    m_UVInfo: 0
++  m_LocalAABB:
++    m_Center: {x: 0, y: 0, z: 0}
++    m_Extent: {x: 0, y: 0, z: 0}
++  m_MeshUsageFlags: 0
++  m_CookingOptions: 30
++  m_BakedConvexCollisionMesh: 
++  m_BakedTriangleCollisionMesh: 
++  'm_MeshMetrics[0]': 1
++  'm_MeshMetrics[1]': 1
++  m_MeshOptimizationFlags: 1
++  m_StreamData:
++    serializedVersion: 2
++    offset: 0
++    size: 0
++    path: 
++  m_MeshLodInfo:
++    serializedVersion: 2
++    m_LodSelectionCurve:
++      serializedVersion: 1
++      m_LodSlope: 0
++      m_LodBias: 0
++    m_NumLevels: 1
++    m_SubMeshes:
++    - serializedVersion: 2
++      m_Levels:
++      - serializedVersion: 1
++        m_IndexStart: 0
++        m_IndexCount: 0
+ --- !u!1 &2049901549
+ GameObject:
+   m_ObjectHideFlags: 0
+@@ -26726,184 +26904,6 @@ MonoBehaviour:
+   - {x: 1.2709818, y: -4.573174, z: 0}
+   - {x: -5.257326, y: 9.151672, z: 0}
+   - {x: -6.0521812, y: 8.960466, z: 0}
+---- !u!43 &2141583163
+-Mesh:
+-  m_ObjectHideFlags: 0
+-  m_CorrespondingSourceObject: {fileID: 0}
+-  m_PrefabInstance: {fileID: 0}
+-  m_PrefabAsset: {fileID: 0}
+-  m_Name: 
+-  serializedVersion: 12
+-  m_SubMeshes:
+-  - serializedVersion: 2
+-    firstByte: 0
+-    indexCount: 0
+-    topology: 0
+-    baseVertex: 0
+-    firstVertex: 0
+-    vertexCount: 0
+-    localAABB:
+-      m_Center: {x: 0, y: 0, z: 0}
+-      m_Extent: {x: 0, y: 0, z: 0}
+-  m_Shapes:
+-    vertices: []
+-    shapes: []
+-    channels: []
+-    fullWeights: []
+-  m_BindPose: []
+-  m_BoneNameHashes: 
+-  m_RootBoneNameHash: 0
+-  m_BonesAABB: []
+-  m_VariableBoneCountWeights:
+-    m_Data: 
+-  m_MeshCompression: 0
+-  m_IsReadable: 1
+-  m_KeepVertices: 1
+-  m_KeepIndices: 1
+-  m_IndexFormat: 0
+-  m_IndexBuffer: 
+-  m_VertexData:
+-    serializedVersion: 3
+-    m_VertexCount: 0
+-    m_Channels:
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 3
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    - stream: 0
+-      offset: 0
+-      format: 0
+-      dimension: 0
+-    m_DataSize: 0
+-    _typelessdata: 
+-  m_CompressedMesh:
+-    m_Vertices:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UV:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Normals:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Tangents:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Weights:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_NormalSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_TangentSigns:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_FloatColors:
+-      m_NumItems: 0
+-      m_Range: 0
+-      m_Start: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_BoneIndices:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_Triangles:
+-      m_NumItems: 0
+-      m_Data: 
+-      m_BitSize: 0
+-    m_UVInfo: 0
+-  m_LocalAABB:
+-    m_Center: {x: 0, y: 0, z: 0}
+-    m_Extent: {x: 0, y: 0, z: 0}
+-  m_MeshUsageFlags: 0
+-  m_CookingOptions: 30
+-  m_BakedConvexCollisionMesh: 
+-  m_BakedTriangleCollisionMesh: 
+-  'm_MeshMetrics[0]': 1
+-  'm_MeshMetrics[1]': 1
+-  m_MeshOptimizationFlags: 1
+-  m_StreamData:
+-    serializedVersion: 2
+-    offset: 0
+-    size: 0
+-    path: 
+-  m_MeshLodInfo:
+-    serializedVersion: 2
+-    m_LodSelectionCurve:
+-      serializedVersion: 1
+-      m_LodSlope: 0
+-      m_LodBias: 0
+-    m_NumLevels: 1
+-    m_SubMeshes:
+-    - serializedVersion: 2
+-      m_Levels:
+-      - serializedVersion: 1
+-        m_IndexStart: 0
+-        m_IndexCount: 0
+ --- !u!1 &2144788612
+ GameObject:
+   m_ObjectHideFlags: 0
+diff --git a/Assets/Settings/Renderer2D.asset b/Assets/Settings/Renderer2D.asset
+index d6b555a..1c2843d 100644
+--- a/Assets/Settings/Renderer2D.asset
++++ b/Assets/Settings/Renderer2D.asset
+@@ -89,3 +89,7 @@ MonoBehaviour:
+   fullEffectSpeed: 30
+   minimumSeparationPixels: 2
+   maximumSeparationPixels: 5
++  hazeThreshold: 0.5
++  hazeOpacity: 0.14
++  hazeBlurPixels: 2
++  hazeSpreadPixels: 1
+diff --git a/Assets/Settings/WorldMotionEffects.shader b/Assets/Settings/WorldMotionEffects.shader
+index 56e57ff..267743b 100644
+--- a/Assets/Settings/WorldMotionEffects.shader
++++ b/Assets/Settings/WorldMotionEffects.shader
+@@ -16,6 +16,39 @@ Shader "BehindTheGear/World Chromatic Motion"
+             float _SeparationPixels;
+             float4 _HealthTint;
+             float _DamageFlashOpacity;
++            float4 _EdgeHaze; // edge threshold, opacity, blur radius, spread (output pixels)
++            float4 _HpRippleBar; // normalized screen-space center and half size, bottom-left origin
++            float4 _HpRippleParameters; // phase, intensity, HUD scale, enabled
++            float RippleHeight(float2 p, float2 halfSize, float age)
++            {
++                float t = saturate(age / .8);
++                float radius = min(4.0, min(halfSize.x, halfSize.y));
++                float2 q = abs(p) - max(halfSize - radius, 0);
++                float d = length(max(q, 0)) + min(max(q.x, q.y), 0) - radius;
++                float expansion = lerp(2.0, lerp(16.0, 28.0, _HpRippleParameters.y), t);
++                float crest = exp2(-pow((d - expansion) / 3.0, 2.0));
++                return crest * smoothstep(0, .10, t) * pow(1 - t, 1.5) * step(0, age);
++            }
++            float RippleProfile(float2 p, float2 halfSize)
++            {
++                return RippleHeight(p, halfSize, _HpRippleParameters.x)
++                    + .55 * RippleHeight(p, halfSize, _HpRippleParameters.x - .32);
++            }
++            float2 RippleSlope(float2 uv)
++            {
++                if (_HpRippleParameters.w < .5) return 0;
++                float2 screenUV = uv;
++                #if UNITY_UV_STARTS_AT_TOP
++                screenUV.y = 1 - screenUV.y;
++                #endif
++                float2 unitUV = _OutputPixelSize.xy * max(.01, _HpRippleParameters.z);
++                float2 p = (screenUV - _HpRippleBar.xy) / unitUV;
++                float2 halfSize = _HpRippleBar.zw / unitUV;
++                if (any(abs(p) > halfSize + 36)) return 0;
++                // Surface-normal gradient: convex and concave edges bend the scene in opposite directions.
++                return float2(RippleProfile(p + float2(1,0), halfSize) - RippleProfile(p - float2(1,0), halfSize),
++                    RippleProfile(p + float2(0,1), halfSize) - RippleProfile(p - float2(0,1), halfSize)) * .5;
++            }
+             half3 SplitColor(float2 uv)
+             {
+                 float2 shift = float2(_OutputPixelSize.x * _SeparationPixels, 0);
+@@ -28,7 +61,29 @@ Shader "BehindTheGear/World Chromatic Motion"
+             {
+                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                 float2 uv = input.texcoord;
++                float2 slope = RippleSlope(uv);
++                float emboss = dot(slope, normalize(float2(-1, 1))) * lerp(.10, .22, _HpRippleParameters.y);
++                float2 displacement = slope * lerp(2.0, 4.0, _HpRippleParameters.y) * _OutputPixelSize.xy;
++                #if UNITY_UV_STARTS_AT_TOP
++                displacement.y = -displacement.y;
++                #endif
++                uv = saturate(uv + displacement);
+                 half3 color = SplitColor(uv);
++                // A continuous screen-space veil, without any ground geometry or camera-following strip.
++                float2 fromCenter = abs(uv * 2 - 1);
++                // Dilate the haze density contour rather than adding more blur.
++                fromCenter += 2.0 * _OutputPixelSize.xy * max(0.0, _EdgeHaze.w);
++                float edge = smoothstep(_EdgeHaze.x, 1.0, max(fromCenter.x, fromCenter.y));
++                if (_EdgeHaze.y > 0 && edge > 0)
++                {
++                    float2 radius = _OutputPixelSize.xy * _EdgeHaze.z;
++                    half3 soft = SplitColor(uv) * .4;
++                    soft += SplitColor(uv + float2(radius.x, 0)) * .15;
++                    soft += SplitColor(uv - float2(radius.x, 0)) * .15;
++                    soft += SplitColor(uv + float2(0, radius.y)) * .15;
++                    soft += SplitColor(uv - float2(0, radius.y)) * .15;
++                    color = lerp(color, soft, edge * .3);
++                }
+                 half luminance = dot(color, half3(.2126, .7152, .0722));
+                 color = lerp(color, luminance.xxx, saturate(_HealthTint.z));
+                 // Overlay is evaluated in display color space, then returned to the render target's space.
+@@ -36,7 +91,11 @@ Shader "BehindTheGear/World Chromatic Motion"
+                 half3 tint = half3(110.0 / 255.0, 0, 0);
+                 half3 overlay = lerp(2 * display * tint, 1 - 2 * (1 - display) * (1 - tint), step(.5, display));
+                 display = lerp(display, overlay, _HealthTint.x) * (1 - _HealthTint.y);
++                // A very light overall haze, increasing smoothly toward the frame. HUD is rendered later.
++                display = lerp(display, half3(1, 1, 1), _EdgeHaze.y * lerp(.12, 1.0, edge));
+                 display = lerp(display, half3(1, 0, 0), saturate(_DamageFlashOpacity));
++                // Bevel-style highlight/shadow belongs to the refracted scenery, not the light contour.
++                display = saturate(display + emboss);
+                 color = SRGBToLinear(display);
+                 half4 original = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                 return half4(color, original.a);
+diff --git a/Assets/Settings/WorldMotionEffectsFeature.cs b/Assets/Settings/WorldMotionEffectsFeature.cs
+index e9e2da0..b904b22 100644
+--- a/Assets/Settings/WorldMotionEffectsFeature.cs
++++ b/Assets/Settings/WorldMotionEffectsFeature.cs
+@@ -11,10 +11,24 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
+     [Min(.01f)] public float fullEffectSpeed = 30f;
+     [Min(0f)] public float minimumSeparationPixels = 2f;
+     [Min(0f)] public float maximumSeparationPixels = 5f;
++    [Header("Soft white edge haze")]
++    [Range(0f, .95f)] public float hazeThreshold = .5f;
++    [Range(0f, .3f)] public float hazeOpacity = .14f;
++    [Range(0f, 5f)] public float hazeBlurPixels = 2f;
++    [Tooltip("Expands the denser haze inward in output pixels without increasing blur or opacity.")]
++    [Range(0f, 8f)] public float hazeSpreadPixels = 1f;
+     private MotionPass pass;
+-    public override void Create() => pass = new MotionPass();
++    private ItemForegroundPass itemPass;
++    public override void Create()
++    {
++        pass = new MotionPass();
++        itemPass = new ItemForegroundPass();
++    }
+     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+     {
++        var cameraType = renderingData.cameraData.cameraType;
++        if (cameraType == CameraType.Game || cameraType == CameraType.SceneView)
++            renderer.EnqueuePass(itemPass);
+         if (renderingData.cameraData.cameraType != CameraType.Game || passMaterial == null) return;
+         var camera = renderingData.cameraData.camera;
+         Vector2 velocity = Vector2.zero;
+@@ -33,8 +47,42 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
+         pass.separation = separation;
+         pass.healthTint = new Vector3(healthEffect.y, healthEffect.z, healthEffect.w);
+         pass.damageFlash = Application.isPlaying ? PrototypeScreenEffects.DamageFlashOpacity : 0f;
++        bool gameplay = Application.isPlaying && player != null && camera == Camera.main
++            && (camera.gameObject.scene.name == "Forest" || camera.gameObject.scene.name == "Market");
++        pass.haze = new Vector4(hazeThreshold, gameplay ? hazeOpacity : 0f, hazeBlurPixels, hazeSpreadPixels);
++        pass.rippleBar = pass.rippleParameters = Vector4.zero;
++        if (Application.isPlaying && camera == Camera.main)
++            InGameVitalsHUD.TryGetRipple(out pass.rippleBar, out pass.rippleParameters);
+         renderer.EnqueuePass(pass);
+     }
++
++    // Item sprites use a dedicated LightMode, so they are drawn once, after the world's
++    // tint/flash/haze and before the overlay UI (including the black scene transition).
++    private sealed class ItemForegroundPass : ScriptableRenderPass
++    {
++        private static readonly ShaderTagId ItemTag = new("WorldItemForeground");
++        private sealed class PassData { public RendererListHandle items; }
++        public ItemForegroundPass() => renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
++
++        public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
++        {
++            var resources = frameData.Get<UniversalResourceData>();
++            var rendering = frameData.Get<UniversalRenderingData>();
++            var camera = frameData.Get<UniversalCameraData>();
++            var lights = frameData.Get<UniversalLightData>();
++            var drawing = RenderingUtils.CreateDrawingSettings(ItemTag, rendering, camera, lights, SortingCriteria.CommonTransparent);
++            var filtering = new FilteringSettings(RenderQueueRange.transparent, camera.camera.cullingMask);
++            var parameters = new RendererListParams(rendering.cullResults, drawing, filtering);
++            using (var builder = graph.AddRasterRenderPass<PassData>("World Items Above Effects", out var data))
++            {
++                data.items = graph.CreateRendererList(parameters);
++                builder.UseRendererList(data.items);
++                builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.ReadWrite);
++                builder.SetRenderFunc(static (PassData value, RasterGraphContext context) => context.cmd.DrawRendererList(value.items));
++            }
++        }
++    }
++
+     private sealed class MotionPass : ScriptableRenderPass
+     {
+         public Material material;
+@@ -42,6 +90,8 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
+         public float separation;
+         public Vector3 healthTint;
+         public float damageFlash;
++        public Vector4 haze;
++        public Vector4 rippleBar, rippleParameters;
+         public MotionPass()
+         {
+             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+@@ -62,6 +112,9 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
+             properties.SetFloat("_SeparationPixels", separation);
+             properties.SetVector("_HealthTint", new Vector4(healthTint.x, healthTint.y, healthTint.z, 0));
+             properties.SetFloat("_DamageFlashOpacity", damageFlash);
++            properties.SetVector("_EdgeHaze", haze);
++            properties.SetVector("_HpRippleBar", rippleBar);
++            properties.SetVector("_HpRippleParameters", rippleParameters);
+             graph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, destination, material, 0)
+                 { propertyBlock = properties }, passName: "World Chromatic Motion");
+             resources.cameraColor = destination;
+diff --git a/ProjectSettings/ProjectSettings.asset b/ProjectSettings/ProjectSettings.asset
+index 5032509..d82c433 100644
+--- a/ProjectSettings/ProjectSettings.asset
++++ b/ProjectSettings/ProjectSettings.asset
+@@ -42,8 +42,8 @@ PlayerSettings:
+   m_SplashScreenLogos: []
+   m_VirtualRealitySplashScreen: {fileID: 0}
+   m_HolographicTrackingLossScreen: {fileID: 0}
+-  defaultScreenWidth: 1920
+-  defaultScreenHeight: 1080
++  defaultScreenWidth: 1280
++  defaultScreenHeight: 720
+   defaultScreenWidthWeb: 960
+   defaultScreenHeightWeb: 600
+   m_StereoRenderingPath: 0
+@@ -99,7 +99,7 @@ PlayerSettings:
+   bakeCollisionMeshes: 0
+   forceSingleInstance: 0
+   useFlipModelSwapchain: 1
+-  resizableWindow: 0
++  resizableWindow: 1
+   useMacAppStoreValidation: 0
+   macAppStoreCategory: public.app-category.games
+   gpuSkinning: 0
+@@ -111,7 +111,7 @@ PlayerSettings:
+   xboxEnableFitness: 0
+   visibleInBackground: 1
+   allowFullscreenSwitch: 1
+-  fullscreenMode: 1
++  fullscreenMode: 3
+   xboxSpeechDB: 0
+   xboxEnableHeadOrientation: 0
+   xboxEnableGuest: 0

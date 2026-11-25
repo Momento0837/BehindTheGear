@@ -1,0 +1,179 @@
+ M Assets/!UI/Other/Curser.png
+ M Assets/!UI/Other/Team_Logo.prefab
+ M Assets/!UI/Other/Team_Logo_A_Clear.png
+ M Assets/Editor/MarketDialogueCheck.cs
+ M Assets/Monster/Scen/MonsterFollowController.cs
+ M Assets/Player/PlayerMovementDemo.unity
+ M Assets/Player/Script/AutomaticNpcBubble.cs
+ M Assets/Player/Script/BaseArrivalTutorial.cs
+ M Assets/Player/Script/BlackMarkerNpc.cs
+ M Assets/Player/Script/ControlHintAnimation.cs
+ M Assets/Player/Script/ControlTutorialUI.cs
+ M Assets/Player/Script/ConversationDialogue.cs
+ M Assets/Player/Script/DialoguePortraitLibrary.cs
+ M Assets/Player/Script/EquipmentTutorialHighlight.cs
+ M Assets/Player/Script/InGameQuestHUD.cs
+ M Assets/Player/Script/InGameVitalsHUD.cs
+ M Assets/Player/Script/MarketNpcBubble.cs
+ M Assets/Player/Script/PersistentPlayer2D.cs
+ M Assets/Player/Script/PlayerCameraFollow2D.cs
+ M Assets/Player/Script/PlayerInputReader.cs
+ M Assets/Player/Script/PlayerInteractionController.cs
+ M Assets/Player/Script/PlayerMeleeAttack.cs
+ M Assets/Player/Script/PlayerMovement2D.cs
+ M Assets/Player/Script/PrototypeScreenEffects.cs
+ M Assets/Player/Script/ScenePortal2D.cs
+ M Assets/Player/Script/StorySceneFlow.LaterChapter.cs
+ M Assets/Player/Script/StorySceneFlow.Tutorials.cs
+ M Assets/Player/Script/StorySceneFlow.cs
+ M Assets/Resources/Dialogue/Fonts/SuhgungDialogue.asset
+ M Assets/Resources/Dialogue/Portraits.asset
+ D Assets/Resources/Dialogue/base_upgrade_tutorial.json
+ D Assets/Resources/Dialogue/base_upgrade_tutorial.json.meta
+ D Assets/Resources/Dialogue/cutscene_conversation.json
+ D Assets/Resources/Dialogue/cutscene_conversation.json.meta
+ D Assets/Resources/Dialogue/equipment_complete.json
+ D Assets/Resources/Dialogue/equipment_complete.json.meta
+ D Assets/Resources/Dialogue/equipment_tutorial.json
+ D Assets/Resources/Dialogue/equipment_tutorial.json.meta
+ D Assets/Resources/Dialogue/forest_clear.json
+ D Assets/Resources/Dialogue/forest_clear.json.meta
+ D Assets/Resources/Dialogue/garbage_monologue.json
+ D Assets/Resources/Dialogue/garbage_monologue.json.meta
+ D Assets/Resources/Dialogue/market_monologue.json
+ D Assets/Resources/Dialogue/market_monologue.json.meta
+ D Assets/Resources/Dialogue/market_npc.json
+ D Assets/Resources/Dialogue/market_npc.json.meta
+ D Assets/Resources/Dialogue/market_talk_reminder.json
+ D Assets/Resources/Dialogue/market_talk_reminder.json.meta
+ D Assets/Resources/Dialogue/neighborhood_conversation.json
+ D Assets/Resources/Dialogue/neighborhood_conversation.json.meta
+ D Assets/Resources/Dialogue/quest_accepted.json
+ D Assets/Resources/Dialogue/quest_accepted.json.meta
+ D Assets/Resources/Dialogue/quest_completed.json
+ D Assets/Resources/Dialogue/quest_completed.json.meta
+ D Assets/Resources/Dialogue/quest_offer.json
+ D Assets/Resources/Dialogue/quest_offer.json.meta
+ D Assets/Resources/Dialogue/quest_rejected.json
+ D Assets/Resources/Dialogue/quest_rejected.json.meta
+ D Assets/Resources/Dialogue/selena.json
+ D Assets/Resources/Dialogue/selena.json.meta
+ M Assets/Resources/Inventory/inventory_ui_text.json
+ M Assets/Resources/Story/Selena.controller
+ M Assets/Resources/Story/TutorialGear.asset
+ M Assets/Resources/UI/Fonts/PFStardustBold.asset
+ M Assets/Scenes/HideOutSystemScene/Data/HideOutPrototype.asset
+ D Assets/Scenes/Inventory/QuestRewardExample.json
+ D Assets/Scenes/Inventory/QuestRewardExample.json.meta
+ M Assets/Scenes/Inventory/README.md
+ M Assets/Scenes/Inventory/Scripts/InventoryUI.cs
+ M Assets/Scenes/Inventory/Scripts/WorldItemPickup.cs
+ M Assets/Scenes/Main/Forest.unity
+ M Assets/Scenes/Main/Market.unity
+ M Assets/Settings/Renderer2D.asset
+ M Assets/Settings/WorldMotionEffects.shader
+ M Assets/Settings/WorldMotionEffectsFeature.cs
+ M ProjectSettings/ProjectSettings.asset
+?? Assets/!Animation/Selena/Selena_Walk.png
+?? Assets/!Animation/Selena/Selena_Walk.png.meta
+?? Assets/!UI/Other/Inventory_Tutorial.gif
+?? Assets/!UI/Other/Inventory_Tutorial.gif.meta
+?? Assets/!UI/Other/Red_Cloth.png
+?? Assets/!UI/Other/Red_Cloth.png.meta
+?? Assets/!UI/Other/W.gif
+?? Assets/!UI/Other/W.gif.meta
+?? Assets/Editor/BaseConnectionBuildCheck.cs
+?? Assets/Editor/BaseConnectionBuildCheck.cs.meta
+?? Assets/Editor/BaseSelenaRenderCheck.cs
+?? Assets/Editor/BaseSelenaRenderCheck.cs.meta
+?? Assets/Editor/CloakIconBuildGuard.cs
+?? Assets/Editor/CloakIconBuildGuard.cs.meta
+?? Assets/Editor/ConvertPortalTutorialGif.ps1
+?? Assets/Editor/ConvertPortalTutorialGif.ps1.meta
+?? Assets/Editor/DialogueCameraReturnCheck.cs
+?? Assets/Editor/DialogueCameraReturnCheck.cs.meta
+?? Assets/Editor/DialogueExpressionImporter.cs
+?? Assets/Editor/DialogueExpressionImporter.cs.meta
+?? Assets/Editor/EditorAudioDiagnostic.cs
+?? Assets/Editor/EditorAudioDiagnostic.cs.meta
+?? Assets/Editor/GarbageBallisticCheck.cs
+?? Assets/Editor/GarbageBallisticCheck.cs.meta
+?? Assets/Editor/GarbageEquipmentSequenceCheck.cs
+?? Assets/Editor/GarbageEquipmentSequenceCheck.cs.meta
+?? Assets/Editor/InventoryTutorialGifImporter.cs
+?? Assets/Editor/InventoryTutorialGifImporter.cs.meta
+?? Assets/Editor/NovemberPolishCheck.cs
+?? Assets/Editor/NovemberPolishCheck.cs.meta
+?? Assets/Editor/PortalArrivalCheck.cs
+?? Assets/Editor/PortalArrivalCheck.cs.meta
+?? Assets/Editor/PortalTutorialGifImporter.cs
+?? Assets/Editor/PortalTutorialGifImporter.cs.meta
+?? Assets/Editor/RedClothIconImporter.cs
+?? Assets/Editor/RedClothIconImporter.cs.meta
+?? Assets/Editor/SelenaDialogueRenderCheck.cs
+?? Assets/Editor/SelenaDialogueRenderCheck.cs.meta
+?? Assets/Editor/SelenaFontBuildSetup.cs
+?? Assets/Editor/SelenaFontBuildSetup.cs.meta
+?? Assets/Editor/SelenaWalkSetup.cs
+?? Assets/Editor/SelenaWalkSetup.cs.meta
+?? Assets/Editor/V004BuildRequest.cs
+?? Assets/Editor/V004BuildRequest.cs.meta
+?? Assets/Editor/V005AspectBuildRequest.cs
+?? Assets/Editor/V005AspectBuildRequest.cs.meta
+?? Assets/Editor/V005BuildRequest.cs
+?? Assets/Editor/V005BuildRequest.cs.meta
+?? Assets/Editor/V005SelenaBuildRequest.cs
+?? Assets/Editor/V005SelenaBuildRequest.cs.meta
+?? Assets/Editor/V006BuildRequest.cs
+?? Assets/Editor/V006BuildRequest.cs.meta
+?? Assets/Player/Script/GroundSteam.cs
+?? Assets/Player/Script/GroundSteam.cs.meta
+?? Assets/Player/Script/PortalArrival.cs
+?? Assets/Player/Script/PortalArrival.cs.meta
+?? Assets/Player/Script/PortalDeparture.cs
+?? Assets/Player/Script/PortalDeparture.cs.meta
+?? Assets/Player/Script/PortalTutorialVisual.cs
+?? Assets/Player/Script/PortalTutorialVisual.cs.meta
+?? Assets/Player/Script/StorySceneFlow.Pursuit.cs
+?? Assets/Player/Script/StorySceneFlow.Pursuit.cs.meta
+?? Assets/Player/Script/WindowsWindowAspect.cs
+?? Assets/Player/Script/WindowsWindowAspect.cs.meta
+?? Assets/Player/Script/WindowsWindowedStartup.cs
+?? Assets/Player/Script/WindowsWindowedStartup.cs.meta
+?? Assets/Resources/ControlHints/Inventory_Tutorial.json
+?? Assets/Resources/ControlHints/Inventory_Tutorial.json.meta
+?? Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes
+?? Assets/Resources/ControlHints/Inventory_Tutorial_Frames.bytes.meta
+?? Assets/Resources/ControlHints/Portal_W_Tutorial.prefab
+?? Assets/Resources/ControlHints/Portal_W_Tutorial.prefab.meta
+?? Assets/Resources/ControlHints/W.json
+?? Assets/Resources/ControlHints/W.json.meta
+?? Assets/Resources/ControlHints/W_Frames.bytes
+?? Assets/Resources/ControlHints/W_Frames.bytes.meta
+?? Assets/Resources/Dialogue/Expressions.meta
+?? Assets/Resources/Dialogue/Expressions/
+?? Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset
+?? Assets/Resources/Dialogue/Fonts/SelenaDialogue.asset.meta
+?? Assets/Resources/Dialogue/Forest.meta
+?? Assets/Resources/Dialogue/Forest/
+?? Assets/Resources/Dialogue/Forest_4.meta
+?? Assets/Resources/Dialogue/Forest_4/
+?? Assets/Resources/Dialogue/Garbage.meta
+?? Assets/Resources/Dialogue/Garbage/
+?? Assets/Resources/Dialogue/Hideout.meta
+?? Assets/Resources/Dialogue/Hideout/
+?? Assets/Resources/Dialogue/Market.meta
+?? Assets/Resources/Dialogue/Market/
+?? Assets/Resources/Dialogue/Neighborhood.meta
+?? Assets/Resources/Dialogue/Neighborhood/
+?? Assets/Resources/Effects/HealthHeartbeatRipple.shader
+?? Assets/Resources/Effects/HealthHeartbeatRipple.shader.meta
+?? Assets/Resources/Effects/WorldItemForeground.mat
+?? Assets/Resources/Effects/WorldItemForeground.mat.meta
+?? Assets/Resources/Effects/WorldItemForeground.shader
+?? Assets/Resources/Effects/WorldItemForeground.shader.meta
+?? Assets/Resources/Story/RedCloth.asset
+?? Assets/Resources/Story/RedCloth.asset.meta
+?? Assets/Resources/Story/Selena_Walk.anim
+?? Assets/Resources/Story/Selena_Walk.anim.meta
+?? Backups/
