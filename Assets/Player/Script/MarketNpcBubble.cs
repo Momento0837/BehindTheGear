@@ -108,7 +108,7 @@ public sealed class MarketNpcBubble : MonoBehaviour
     private void Update()
     {
         if (dismissed || player == null || image == null) return;
-        if (!HasPresented && player.position.x >= 70f &&
+        if (!HasPresented && !PortalArrival.IsEntering && player.position.x >= 70f &&
             Mathf.Abs(player.position.y - transform.position.y) < 2.5f && !conversation.IsPlaying)
         {
             HasPresented = true;

@@ -141,9 +141,30 @@ public sealed class InventoryUI : MonoBehaviour
     public void SetTutorialInventoryUnlocked(bool value)
     {
         TutorialInventoryUnlocked = value;
-        if (!value) CloseAllWindows();
+        if (!value)
+        {
+            tutorialEquipmentItem = null;
+            openingHint?.Dismiss();
+            if (equipmentTutorial != null) equipmentTutorial.enabled = false;
+            CloseAllWindows();
+        }
         if (shortcutButton != null) shortcutButton.gameObject.SetActive(value);
+        SyncTutorialShortcut();
     }
+    private readonly System.Collections.Generic.List<GameObject> tutorialShortcutIcons = new();
+    private float nextShortcutScan;
+    private void SyncTutorialShortcut()
+    {
+        if (Time.unscaledTime >= nextShortcutScan)
+        {
+            nextShortcutScan = Time.unscaledTime + .25f;
+            foreach (var image in FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if ((image.name == "Inventory_Icon" || image.name == "Inventory Icon") && !tutorialShortcutIcons.Contains(image.gameObject))
+                    tutorialShortcutIcons.Add(image.gameObject);
+        }
+        foreach (var icon in tutorialShortcutIcons) if (icon != null && icon.activeSelf != TutorialInventoryUnlocked) icon.SetActive(TutorialInventoryUnlocked);
+    }
+
     public Image FindTutorialItemImage(InventoryItemDefinition item)
     {
         foreach (var slot in slots)
@@ -158,10 +179,16 @@ public sealed class InventoryUI : MonoBehaviour
             if (GetEquipmentSlotForIndex(i) == item.Slot && equipmentUnequipButtons[i] != null) return equipmentUnequipButtons[i].transform;
         return null;
     }
+    private InventoryItemDefinition tutorialEquipmentItem;
+    public bool EquipmentTutorialActive => tutorialEquipmentItem != null;
+    public void CloseForStoryDialogue() => CloseAllWindows();
+
     public void BeginEquipmentHint(InventoryItemDefinition item)
     {
         ResetEquipmentHint(); SetTutorialInventoryUnlocked(true);
         if (item == null) return;
+        tutorialEquipmentItem = item;
+        GetComponent<PlayerMovement2D>()?.RefreshAnimationWhileControlLocked();
         if (!IsOpen)
         {
             if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
@@ -173,6 +200,8 @@ public sealed class InventoryUI : MonoBehaviour
 
     public void EndEquipmentHint()
     {
+        if (tutorialEquipmentItem != null && inventory.GetEquipped(tutorialEquipmentItem.Slot) != tutorialEquipmentItem) return;
+        tutorialEquipmentItem = null;
         if (equipmentTutorial != null) equipmentTutorial.enabled = false;
         openingHint?.Dismiss();
         if (hintedSlot == null || hintReturning) return;
@@ -191,6 +220,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void UpdateEquipmentHint()
     {
+        if (tutorialEquipmentItem != null && inventory.GetEquipped(tutorialEquipmentItem.Slot) == tutorialEquipmentItem) EndEquipmentHint();
         if (hintedSlot == null) return;
         if (!hintReturning && inventory.GetEquipped(hintedItem.Slot) != null) EndEquipmentHint();
         if (hintReturning)
@@ -399,6 +429,9 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
+        tutorialEquipmentItem = null;
+        openingHint?.Dismiss();
+        if (equipmentTutorial != null) equipmentTutorial.enabled = false;
         ResetEquipmentHint();
         SetInventoryModal(false);
         hoveredDisplaySlot = -1;
@@ -459,6 +492,7 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (!ready) return;
         if (shortcutButton != null) shortcutButton.gameObject.SetActive(TutorialInventoryUnlocked);
+        SyncTutorialShortcut();
         if (Time.unscaledTime >= nextCatalogCheck)
         {
             nextCatalogCheck = Time.unscaledTime + .5f;
@@ -584,6 +618,11 @@ public sealed class InventoryUI : MonoBehaviour
         CancelDrag();
         ShowDetails(-1);
         if (window != null) window.SetActive(false);
+        if (EquipmentTutorialActive && inventory.GetEquipped(tutorialEquipmentItem.Slot) != tutorialEquipmentItem)
+        {
+            if (openingHint == null) openingHint = gameObject.AddComponent<InventoryOpeningHint>();
+            openingHint.Begin(this);
+        }
         if (equipmentWindow != null && equipmentWindow.activeSelf) RestoreEquipmentSoloLayout();
     }
 
@@ -732,7 +771,7 @@ public sealed class InventoryUI : MonoBehaviour
             slots[i].gameObject.SetActive(visible);
             if (!visible) continue;
 
-            bool unlocked = i < (currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity);
+            bool unlocked = i < (currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity + (currentFilter == Filter.All ? questUsed : 0));
             slots[i].SetLocked(!unlocked);
             slots[i].ResetVisualState();
             slots[i].Refresh(unlocked ? GetDisplayedSlot(i) : null);
@@ -811,6 +850,7 @@ public sealed class InventoryUI : MonoBehaviour
         if (currentFilter == Filter.Quest) return;
         PlayerInventory.Slot slot = GetDisplayedSlot(index);
         if (slot == null || slot.IsEmpty) return;
+        if (slot.Item.IsQuestItem) return;
         dragSource = index;
         if (usesDesignedCanvas) InventoryHoverReveal.HideAll(window);
         dragInventorySource = GetInventorySlotIndexForDisplay(index);
@@ -823,6 +863,13 @@ public sealed class InventoryUI : MonoBehaviour
         dragIcon.raycastTarget = false;
         dragIcon.transform.SetAsLastSibling();
         dragIcon.gameObject.SetActive(true);
+        // Tutorial sockets render at inventory order + 3; sibling order alone cannot cover them.
+        // Configure after activation, which can reset a nested Canvas's sorting override.
+        if (!dragIcon.TryGetComponent<Canvas>(out var dragCanvas))
+            dragCanvas = dragIcon.gameObject.AddComponent<Canvas>();
+        dragCanvas.overrideSorting = true;
+        dragCanvas.sortingLayerID = canvas.sortingLayerID;
+        dragCanvas.sortingOrder = canvas.sortingOrder + 4;
         slots[index].SetDragging(true);
         Drag(data);
     }
@@ -1545,6 +1592,7 @@ public sealed class InventoryUI : MonoBehaviour
     {
         if (index < 0) return null;
         if (currentFilter == Filter.Quest) return inventory.GetQuestSlot(index);
+        if (currentFilter == Filter.All) return GetAllDisplayedSlot(index, out _);
         int inventoryIndex = GetInventorySlotIndexForDisplay(index);
         return inventoryIndex >= 0 ? inventory.GetSlot(inventoryIndex) : null;
     }
@@ -1552,7 +1600,7 @@ public sealed class InventoryUI : MonoBehaviour
     private int GetInventorySlotIndexForDisplay(int displayIndex)
     {
         if (displayIndex < 0) return -1;
-        if (currentFilter == Filter.All) return displayIndex < inventory.Capacity ? displayIndex : -1;
+        if (currentFilter == Filter.All) { GetAllDisplayedSlot(displayIndex, out int source); return source; }
 
         int logicalIndex = 0;
         for (int i = 0; i < inventory.Capacity; i++)
@@ -1584,6 +1632,32 @@ public sealed class InventoryUI : MonoBehaviour
             Filter.Equipment => slot.Item.Category == InventoryItemDefinition.ItemCategory.Equipment,
             _ => true
         };
+    }
+
+    private PlayerInventory.Slot GetAllDisplayedSlot(int displayIndex, out int generalIndex)
+    {
+        generalIndex = -1;
+        if (displayIndex < 0) return null;
+        int logical = 0;
+        // Include quest items in All, but retain their separate storage and non-draggable behavior.
+        for (int i = 0; i < inventory.Capacity; i++)
+        {
+            var slot = inventory.GetSlot(i);
+            if (slot.IsEmpty) continue;
+            if (logical++ == displayIndex) { generalIndex = i; return slot; }
+        }
+        for (int i = 0; i < inventory.QuestCapacity; i++)
+        {
+            var slot = inventory.GetQuestSlot(i);
+            if (!slot.IsEmpty && logical++ == displayIndex) return slot;
+        }
+        for (int i = 0; i < inventory.Capacity; i++)
+        {
+            var slot = inventory.GetSlot(i);
+            if (!slot.IsEmpty) continue;
+            if (logical++ == displayIndex) { generalIndex = i; return slot; }
+        }
+        return null;
     }
 
     private int CountUsed(bool quest)
@@ -1737,7 +1811,7 @@ public sealed class InventoryUI : MonoBehaviour
     private void MatchSlotCount()
     {
         if (usesDesignedCanvas) return;
-        int count = Mathf.Max(inventory.Capacity, inventory.QuestCapacity);
+        int count = Mathf.Max(inventory.Capacity + CountUsed(true), inventory.QuestCapacity);
         int previousCount = slots.Length;
         if (count == previousCount) return;
         RectTransform content = (RectTransform)slots[0].transform.parent;
@@ -1762,7 +1836,7 @@ public sealed class InventoryUI : MonoBehaviour
     private int GetDisplayedSlotCount()
     {
         if (usesDesignedCanvas) return slots != null ? slots.Length : 0;
-        return currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity;
+        return currentFilter == Filter.Quest ? inventory.QuestCapacity : inventory.Capacity + (currentFilter == Filter.All ? CountUsed(true) : 0);
     }
 
     private void ApplySlotLayout(int slotCount)

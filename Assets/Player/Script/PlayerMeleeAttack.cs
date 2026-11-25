@@ -149,7 +149,9 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
 
         SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
         renderer.sprite = attackEffectReferenceSprite;
-        renderer.sortingOrder = attackEffectSortingOrder;
+        renderer.sortingLayerName = "ForeGround";
+        renderer.sortingOrder = Mathf.Max(1000, attackEffectSortingOrder);
+        renderer.color = new Color(1, 1, 1, .9f);
         renderer.flipX = facingDirection < 0f;
 
         Animator effectAnimator = effect.GetComponent<Animator>();

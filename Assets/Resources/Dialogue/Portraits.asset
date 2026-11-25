@@ -14,3 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialoguePortraitLibrary
   ethan: {fileID: 21300000, guid: abb33a31c9aa44a4f9d579d3ca20ca12, type: 3}
   selena: {fileID: 21300000, guid: 75e29a2c3bf13e641b6d47b9d2e5845b, type: 3}
+  ethanExpressions:
+  - 표정: 기본 표정
+    image: {fileID: 21300000, guid: abb33a31c9aa44a4f9d579d3ca20ca12, type: 3}
+  - 표정: 곤란
+    image: {fileID: 0}
+  - 표정: 의아
+    image: {fileID: 0}
+  - 표정: 짜증
+    image: {fileID: 0}
+  - 표정: 눈 돌림
+    image: {fileID: 0}
+  - 표정: 눈 반 감음
+    image: {fileID: 0}
+  - 표정: 눈 감음
+    image: {fileID: 0}
+  selenaExpressions:
+  - 표정: 기본 표정
+    image: {fileID: 21300000, guid: 75e29a2c3bf13e641b6d47b9d2e5845b, type: 3}
+  - 표정: 의아
+    image: {fileID: 0}
+  - 표정: 흘겨봄
+    image: {fileID: 0}

@@ -13,6 +13,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
     private GameObject portal;
     private bool portalUsed;
     private float started;
+    private bool portalPresentation, fromRight;
+    private PortalTutorialVisual portalVisual;
     public bool IsPortalHintVisible { get; private set; }
     public GameObject PresentationRoot { get; private set; }
     private readonly Key[] movementKeys = { Key.W, Key.A, Key.S, Key.D, Key.Space };
@@ -52,7 +54,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
     public void CompletePortal() => portalUsed = true;
     private void Update()
     {
-        if (image != null && image.enabled && clip != null) image.sprite = clip.Frame(Time.unscaledTime - started);
+        if (image != null && image.enabled && clip != null)
+            image.sprite = portalPresentation && portalVisual != null ? portalVisual.Frame(Time.unscaledTime - started) : clip.Frame(Time.unscaledTime - started);
     }
     private bool CanReadInput => player != null && player.enabled && !SceneFadeTransition.IsRunning
         && !(player.GetComponent<PlayerControlLock>()?.IsLocked ?? false);
@@ -77,7 +80,8 @@ public sealed class ControlTutorialUI : MonoBehaviour
     }
     private IEnumerator Slide(bool entering)
     {
-        float from = rect.anchoredPosition.x, to = entering ? 24f : -rect.sizeDelta.x - 40f;
+        float sign = fromRight ? -1f : 1f;
+        float from = rect.anchoredPosition.x, to = sign * (entering ? 24f : -rect.sizeDelta.x - 40f);
         float duration = entering ? .9f : .45f;
         for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
         {
@@ -89,7 +93,7 @@ public sealed class ControlTutorialUI : MonoBehaviour
         {
             // Restart once fully on screen, so no frames are missed during the entrance.
             started = Time.unscaledTime;
-            image.sprite = clip.Frame(0);
+            image.sprite = portalPresentation && portalVisual != null ? portalVisual.Frame(0) : clip.Frame(0);
         }
         else image.enabled = false;
     }
@@ -128,17 +132,45 @@ public sealed class ControlTutorialUI : MonoBehaviour
         yield return Slide(false);
         yield return RunPortal();
     }
+    private bool InPortalRange => portal != null && player != null
+        && portal.GetComponent<ScenePortal2D>() != null && portal.GetComponent<ScenePortal2D>().ContainsPlayer(player.gameObject);
+    private void ShowPortalKey()
+    {
+        portalPresentation = true;
+        fromRight = portal.GetComponent<ScenePortal2D>().ExitDirection > 0;
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(fromRight ? 1 : 0, .5f);
+        if (portalVisual == null)
+        {
+            var prefab = Resources.Load<GameObject>("ControlHints/Portal_W_Tutorial");
+            if (prefab == null) throw new System.InvalidOperationException("Missing Portal_W_Tutorial prefab");
+            var visual = Instantiate(prefab, rect.parent);
+            portalVisual = visual.GetComponent<PortalTutorialVisual>();
+            image.enabled = false;
+            image = visual.GetComponent<Image>() ?? visual.AddComponent<Image>();
+            image.raycastTarget = false;
+            var shadow = Resources.Load<Shader>("Effects/TutorialHintShadow");
+            if (shadow != null) visual.AddComponent<MenuImageSoftEffect>().Configure(shadow, 0f, 30f, .5f);
+            rect = image.rectTransform;
+        }
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(fromRight ? 1 : 0, .5f);
+        clip = portalVisual.Animation;
+        rect.sizeDelta = portalVisual.Size * (portalVisual.DisplayWidth / portalVisual.Size.x);
+        started = Time.unscaledTime;
+        image.sprite = portalVisual.Frame(0); image.color = Color.white; image.enabled = true;
+        rect.anchoredPosition = new Vector2((fromRight ? 1 : -1) * (rect.sizeDelta.x + 40), 0);
+    }
     private IEnumerator RunPortal()
     {
-        while (!portalUsed && (portal == null || !portal.activeInHierarchy || player == null
-            || Mathf.Abs(player.transform.position.x - portal.GetComponent<Collider2D>().bounds.ClosestPoint(player.transform.position).x) > 2.5f)) yield return null;
-        if (portalUsed) yield break;
-        IsPortalHintVisible = true;
-        Show("F"); var entry = StartCoroutine(Slide(true));
-        while (!portalUsed) yield return null;
-        yield return entry;
-        yield return FinishVisibleCycle();
-        yield return Slide(false);
-        IsPortalHintVisible = false;
+        while (!portalUsed)
+        {
+            while (!portalUsed && !InPortalRange) yield return null;
+            if (portalUsed) yield break;
+            IsPortalHintVisible = true; ShowPortalKey();
+            // Complete each entrance/exit before checking range again. No cancelled lerps.
+            yield return Slide(true);
+            while (!portalUsed && InPortalRange) yield return null;
+            yield return Slide(false);
+            IsPortalHintVisible = false;
+        }
     }
 }

@@ -74,6 +74,7 @@ public sealed class PlayerInteractionController : MonoBehaviour
             if (hit == null || !hit.isTrigger) continue;
             Interactable2D interactable = hit.GetComponentInParent<Interactable2D>();
             if (interactable == null || !interactable.isActiveAndEnabled || interactable.gameObject == gameObject) continue;
+            if (interactable.GetComponent<ScenePortal2D>() != null) continue;
             if (!interactable.AllowFromEitherSide && !IsInFacingDirection(bounds.center, hit.bounds.center)) continue;
             if (!HasLineOfSight(bounds.center, hit, interactable)) continue;
             float distance = ((Vector2)interactable.transform.position - (Vector2)transform.position).sqrMagnitude;

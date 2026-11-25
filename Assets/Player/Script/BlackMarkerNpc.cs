@@ -24,14 +24,7 @@ public sealed class BlackMarkerNpc : MonoBehaviour
 
     private void OnEnable()
     {
-        var player = FindFirstObjectByType<PlayerSpriteFacing>();
-        var playerSprite = player != null ? player.GetComponent<SpriteRenderer>() : null;
-        var npcSprite = GetComponent<SpriteRenderer>();
-        if (playerSprite != null && npcSprite != null)
-        {
-            npcSprite.sortingLayerID = playerSprite.sortingLayerID;
-            npcSprite.sortingOrder = playerSprite.sortingOrder - 1;
-        }
+        // Preserve the sorting layer and order authored in the scene or prefab.
         if (conversation == null) conversation = GetComponent<ConversationDialogue>();
         conversation.LineRevealStarted += HandleLineStarted;
     }

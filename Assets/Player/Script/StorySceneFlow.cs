@@ -29,6 +29,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
     private static void Register()
     {
         RestartAtCombat = false;
+        GarbageArrivalOwnsMotion = false;
         pendingArrival = StoryArrival.None;
         travellingSelena = null;
         SceneManager.sceneLoaded -= Attach;
@@ -302,8 +303,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             trigger.enabled = false;
             searchPoint.gameObject.SetActive(false);
             LocationHUD.ShowAcquired(tutorialGear, 1);
-            AdvanceGuide("equipment_tutorial");
-            player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
+            LocationHUD.ShowAcquired(pen, 1);
         };
         if (collected)
         {
@@ -320,9 +320,16 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         if (!collected) StartCoroutine(RevealGarbagePoint(searchPoint));
         if (!restoring) ShowGuide("garbage_search");
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || !collected) yield return null;
+        if (!resumeCollected)
+        {
+            yield return GarbagePickupReaction();
+            AdvanceGuide("equipment_tutorial");
+            player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
+        }
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || inventory.GetEquipped(tutorialGear.Slot) != tutorialGear)
             yield return null;
         player.GetComponent<InventoryUI>()?.EndEquipmentHint();
+        if (!restoring || currentGuide == "equipment_tutorial") yield return GarbagePursuit();
         ready = true;
         portal.SetActive(true);
         if (currentGuide != "garbage_exit") AdvanceGuide("garbage_exit");
@@ -339,15 +346,26 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         if (!ready) return;
         portal.GetComponent<ScenePortal2D>()?.CompleteHint();
         busy = true;
+        controlTutorial?.CompletePortal();
+        player.StartCoroutine(BeginPortalTravel());
+    }
+
+    private IEnumerator BeginPortalTravel()
+    {
+        if (marketMap) yield return Say("Market/market_monologue");
+        yield return PortalDeparture.Travel(player, portal.GetComponent<ScenePortal2D>(), ContinuePortalTravel);
+    }
+
+    private IEnumerator ContinuePortalTravel()
+    {
         if (gameObject.scene.name == "Forest")
         {
-            controlTutorial?.CompletePortal();
-            portal.GetComponent<WorldInteractionHint>()?.Dismiss();
-            // Arrival is owned by the Market flow, so no cross-scene marker is required.
-            SceneFadeTransition.LoadScene("Market", .8f, success => { if (!success) busy = false; });
+            bool finished = false;
+            SceneFadeTransition.LoadScene("Market", .8f, success => { finished = true; if (!success && this != null) busy = false; });
+            while (!finished) yield return null;
         }
-        else if (!marketMap) StartCoroutine(EnterMarket());
-        else StartCoroutine(FinalCutscene());
+        else if (!marketMap) yield return EnterMarket();
+        else yield return FinalCutscene();
     }
 
     private IEnumerator EnterMarket()
@@ -356,14 +374,21 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         portal.SetActive(false);
         var controlLock = player.GetComponent<PlayerControlLock>();
         controlLock?.Acquire();
+        PortalArrival arrival = null;
         try
         {
-            yield return SceneFadeTransition.FadeThrough(PrepareMarket);
-            // Show the arrival objective before the player reaches the NPC greeting trigger.
+            yield return SceneFadeTransition.FadeThrough(() =>
+            {
+                PrepareMarket();
+                arrival = PortalArrival.Prepare(player);
+            });
+            if (arrival != null) yield return arrival.Enter();
+            // Show the arrival objective once the character has entered the map.
             ShowGuide("market_arrival");
         }
         finally
         {
+            arrival?.Dispose();
             controlLock?.Release();
             busy = false;
         }
@@ -378,7 +403,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         QuestTracker.Complete(this);
         dialogue.GetComponent<BlackMarkerNpc>()?.SetMapVisible(true);
         marketBubble = dialogue.gameObject.AddComponent<MarketNpcBubble>();
-        marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/quest_offer"));
+        marketBubble.Configure(dialogue, player.transform, Resources.Load<TextAsset>("Dialogue/Market/quest_offer"));
         marketBubble.Finished += () =>
         {
             if (!marketNpcSpoken) ShowGuide("market_talk");
@@ -399,7 +424,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
     private IEnumerator RemindMarketConversation()
     {
         busy = true;
-        try { yield return Say("market_talk_reminder"); }
+        try { yield return Say("Market/market_talk_reminder"); }
         finally { busy = false; }
     }
 
@@ -409,7 +434,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         int startLine = 3;
         if (marketBubble == null || !marketBubble.HasPresented)
         {
-            dialogue.PlayFromLine(Resources.Load<TextAsset>("Dialogue/quest_offer"), startLine);
+            dialogue.PlayFromLine(Resources.Load<TextAsset>("Dialogue/Market/quest_offer"), startLine);
             while (dialogue.IsPlaying) yield return null;
             busy = false;
             yield break;
@@ -419,7 +444,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         marketNpcSpoken = true;
         if (marketBubble != null) marketBubble.Dismiss();
         bool? accepted = null;
-        var offer = Resources.Load<TextAsset>("Dialogue/quest_offer");
+        var offer = Resources.Load<TextAsset>("Dialogue/Market/quest_offer");
         if (offer == null)
         {
             Debug.LogError("[Story] Missing dialogue: quest_offer", this);
@@ -432,7 +457,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             if (choice) AdvanceGuide("market_quest");
         }, startLine);
         while (!accepted.HasValue) yield return null;
-        yield return Say(accepted.Value ? "quest_accepted" : "quest_rejected");
+        yield return Say(accepted.Value ? "Market/quest_accepted" : "Market/quest_rejected");
         if (!accepted.Value)
         {
             ShowGuide("market_retry");
@@ -446,7 +471,6 @@ public sealed partial class StorySceneFlow : MonoBehaviour
 
     private IEnumerator FinalCutscene()
     {
-        yield return Say("market_monologue");
         ready = false;
         portal.SetActive(false);
         if (cutscene == null)
@@ -456,7 +480,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         }
         // Natural completion and skip both hold the video frame while this transition runs.
         cutscene.EndingTransition = LeaveFinalCutscene;
-        cutscene.PlayFromInteraction();
+        yield return SceneFadeTransition.FadeThrough(() => cutscene.PlayFromInteraction());
         while (cutscene.IsPlaying) yield return null;
     }
 

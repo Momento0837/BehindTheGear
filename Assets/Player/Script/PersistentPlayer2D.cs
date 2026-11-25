@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,6 +13,8 @@ public sealed class PersistentPlayer2D : MonoBehaviour
 
     private Rigidbody2D body;
     private bool isChangingScene;
+    private PortalArrival portalArrival;
+    private bool foundTravelSpawn;
 
     private void Awake()
     {
@@ -27,7 +30,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public bool TravelTo(string sceneName, string spawnPointId)
+    public bool TravelTo(string sceneName, string spawnPointId, bool animatePortalArrival = false)
     {
         if (isChangingScene || string.IsNullOrWhiteSpace(sceneName) || string.IsNullOrWhiteSpace(spawnPointId))
             return false;
@@ -37,7 +40,13 @@ public sealed class PersistentPlayer2D : MonoBehaviour
         hasPendingTravel = true;
         isChangingScene = true;
 
-        SceneFadeTransition.LoadScene(sceneName, .8f, OnTravelLoadFinished);
+        foundTravelSpawn = false;
+        SceneFadeTransition.LoadScene(sceneName, .8f, OnTravelLoadFinished, readyToReveal: () =>
+        {
+            if (animatePortalArrival && foundTravelSpawn && portalArrival == null)
+                portalArrival = PortalArrival.Prepare(GetComponent<PlayerMovement2D>());
+            return true;
+        });
         return true;
     }
 
@@ -62,6 +71,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
         }
         else
         {
+            foundTravelSpawn = true;
             transform.position = destination.transform.position;
             if (body != null)
             {
@@ -76,7 +86,14 @@ public sealed class PersistentPlayer2D : MonoBehaviour
 
     private void OnTravelLoadFinished(bool succeeded)
     {
-        if (!succeeded) ClearPendingTravel();
+        if (!succeeded) { portalArrival?.Dispose(); portalArrival = null; ClearPendingTravel(); }
+    }
+
+    public IEnumerator CompletePortalArrival()
+    {
+        var arrival = portalArrival;
+        try { if (arrival != null) yield return arrival.Enter(); }
+        finally { arrival?.Dispose(); portalArrival = null; }
     }
 
     private void ClearPendingTravel()
@@ -89,6 +106,7 @@ public sealed class PersistentPlayer2D : MonoBehaviour
 
     private void OnDestroy()
     {
+        portalArrival?.Dispose();
         if (instance != this) return;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         instance = null;

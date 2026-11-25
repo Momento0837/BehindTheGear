@@ -14,6 +14,7 @@ public sealed class WorldItemPickup : MonoBehaviour
 
     private PlayerInventory target;
     private GameObject runtimeHighlight;
+    private SpriteRenderer smallDropVisual;
     private float nextFullNoticeTime;
     private bool collecting;
     public InventoryItemDefinition Definition => item;
@@ -31,6 +32,8 @@ public sealed class WorldItemPickup : MonoBehaviour
         ConfigureCollider();
         RefreshVisual();
     }
+
+    private void OnEnable() => RefreshVisual();
 
     private void Update()
     {
@@ -74,9 +77,29 @@ public sealed class WorldItemPickup : MonoBehaviour
     {
         if (item == null) return;
         SpriteRenderer visual = GetComponent<SpriteRenderer>();
+        bool smallDrop = item.ItemId == "red_cloth";
+        if (smallDrop && smallDropVisual == null)
+        {
+            var child = new GameObject("Red Cloth Visual");
+            child.transform.SetParent(transform, false);
+            child.transform.localScale = Vector3.one * .2f;
+            smallDropVisual = child.AddComponent<SpriteRenderer>();
+            smallDropVisual.sortingLayerID = visual.sortingLayerID;
+        }
+        // Scale only the artwork so the pickup/magnet collider keeps its original range.
+        visual.enabled = !smallDrop;
+        if (smallDropVisual != null) smallDropVisual.enabled = smallDrop;
+        if (smallDrop) visual = smallDropVisual;
         visual.sprite = item.Icon;
         visual.sortingOrder = 10;
+        ApplyForegroundMaterial(visual);
         EnsureQuestHighlight();
+    }
+
+    private static void ApplyForegroundMaterial(SpriteRenderer visual)
+    {
+        var material = Resources.Load<Material>("Effects/WorldItemForeground");
+        if (material != null) visual.sharedMaterial = material;
     }
 
     private void OnTriggerEnter2D(Collider2D other) => TrackTarget(other);
@@ -137,6 +160,7 @@ public sealed class WorldItemPickup : MonoBehaviour
         renderer.sprite = item.Icon;
         renderer.color = new Color(.65f, .9f, 1f, .32f);
         renderer.sortingOrder = 9;
+        ApplyForegroundMaterial(renderer);
         runtimeHighlight = glow;
     }
 

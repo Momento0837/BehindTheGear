@@ -1,6 +1,14 @@
 {
   "items": [
     {
+      "id": "red_cloth",
+      "display": {
+        "name": "붉은 천조각",
+        "description": "몬스터가 떨어뜨린 붉은 천조각입니다."
+      },
+      "rarity": "Normal"
+    },
+    {
       "id": "health_potion",
       "display": {
         "name": "",
