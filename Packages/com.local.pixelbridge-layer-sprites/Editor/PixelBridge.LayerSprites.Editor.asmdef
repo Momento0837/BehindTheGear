@@ -1,0 +1,4 @@
+{
+  "name": "PixelBridge.LayerSprites.Editor",
+  "includePlatforms": ["Editor"]
+}
