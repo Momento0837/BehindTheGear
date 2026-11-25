@@ -217,7 +217,9 @@ namespace BehindTheGear.HideOut
                         level = snapshot.levels[(int)f], unlocked = !HideOutModel.Locked(snapshot, f) });
                 Validate(snapshot);
                 ManualSaveStore.Write(SavePath, snapshot);
-                SetMessage("저장 완료"); return true;
+                SetMessage("저장 완료");
+                CloudSaveSync.UploadAfterBedSave(this); // Never throws; no-op unless signed in and on the real slot.
+                return true;
             }
             catch (Exception e) { SetMessage("저장 실패 · 직전 저장을 유지합니다: " + e.Message); return false; }
             finally { busy = false; }

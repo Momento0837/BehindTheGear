@@ -20,6 +20,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
     private SaveConfirmButtonStyle confirmStyle, cancelStyle;
     private TMP_Text status, question, guidance;
     private Button newGameButton, continueButton, deleteButton, confirmButton, cancelButton;
+    private CloudAccountPanel cloudPanel; // Optional account cloud save (Cloud/ folder).
     private GameObject selectionBeforeConfirmation;
     private Action confirmed;
     private bool visible = true;
@@ -61,6 +62,8 @@ public sealed class ManualSaveMenu : MonoBehaviour
         question.color = new Color(.90f, .84f, .74f);
         confirmButton = ConfirmationButton(dialog, "확인", -140, Confirm, true, out confirmStyle);
         cancelButton = ConfirmationButton(dialog, "취소", 140, Cancel, false, out cancelStyle);
+        cloudPanel = gameObject.AddComponent<CloudAccountPanel>();
+        cloudPanel.Build(this, panel.transform, buttonPlateSprite, buttonGear != null ? buttonGear.Icon : null);
         confirmation.SetActive(false); Refresh();
         panel.SetActive(visible);
         if (visible) SelectPreferredButton();
@@ -91,8 +94,8 @@ public sealed class ManualSaveMenu : MonoBehaviour
     {
         bool exists = ManualSaveStore.Exists;
         if (guidance != null) guidance.text = exists
-            ? "침대에서 마지막으로 저장한 지점부터 이어집니다."
-            : "게임 진행 상황은 침대에서 저장할 수 있습니다.";
+            ? ""
+            : "게임 진행 상황은 세이브 포인트에서 저장할 수 있습니다.";
         if (continueButton != null) continueButton.interactable = exists;
         if (deleteButton != null) deleteButton.interactable = exists;
         if (newGameButton != null) newGameButton.GetComponent<SaveSlotButtonStyle>().SetPrimary(!exists);
@@ -108,13 +111,14 @@ public sealed class ManualSaveMenu : MonoBehaviour
         try
         {
             if (exists) HideOutPlayerBridge.ValidateSnapshot(ManualSaveStore.ReadSlot(), settings);
-            status.text = SaveGameSession.MenuMessage ?? (exists ? "저장된 게임" : "저장된 게임이 없습니다");
+            status.text = SaveGameSession.MenuMessage ?? (exists ? "" : "저장된 게임이 없습니다");
         }
         catch (Exception error) { status.text = "저장된 게임을 불러올 수 없습니다.\n" + error.Message; }
     }
     public void Continue()
     {
         if (departing || SceneFadeTransition.IsRunning) return;
+        if (CloudBusy()) return; // A download may be replacing the slot right now.
         try
         {
             var save = ManualSaveStore.ReadSlot();
@@ -127,7 +131,9 @@ public sealed class ManualSaveMenu : MonoBehaviour
     public void NewGame()
     {
         if (departing || SceneFadeTransition.IsRunning) return;
-        if (ManualSaveStore.Exists) Ask("새 게임을 시작할까요?\n침대에서 처음 저장하면 기존 진행 기록을 덮어씁니다.", Begin, "시작하기");
+        if (CloudBusy()) return;
+        if (ManualSaveStore.Exists) Ask("새 게임을 시작할까요?\n세이브 포인트에서 처음 저장하면 기존 진행 기록을 덮어씁니다."
+            + (CloudAccountService.SignedIn ? "\n(로그인한 계정의 저장도 함께 바뀝니다)" : ""), Begin, "시작하기");
         else Begin();
     }
     private void Begin()
@@ -162,11 +168,29 @@ public sealed class ManualSaveMenu : MonoBehaviour
         startup?.ResumeMenuMusic();
         SelectPreferredButton();
     }
-    public void Delete() => Ask("저장 데이터를 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다.", () =>
+    public void Delete()
     {
-        try { ManualSaveStore.DeleteSlot(); Refresh(); }
-        catch (Exception error) { status.text = "삭제 실패: " + error.Message; }
-    }, "삭제", true);
+        if (CloudBusy()) return;
+        bool includeCloud = CloudAccountService.SignedIn && CloudSaveSync.ProductionSlotActive;
+        Ask(includeCloud ? "이 PC와 계정에 보관된 저장 데이터를 모두 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다."
+            : "저장 데이터를 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다.", () =>
+        {
+            try { ManualSaveStore.DeleteSlot(); Refresh(); }
+            catch (Exception error) { status.text = "삭제 실패: " + error.Message; return; }
+            if (includeCloud) CloudSaveSync.DeleteCloudSave((ok, message) =>
+            {
+                Refresh();
+                if (!ok && status != null) status.text = "이 PC 저장은 삭제했지만 계정 저장 삭제에 실패했습니다: " + message;
+            });
+        }, "삭제", true);
+    }
+    private bool CloudBusy()
+    {
+        // Editor save checks use an isolated Temp slot that the cloud never touches.
+        if (!CloudSaveSync.ProductionSlotActive || !CloudSaveSync.Busy && !CloudAccountService.Busy) return false;
+        if (status != null) status.text = "계정과 동기화하는 중입니다. 잠시 후 다시 시도하세요.";
+        return true;
+    }
     private void Ask(string text, Action action, string confirmText = "확인", bool destructive = false)
     {
         if (departing) return;
@@ -202,9 +226,13 @@ public sealed class ManualSaveMenu : MonoBehaviour
     private void ConfigureNavigation(bool exists)
     {
         if (newGameButton == null || continueButton == null || deleteButton == null) return;
-        NavigationFor(newGameButton, exists ? deleteButton : newGameButton, exists ? continueButton : newGameButton);
+        // The account corner button joins the keyboard cycle after the slot buttons.
+        var account = cloudPanel != null ? cloudPanel.CornerButton : null;
+        var last = exists ? deleteButton : newGameButton;
+        NavigationFor(newGameButton, account ?? last, exists ? continueButton : account ?? newGameButton);
         NavigationFor(continueButton, newGameButton, deleteButton);
-        NavigationFor(deleteButton, continueButton, newGameButton);
+        NavigationFor(deleteButton, continueButton, account ?? newGameButton);
+        if (account != null) NavigationFor(account, last, newGameButton);
         NavigationFor(confirmButton, cancelButton, cancelButton);
         NavigationFor(cancelButton, confirmButton, confirmButton);
     }
