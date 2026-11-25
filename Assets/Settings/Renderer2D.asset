@@ -89,3 +89,7 @@ MonoBehaviour:
   fullEffectSpeed: 30
   minimumSeparationPixels: 2
   maximumSeparationPixels: 5
+  hazeThreshold: 0.5
+  hazeOpacity: 0.14
+  hazeBlurPixels: 2
+  hazeSpreadPixels: 1

@@ -172,7 +172,9 @@ public sealed class InGameQuestHUD : MonoBehaviour
         questText.enableAutoSizing = false;
         questText.fontSize = authoredFontSize;
         questText.textWrappingMode = TextWrappingModes.Normal;
-        questText.alignment = TextAlignmentOptions.TopRight;
+        // Keep the first row vertically centered beside the exclamation icon.
+        // The rect still grows downward for wrapped titles and descriptions.
+        questText.alignment = TextAlignmentOptions.Right;
         if (questText.text.Length == 0)
         {
             rect.sizeDelta = authoredTextSize;
@@ -580,6 +582,25 @@ public sealed class InGameQuestHUD : MonoBehaviour
 
     private void HandleTextRebuilt(TMP_TextInfo info)
     {
+        // Center the actual first-row glyphs, not the font's ascender/descender box.
+        // Extra wrapped rows extend below the icon without shifting the first row upward.
+        if (questRoot != null && questRoot.TryGetComponent<RectTransform>(out var icon))
+        {
+            float bottom = float.PositiveInfinity, top = float.NegativeInfinity;
+            for (int i = 0; i < info.characterCount; i++)
+            {
+                var character = info.characterInfo[i];
+                if (!character.isVisible || character.lineNumber != 0) continue;
+                bottom = Mathf.Min(bottom, character.bottomLeft.y);
+                top = Mathf.Max(top, character.topRight.y);
+            }
+            if (!float.IsInfinity(bottom))
+            {
+                Vector3 center = icon.InverseTransformPoint(questText.transform.TransformPoint(new Vector3(0, (bottom + top) * .5f, 0)));
+                float offset = icon.rect.center.y - center.y;
+                if (Mathf.Abs(offset) > .001f) questText.transform.position += icon.TransformVector(Vector3.up * offset);
+            }
+        }
         originalMesh = info.CopyMeshInfoVertexData();
         glyphOrder.Clear();
         if (glyphRanks.Length != info.characterCount) glyphRanks = new int[info.characterCount];

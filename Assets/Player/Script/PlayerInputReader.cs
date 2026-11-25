@@ -48,7 +48,7 @@ public sealed class PlayerInputReader : MonoBehaviour
         bool dashPressed = shiftHeld && !dashHeld;
         // Consume the edge even while UI suppresses gameplay; never queue a dash.
         dashHeld = shiftHeld;
-        if (gameplaySuppressedFrame == Time.frameCount || SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
+        if (GetComponent<InventoryUI>()?.EquipmentTutorialActive == true || gameplaySuppressedFrame == Time.frameCount || SceneFadeTransition.IsRunning || InventoryUI.GameplayInputSuppressedThisFrame || PlayerSkillDevelopmentMenu.IsOpen)
         {
             throwWasHeld = IsThrowHeld(keyboard);
             WalkHeld = false;
@@ -78,6 +78,11 @@ public sealed class PlayerInputReader : MonoBehaviour
 
         if (dashPressed) DashPressed?.Invoke();
 
+        if (keyboard.wKey.wasPressedThisFrame)
+        {
+            var portal = ScenePortal2D.FindInRange(gameObject);
+            if (portal != null) { portal.GetComponent<Interactable2D>().Interact(gameObject); return; }
+        }
         bool jumpPressed = keyboard.wKey.wasPressedThisFrame
             || keyboard.spaceKey.wasPressedThisFrame;
         if (jumpPressed) JumpPressed?.Invoke();

@@ -110,7 +110,10 @@ public sealed partial class StorySceneFlow
             {
                 while (SceneFadeTransition.IsRunning)
                 {
-                    float speed = player.RunningSpeed;
+                    float speed = player.RunningSpeed * .5f;
+                    var walkAnimator = player.GetComponent<Animator>();
+                    if (walkAnimator != null) walkAnimator.speed = .3f;
+                    if (npcAnimator != null) npcAnimator.speed = .3f;
                     body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
                     selena.position = Vector3.MoveTowards(selena.position,
                         new Vector3(player.transform.position.x - SelenaFollowDistance, selena.position.y, selena.position.z), speed * Time.deltaTime);
@@ -162,6 +165,7 @@ public sealed partial class StorySceneFlow
             animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Story/Selena");
         var action = selena.GetComponent<StoryInteraction2D>();
         if (action == null) action = selena.gameObject.AddComponent<StoryInteraction2D>();
+        if (selena.GetComponent<WorldInteractionHint>() == null) selena.gameObject.AddComponent<WorldInteractionHint>();
         action.Activated = user =>
         {
             if (!busy && !selenaUsed && user == player.gameObject) StartCoroutine(TalkToSelena());
@@ -171,6 +175,7 @@ public sealed partial class StorySceneFlow
     private IEnumerator TalkToSelena()
     {
         busy = selenaUsed = true;
+        selena.GetComponent<WorldInteractionHint>()?.Dismiss();
         var controls = player.GetComponent<PlayerControlLock>();
         var npcAnimator = selena.GetComponent<Animator>();
         var body = player.GetComponent<Rigidbody2D>();
@@ -200,7 +205,7 @@ public sealed partial class StorySceneFlow
         {
             // Reuse the scene's authored dialogue canvas, fonts and text effects.
             dialogue.transform.position = selena.position;
-            yield return Say("selena");
+            yield return Say("Forest_4/selena");
             if (events != null) events.enabled = false;
             if (inventoryUi != null) inventoryUi.enabled = false;
             player.SetCinematicWalking(true);

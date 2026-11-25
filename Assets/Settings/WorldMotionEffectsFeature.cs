@@ -11,10 +11,24 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
     [Min(.01f)] public float fullEffectSpeed = 30f;
     [Min(0f)] public float minimumSeparationPixels = 2f;
     [Min(0f)] public float maximumSeparationPixels = 5f;
+    [Header("Soft white edge haze")]
+    [Range(0f, .95f)] public float hazeThreshold = .5f;
+    [Range(0f, .3f)] public float hazeOpacity = .14f;
+    [Range(0f, 5f)] public float hazeBlurPixels = 2f;
+    [Tooltip("Expands the denser haze inward in output pixels without increasing blur or opacity.")]
+    [Range(0f, 8f)] public float hazeSpreadPixels = 1f;
     private MotionPass pass;
-    public override void Create() => pass = new MotionPass();
+    private ItemForegroundPass itemPass;
+    public override void Create()
+    {
+        pass = new MotionPass();
+        itemPass = new ItemForegroundPass();
+    }
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
+        var cameraType = renderingData.cameraData.cameraType;
+        if (cameraType == CameraType.Game || cameraType == CameraType.SceneView)
+            renderer.EnqueuePass(itemPass);
         if (renderingData.cameraData.cameraType != CameraType.Game || passMaterial == null) return;
         var camera = renderingData.cameraData.camera;
         Vector2 velocity = Vector2.zero;
@@ -33,8 +47,42 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         pass.separation = separation;
         pass.healthTint = new Vector3(healthEffect.y, healthEffect.z, healthEffect.w);
         pass.damageFlash = Application.isPlaying ? PrototypeScreenEffects.DamageFlashOpacity : 0f;
+        bool gameplay = Application.isPlaying && player != null && camera == Camera.main
+            && (camera.gameObject.scene.name == "Forest" || camera.gameObject.scene.name == "Market");
+        pass.haze = new Vector4(hazeThreshold, gameplay ? hazeOpacity : 0f, hazeBlurPixels, hazeSpreadPixels);
+        pass.rippleBar = pass.rippleParameters = Vector4.zero;
+        if (Application.isPlaying && camera == Camera.main)
+            InGameVitalsHUD.TryGetRipple(out pass.rippleBar, out pass.rippleParameters);
         renderer.EnqueuePass(pass);
     }
+
+    // Item sprites use a dedicated LightMode, so they are drawn once, after the world's
+    // tint/flash/haze and before the overlay UI (including the black scene transition).
+    private sealed class ItemForegroundPass : ScriptableRenderPass
+    {
+        private static readonly ShaderTagId ItemTag = new("WorldItemForeground");
+        private sealed class PassData { public RendererListHandle items; }
+        public ItemForegroundPass() => renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+
+        public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
+        {
+            var resources = frameData.Get<UniversalResourceData>();
+            var rendering = frameData.Get<UniversalRenderingData>();
+            var camera = frameData.Get<UniversalCameraData>();
+            var lights = frameData.Get<UniversalLightData>();
+            var drawing = RenderingUtils.CreateDrawingSettings(ItemTag, rendering, camera, lights, SortingCriteria.CommonTransparent);
+            var filtering = new FilteringSettings(RenderQueueRange.transparent, camera.camera.cullingMask);
+            var parameters = new RendererListParams(rendering.cullResults, drawing, filtering);
+            using (var builder = graph.AddRasterRenderPass<PassData>("World Items Above Effects", out var data))
+            {
+                data.items = graph.CreateRendererList(parameters);
+                builder.UseRendererList(data.items);
+                builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.ReadWrite);
+                builder.SetRenderFunc(static (PassData value, RasterGraphContext context) => context.cmd.DrawRendererList(value.items));
+            }
+        }
+    }
+
     private sealed class MotionPass : ScriptableRenderPass
     {
         public Material material;
@@ -42,6 +90,8 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         public float separation;
         public Vector3 healthTint;
         public float damageFlash;
+        public Vector4 haze;
+        public Vector4 rippleBar, rippleParameters;
         public MotionPass()
         {
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -62,6 +112,9 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
             properties.SetFloat("_SeparationPixels", separation);
             properties.SetVector("_HealthTint", new Vector4(healthTint.x, healthTint.y, healthTint.z, 0));
             properties.SetFloat("_DamageFlashOpacity", damageFlash);
+            properties.SetVector("_EdgeHaze", haze);
+            properties.SetVector("_HpRippleBar", rippleBar);
+            properties.SetVector("_HpRippleParameters", rippleParameters);
             graph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, destination, material, 0)
                 { propertyBlock = properties }, passName: "World Chromatic Motion");
             resources.cameraColor = destination;

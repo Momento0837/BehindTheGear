@@ -1,0 +1,10 @@
+{
+  "name": "com.local.pixelbridge-layer-sprites",
+  "version": "1.0.0",
+  "displayName": "Pixel Bridge Layer Sprites",
+  "description": "Import visible Aseprite layers as individual Unity sprites.",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.unity.modules.imageconversion": "1.0.0"
+  }
+}

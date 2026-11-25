@@ -12,6 +12,8 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Serializable] private class DialogueLine
     {
         public string speaker = string.Empty;
+        public string 표정 = "기본 표정";
+        public string 연출 = string.Empty;
         public bool npcLaugh;
         [TextArea] public string text = string.Empty;
         // Kept for a future portrait-address lookup. The portrait UI is safely hidden when null.
@@ -26,8 +28,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Header("Existing UI references")]
     [SerializeField] private CanvasGroup dialogueGroup;
     [SerializeField] private Image portraitImage;
-    private Sprite ethanPortrait;
-    private Sprite selenaPortrait;
+    private DialoguePortraitLibrary portraitLibrary;
     private Image animatedPortrait;
     private SpriteRenderer portraitSource;
     [Tooltip("Separate UI text for the speaker name.")]
@@ -62,6 +63,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     }
 
     public event Action Finished;
+    public Func<string, IEnumerator> BeforeLineEvent { get; set; }
     public event Action LineRevealStarted;
     public event Action<char> CharacterRevealed;
     public event Action LineRevealCompleted;
@@ -87,10 +89,12 @@ public sealed class ConversationDialogue : MonoBehaviour
     private PlayerCameraFollow2D dialogueCamera;
     private TMP_FontAsset mysterySpeakerFont;
     private TMP_FontAsset ethanSpeakerFont;
+    private TMP_FontAsset selenaSpeakerFont;
     private TMP_FontAsset originalBodyFont;
     private TMP_FontAsset originalSpeakerFont;
     private Material originalBodyMaterial;
     private Material originalSpeakerMaterial;
+    private Material selenaBodyMaterial, selenaSpeakerMaterial;
     private int startingLine;
     private RectTransform acceptRect, acceptFill;
     private float acceptHeld;
@@ -108,11 +112,11 @@ public sealed class ConversationDialogue : MonoBehaviour
             overAccept = RectTransformUtility.RectangleContainsScreenPoint(acceptRect, mouse.position.ReadValue(),
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera);
         }
-        if (mouse?.leftButton.wasPressedThisFrame == true && overAccept) { holdSource = 2; acceptHeld = 0; }
+        if (mouse?.leftButton.wasPressedThisFrame == true && overAccept) { SelectChoice(true); return; }
         bool held = holdSource == 1 ? keyboard?.fKey.isPressed == true : holdSource == 2 && overAccept && mouse?.leftButton.isPressed == true;
         if (!held) { acceptHeld = 0; holdSource = 0; }
         else acceptHeld += Time.unscaledDeltaTime;
-        float progress = Mathf.Clamp01(acceptHeld / (holdSource == 2 ? .5f : 1f));
+        float progress = Mathf.Clamp01(acceptHeld / .5f);
         if (acceptFill != null) acceptFill.anchorMax = new Vector2(progress, 1);
         if (progress >= 1) SelectChoice(true);
     }
@@ -147,19 +151,47 @@ public sealed class ConversationDialogue : MonoBehaviour
             if (ethanSpeakerFont == null) ethanSpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/TangbaDialogue");
             font = ethanSpeakerFont;
         }
-        ApplyFont(bodyText, font != null ? font : originalBodyFont, font != null ? font.material : originalBodyMaterial);
+        bool isSelena = string.Equals(name, "Selena", StringComparison.OrdinalIgnoreCase) || name == "셀레나";
+        // Same authored Tangba face, with padded glyphs and a build-referenced transparent TMP material.
+        if (isSelena && selenaSpeakerFont == null)
+            selenaSpeakerFont = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/SelenaDialogue");
+        var bodyFont = isSelena && selenaSpeakerFont != null ? selenaSpeakerFont : font;
+        ApplyFont(bodyText, bodyFont != null ? bodyFont : originalBodyFont, bodyFont != null ? bodyFont.material : originalBodyMaterial);
         ApplyFont(speakerText, font != null ? font : originalSpeakerFont, font != null ? font.material : originalSpeakerMaterial);
+        if (isSelena)
+        {
+            ApplyCleanSelenaMaterial(bodyText, ref selenaBodyMaterial);
+            ApplyCleanSelenaMaterial(speakerText, ref selenaSpeakerMaterial);
+        }
         SetPortrait(name, null);
     }
 
-    private void SetPortrait(string speaker, Sprite overrideSprite)
+    private static void ApplyCleanSelenaMaterial(TMP_Text label, ref Material clean)
+    {
+        if (label == null || label.font == null) return;
+        if (clean == null)
+        {
+            clean = new Material(label.font.material);
+            clean.DisableKeyword("UNDERLAY_ON"); clean.DisableKeyword("UNDERLAY_INNER"); clean.DisableKeyword("GLOW_ON");
+            if (clean.HasProperty("_UnderlayColor")) clean.SetColor("_UnderlayColor", Color.clear);
+        }
+        // Dynamic atlas contents can change between speakers; never retain a stale texture binding.
+        clean.CopyPropertiesFromMaterial(label.font.material);
+        clean.DisableKeyword("UNDERLAY_ON"); clean.DisableKeyword("UNDERLAY_INNER"); clean.DisableKeyword("GLOW_ON");
+        if (clean.HasProperty("_UnderlayColor")) clean.SetColor("_UnderlayColor", Color.clear);
+        clean.mainTexture = label.font.atlasTexture;
+        label.fontSharedMaterial = clean;
+    }
+    private void OnDestroy()
+    {
+        if (selenaBodyMaterial != null) Destroy(selenaBodyMaterial);
+        if (selenaSpeakerMaterial != null) Destroy(selenaSpeakerMaterial);
+    }
+
+    private void SetPortrait(string speaker, Sprite overrideSprite, string expression = null)
     {
         if (portraitImage == null) return;
-        if (ethanPortrait == null)
-        {
-            var portraits = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
-            if (portraits != null) { ethanPortrait = portraits.ethan; selenaPortrait = portraits.selena; }
-        }
+        if (portraitLibrary == null) portraitLibrary = Resources.Load<DialoguePortraitLibrary>("Dialogue/Portraits");
         if (animatedPortrait == null)
         {
             if (portraitImage.GetComponent<RectMask2D>() == null) portraitImage.gameObject.AddComponent<RectMask2D>();
@@ -175,8 +207,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         bool mystery = speaker.Trim() == "???" && overrideSprite == null;
         animatedPortrait.gameObject.SetActive(mystery);
         portraitImage.sprite = overrideSprite != null ? overrideSprite
-            : string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) ? ethanPortrait
-            : string.Equals(speaker.Trim(), "Selena", StringComparison.OrdinalIgnoreCase) || speaker.Trim() == "셀레나" ? selenaPortrait : null;
+            : portraitLibrary != null ? portraitLibrary.Resolve(speaker, expression) : null;
         portraitImage.preserveAspect = true;
         portraitImage.enabled = portraitImage.sprite != null;
         UpdatePortraitFrame();
@@ -529,11 +560,17 @@ public sealed class ConversationDialogue : MonoBehaviour
         for (int i = startingLine; i < lines.Length; i++)
         {
             DialogueLine line = lines[i];
+            if (!string.IsNullOrWhiteSpace(line.연출) && BeforeLineEvent != null)
+            {
+                SetVisible(false);
+                yield return BeforeLineEvent(line.연출);
+                SetVisible(true);
+            }
             CurrentLineNpcLaugh = line.npcLaugh && line.speaker?.Trim() == "???";
             SetSpeaker(line.speaker);
 
             if (speakerText != null) speakerText.text = line.speaker ?? string.Empty;
-            SetPortrait(line.speaker ?? string.Empty, line.portrait);
+            SetPortrait(line.speaker ?? string.Empty, line.portrait, line.표정);
             if (bodyText != null) bodyText.text = string.Empty;
             if (continueIndicator != null) continueIndicator.SetActive(false);
 

@@ -1,0 +1,5 @@
+Assets/Resources/Dialogue/Forest/forest_clear.json
+Assets/Resources/Dialogue/Garbage/equipment_complete.json
+Assets/Resources/Dialogue/Garbage/equipment_tutorial.json
+Assets/Resources/Dialogue/Market/market_npc.json
+Assets/Scenes/Inventory/QuestRewardExample.json

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Rendering.Universal;
 
-/// <summary>Loads a destination scene when the player presses F on this portal.</summary>
+/// <summary>Loads a destination scene when the player presses W on this portal.</summary>
 [RequireComponent(typeof(Interactable2D))]
 public sealed class ScenePortal2D : MonoBehaviour
 {
@@ -15,6 +15,27 @@ public sealed class ScenePortal2D : MonoBehaviour
     private ControlTutorialUI portalHint;
     private bool presentationReady, hintUsed;
     private Vector3 hintArea;
+
+    public bool ContainsPlayer(GameObject actor)
+    {
+        var area = GetComponent<Collider2D>();
+        var body = actor != null ? actor.GetComponent<Collider2D>() : null;
+        var interaction = GetComponent<Interactable2D>();
+        return isActiveAndEnabled && area != null && area.enabled && body != null
+            && interaction != null && interaction.isActiveAndEnabled && area.bounds.Intersects(body.bounds);
+    }
+    public static ScenePortal2D FindInRange(GameObject actor)
+    {
+        ScenePortal2D nearest = null; float distance = float.MaxValue;
+        foreach (var portal in FindObjectsByType<ScenePortal2D>(FindObjectsSortMode.None))
+            if (portal.ContainsPlayer(actor))
+            {
+                float d = (portal.transform.position - actor.transform.position).sqrMagnitude;
+                if (d < distance) { nearest = portal; distance = d; }
+            }
+        return nearest;
+    }
+    public int ExitDirection => glowFacesRight ? -1 : 1;
 
     private void Awake()
     {
@@ -107,6 +128,14 @@ public sealed class ScenePortal2D : MonoBehaviour
         }
 
         CompleteHint();
-        player.TravelTo(destinationSceneName, destinationSpawnPointId);
+        var movement = interactor.GetComponent<PlayerMovement2D>();
+        if (movement != null) movement.StartCoroutine(PortalDeparture.Travel(movement, this, () => TravelAfterDeparture(player)));
+        else player.TravelTo(destinationSceneName, destinationSpawnPointId);
+    }
+    private IEnumerator TravelAfterDeparture(PersistentPlayer2D player)
+    {
+        if (!player.TravelTo(destinationSceneName, destinationSpawnPointId, animatePortalArrival: true)) yield break;
+        while (SceneFadeTransition.IsRunning) yield return null;
+        yield return player.CompletePortalArrival();
     }
 }

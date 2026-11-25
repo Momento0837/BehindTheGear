@@ -244,7 +244,7 @@ public sealed class MonsterFollowController : MonoBehaviour
         child.gameObject.layer = gameObject.layer;
         var collider = child.GetComponent<BoxCollider2D>();
         if (collider == null) collider = child.gameObject.AddComponent<BoxCollider2D>();
-        collider.size = source.size;
+        collider.size = new Vector2(source.size.x, source.size.y * (attack ? .7f : 1f));
         collider.offset = source.offset;
         collider.isTrigger = true;
         source.enabled = false;
@@ -479,20 +479,23 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void CreateDrops()
     {
-        int roll = Random.Range(0, 100);
-        if (roll >= 40) return;
-        bool equipment = roll == 0;
-        var pool = loot.Where(item => item != null && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealth
-            && item.Effect != InventoryItemDefinition.ConsumableEffect.RestoreHealthAndMana
-            && (equipment ? item.IsEquipment : item.IsConsumable)).ToArray();
-        if (pool.Length == 0) return;
-        int count = equipment ? 1 : Random.Range(1, 3);
-        for (int i = 0; i < count; i++)
-        {
-            var drop = new GameObject("Monster Loot");
-            drop.transform.position = transform.position + new Vector3((i - (count - 1) * .5f) * .4f, .5f, 0f);
-            drop.AddComponent<WorldItemPickup>().Configure(pool[Random.Range(0, pool.Length)], 1);
-        }
+        // The basic drop is independent of scene loot and always awards one cloth.
+        var cloth = Resources.Load<InventoryItemDefinition>("Story/RedCloth");
+        if (cloth != null) CreateDrop(cloth, 0f);
+        else Debug.LogError("Missing monster drop: Resources/Story/RedCloth", this);
+
+        // Preserve the existing 1% bonus equipment chance; potions are not monster loot.
+        if (Random.Range(0, 100) != 0) return;
+        var pool = loot.Where(item => item != null && item.IsEquipment
+            && item.Effect == InventoryItemDefinition.ConsumableEffect.None).ToArray();
+        if (pool.Length > 0) CreateDrop(pool[Random.Range(0, pool.Length)], .4f);
+    }
+
+    private void CreateDrop(InventoryItemDefinition item, float offsetX)
+    {
+        var drop = new GameObject("Monster Loot");
+        drop.transform.position = transform.position + new Vector3(offsetX, .5f, 0f);
+        drop.AddComponent<WorldItemPickup>().Configure(item, 1);
     }
 
     private void CreateTemporaryDrop()

@@ -44,6 +44,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float normalFieldOfView;
     private float lensVelocity;
     private Transform deathTarget;
+    private Transform walkingCompanion;
+    private float walkingFocusWeight;
     private readonly List<Vector2> focusFloorPlanes = new();
 
     private void CaptureFocusFloor()
@@ -122,13 +124,36 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     public void EndDialogueFocus(ConversationDialogue owner)
     {
         if (dialogueOwner != owner) return;
+        // Return to the actual speaker's player, without the NPC framing's residual motion.
+        if (dialoguePlayer != null) { target = dialoguePlayer; CacheTargetBody(); }
+        lookAhead = lookAheadVelocity = 0f;
+        followVelocity = Vector3.zero;
         dialogueOwner = null;
         dialoguePlayer = null;
+    }
+
+    public void BeginWalkingFocus(Transform companion)
+    {
+        if (companion == null || attachedCamera == null || !isActiveAndEnabled) return;
+        BeginDialogueFocusForDeath();
+        walkingCompanion = companion;
+        walkingFocusWeight = 0;
+    }
+
+    public void SetWalkingFocusWeight(float weight) => walkingFocusWeight = Mathf.Clamp01(weight);
+
+    public void EndWalkingFocus()
+    {
+        walkingCompanion = null;
+        walkingFocusWeight = 0;
+        if (dialogueOwner == null && deathTarget == null) RestoreDialogueLens();
     }
 
     private void RestoreDialogueLens()
     {
         deathTarget = null;
+        walkingCompanion = null;
+        walkingFocusWeight = 0;
         if (hasDialogueLens && attachedCamera != null)
         {
             attachedCamera.orthographicSize = normalOrthographicSize;
@@ -162,6 +187,16 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             return;
         }
         Transform player = dialoguePlayer != null ? dialoguePlayer : target;
+        if (walkingCompanion != null && dialogueOwner == null && player != null)
+        {
+            // Shift the usual player-follow target toward the pair without losing its
+            // smoothed movement look-ahead (including the settling motion when they stop).
+            desiredPosition.x += (walkingCompanion.position.x - player.position.x) * .5f * walkingFocusWeight;
+            float walkingLens = desiredLens * Mathf.Lerp(1f, .9f, walkingFocusWeight);
+            if (attachedCamera.orthographic) attachedCamera.orthographicSize = walkingLens;
+            else attachedCamera.fieldOfView = walkingLens;
+            return;
+        }
         if (dialogueOwner != null && player != null)
         {
             Bounds subjects = dialogueSubjects;
@@ -251,6 +286,9 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         RenderPipelineManager.beginCameraRendering += ClampAtRender;
     }
 
+    public float StoryLookOffset { get; set; }
+    public bool CanLookRight => ClampHorizontalPosition(transform.position.x + .7f) > transform.position.x + .1f;
+
     private void LateUpdate()
     {
         if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
@@ -272,7 +310,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             Mathf.Infinity,
             Time.deltaTime);
 
-        Vector3 desiredPosition = target.position + new Vector3(followOffset.x + lookAhead, followOffset.y, 0f);
+        Vector3 desiredPosition = target.position + new Vector3(followOffset.x + lookAhead + StoryLookOffset, followOffset.y, 0f);
         if (!followVertical)
         {
             float verticalSpeed = targetBody != null ? targetBody.linearVelocity.y : 0f;
@@ -282,13 +320,20 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             desiredPosition.y = desiredCameraY;
         }
         bool dialogueTransition = hasDialogueLens;
+        bool focusedOnSubject = dialogueOwner != null || deathTarget != null || walkingCompanion != null;
+        // Zoom out gently, but resume responsive player tracking immediately.
+        if (dialogueTransition && !focusedOnSubject)
+            desiredPosition.x = target.position.x + followOffset.x + StoryLookOffset;
         UpdateDialogueFraming(ref desiredPosition);
         desiredPosition.z = cameraZ;
+        float trackingSmoothTime = focusedOnSubject ? dialogueSmoothTime : smoothTime;
+        if (walkingCompanion != null && dialogueOwner == null && deathTarget == null)
+            trackingSmoothTime = Mathf.Lerp(smoothTime, dialogueSmoothTime, walkingFocusWeight);
         Vector3 smoothedPosition = Vector3.SmoothDamp(
             transform.position,
             desiredPosition,
             ref followVelocity,
-            dialogueTransition ? dialogueSmoothTime : smoothTime,
+            trackingSmoothTime,
             maxFollowSpeed,
             dialogueTransition ? Time.unscaledDeltaTime : Time.deltaTime);
 

@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.local.pixelbridge-layer-sprites": {
+      "version": "file:com.local.pixelbridge-layer-sprites",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.modules.imageconversion": "1.0.0"
+      }
+    },
     "com.unity.2d.animation": {
       "version": "13.0.6",
       "depth": 0,

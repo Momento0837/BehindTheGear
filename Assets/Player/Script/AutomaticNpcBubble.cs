@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(1100)]
 public sealed class AutomaticNpcBubble : MonoBehaviour
@@ -12,14 +13,24 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
     TMP_Text text;
     Image image;
     CanvasGroup group;
-    float entranceElapsed;
+    float entranceElapsed, exitDrop;
+    public bool ScreenRight { get; set; }
+    public bool PlayerReaction { get; set; }
     float sliceScale = 1f;
-    float headOffset = 2.8f;
+    Vector3 headAnchor = Vector3.up * 2.55f;
+    bool headAnchorCaptured;
+    const float HeadGap = 12f; // Reference-resolution UI pixels, independent of the camera lens.
+    const float FadeDuration = .5f;
+    float EntranceDuration => ScreenRight || PlayerReaction ? .48f : FadeDuration;
     public bool IsPlaying { get; private set; }
+    public int RevealedLineCount { get; private set; }
     public void Begin(Image style, string[] lines)
     {
         IsPlaying = true;
-        var root = new GameObject("Selena Automatic Bubble", typeof(Canvas), typeof(CanvasScaler)); root.transform.SetParent(transform, false);
+        RevealedLineCount = 0;
+        // A scene-root overlay cannot inherit the NPC's world transform or animation scale.
+        var root = new GameObject(PlayerReaction ? "Player Reaction Bubble" : "Selena Automatic Bubble", typeof(Canvas), typeof(CanvasScaler));
+        if (root.scene != gameObject.scene) SceneManager.MoveGameObjectToScene(root, gameObject.scene);
         canvas = root.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 20;
         var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1280,720);
         bubble = new GameObject("Talking", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -29,7 +40,7 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
         image = new GameObject("Mirrored Background", typeof(RectTransform), typeof(Image)).GetComponent<Image>(); image.transform.SetParent(bubble,false);
         image.rectTransform.anchorMin = Vector2.zero; image.rectTransform.anchorMax = Vector2.one;
         image.rectTransform.offsetMin = image.rectTransform.offsetMax = Vector2.zero;
-        image.rectTransform.localScale = new Vector3(-1, 1, 1);
+        image.rectTransform.localScale = new Vector3(PlayerReaction ? 1 : -1, 1, 1);
         image.sprite = style != null ? style.sprite : null; image.type = Image.Type.Sliced; image.raycastTarget = false;
         if (style != null)
         {
@@ -41,9 +52,17 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
         text = new GameObject("Text",typeof(RectTransform),typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>(); text.transform.SetParent(bubble,false);
         text.rectTransform.anchorMin = Vector2.zero; text.rectTransform.anchorMax = Vector2.one; text.rectTransform.offsetMin = new Vector2(26,26 + 8 * sliceScale); text.rectTransform.offsetMax = new Vector2(-26,-26);
         UIFontTheme.Apply(text, UIFontTheme.Normal); text.fontSize = 22; text.color = new Color(.12f,.09f,.07f); text.raycastTarget = false;
-        text.textWrappingMode = TextWrappingModes.Normal;
-        var sprite = GetComponent<SpriteRenderer>();
-        if (sprite != null) headOffset = sprite.bounds.max.y - transform.position.y + .25f;
+        if (ScreenRight || PlayerReaction)
+        {
+            var font = Resources.Load<TMP_FontAsset>("Dialogue/Fonts/SuhgungDialogue");
+            if (font != null) { text.font = font; text.fontSharedMaterial = font.material; }
+            text.fontSize = 21.6f;
+            text.alignment = TextAlignmentOptions.Center;
+        }
+        // Enlarge the reaction glyph around its center without resizing the bubble layout.
+        if (PlayerReaction) text.rectTransform.localScale = Vector3.one * 1.7f;
+        text.textWrappingMode = ScreenRight || PlayerReaction ? TextWrappingModes.NoWrap : TextWrappingModes.Normal;
+        CaptureHeadAnchor();
         RenderPipelineManager.beginCameraRendering += PositionAtRender;
         StartCoroutine(Play(lines));
     }
@@ -51,19 +70,26 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
     {
         for(int i=0;i<lines.Length;i++)
         {
-            text.text=MarketNpcBubble.FormatBubbleText(lines[i]); text.maxVisibleCharacters=0;
+            // Pursuit shouts expand horizontally; only explicit JSON newlines break the line.
+            text.text=ScreenRight ? lines[i] : MarketNpcBubble.FormatBubbleText(lines[i]); text.maxVisibleCharacters=0;
             float maxWidth = Mathf.Max(50, Mathf.Min(520, ((RectTransform)canvas.transform).rect.width * .7f) - 52);
-            Vector2 size=text.GetPreferredValues(text.text,maxWidth,Mathf.Infinity);
+            Vector2 size=text.GetPreferredValues(text.text,ScreenRight ? Mathf.Infinity : maxWidth,Mathf.Infinity);
             float width = Mathf.Max(50, size.x) + 54;
             float height = Mathf.Max(28,size.y) + 52 + 8 * sliceScale;
             bubble.sizeDelta=new Vector2(width,height);
-            bubble.pivot=new Vector2(1 - 6 * sliceScale / width, 3 * sliceScale / height);
+            float tailInset = 6 * sliceScale / width;
+            bubble.pivot=new Vector2(PlayerReaction ? tailInset : 1 - tailInset, 3 * sliceScale / height);
             ApplyEntrance(0);
             bubble.gameObject.SetActive(true); text.ForceMeshUpdate();
-            for(float t=0;t<Mathf.Max(.48f,lines[i].Length*.045f);t+=Time.deltaTime)
+            for(float t=0;t<Mathf.Max(EntranceDuration,lines[i].Length*.045f);t+=Time.deltaTime)
             { ApplyEntrance(t); text.maxVisibleCharacters=Mathf.FloorToInt(t/.045f);yield return null; }
-            ApplyEntrance(.48f);
-            text.maxVisibleCharacters=int.MaxValue; yield return new WaitForSeconds(.5f); bubble.gameObject.SetActive(false);
+            ApplyEntrance(EntranceDuration);
+            text.maxVisibleCharacters=int.MaxValue;
+            RevealedLineCount = i + 1;
+            yield return new WaitForSeconds(.5f);
+            for (float fade = 0; fade < FadeDuration; fade += Time.deltaTime)
+            { float progress = Mathf.Clamp01(fade / FadeDuration); group.alpha = 1 - progress; exitDrop = (ScreenRight ? 18 : 15) * progress; yield return null; }
+            group.alpha = 0; bubble.gameObject.SetActive(false); exitDrop = 0;
             if(i+1<lines.Length)yield return new WaitForSeconds(1);
         }
         IsPlaying = false;
@@ -71,11 +97,19 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
     void ApplyEntrance(float elapsed)
     {
         entranceElapsed = elapsed;
-        float appear = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / .22f));
+        if (!ScreenRight && !PlayerReaction)
+        {
+            group.alpha = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / FadeDuration));
+            bubble.localScale = Vector3.one;
+            bubble.localRotation = Quaternion.identity;
+            return;
+        }
+        float appear = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / (PlayerReaction ? .42f : .22f)));
         float settle = Mathf.SmoothStep(0, 1, Mathf.Clamp01((elapsed - .22f) / .16f));
-        float widthScale = elapsed < .22f ? Mathf.Lerp(0, 1.05f, appear) : Mathf.Lerp(1.05f, 1, settle);
+        float widthScale = elapsed < .22f ? Mathf.Lerp(.8f, 1.05f, appear) : Mathf.Lerp(1.05f, 1, settle);
         group.alpha = appear;
-        bubble.localScale = new Vector3(widthScale, Mathf.Lerp(.8f, 1, appear), 1);
+        bubble.localScale = PlayerReaction ? Vector3.one * (.5f * Mathf.Lerp(.8f, 1, appear))
+            : new Vector3(widthScale, Mathf.Lerp(.8f, 1, appear), 1);
         float angle = elapsed < .2f ? Mathf.Lerp(-5, 5, Mathf.SmoothStep(0, 1, elapsed / .2f))
             : Mathf.Lerp(5, 0, Mathf.SmoothStep(0, 1, Mathf.Clamp01((elapsed - .2f) / .28f)));
         bubble.localRotation = Quaternion.Euler(0, 0, angle);
@@ -91,17 +125,29 @@ public sealed class AutomaticNpcBubble : MonoBehaviour
     void PositionBubble(Camera camera)
     {
         if(bubble==null)return;
-        var screen=camera.WorldToScreenPoint(transform.position+Vector3.up*headOffset);
+        CaptureHeadAnchor();
+        var screen = ScreenRight ? new Vector3(Screen.width * .96f, Screen.height * .5f, 1)
+            : camera.WorldToScreenPoint(transform.TransformPoint(headAnchor));
         image.enabled = screen.z > 0;
         RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)canvas.transform,screen,null,out var local);
-        local.y -= 18f * (1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01(entranceElapsed / .22f)));
-        bubble.anchoredPosition=local;
-        var rect = ((RectTransform)canvas.transform).rect;
-        local.x = Mathf.Clamp(local.x, rect.xMin + 16 + bubble.pivot.x * bubble.sizeDelta.x,
-            rect.xMax - 16 - (1 - bubble.pivot.x) * bubble.sizeDelta.x);
-        local.y = Mathf.Clamp(local.y, rect.yMin + 16 + bubble.pivot.y * bubble.sizeDelta.y,
-            rect.yMax - 16 - (1 - bubble.pivot.y) * bubble.sizeDelta.y);
+        if (!ScreenRight) local.y += HeadGap;
+        local.y -= exitDrop;
+        float riseDuration = PlayerReaction ? .42f : ScreenRight ? .22f : FadeDuration;
+        float riseDistance = ScreenRight || PlayerReaction ? 18f : 15f;
+        local.y -= riseDistance * (1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01(entranceElapsed / riseDuration)));
+        // Follow the speaker even outside the viewport; edge clamping breaks the head anchor.
         bubble.anchoredPosition = local;
     }
+    void CaptureHeadAnchor()
+    {
+        if (headAnchorCaptured || ScreenRight) return;
+        var sprite = GetComponent<SpriteRenderer>();
+        if (sprite == null || sprite.sprite == null) return;
+        // Capture once: walking frames must not make the bubble jitter with changing sprite bounds.
+        headAnchor = transform.InverseTransformPoint(new Vector3(sprite.bounds.center.x, sprite.bounds.max.y, transform.position.z));
+        headAnchorCaptured = true;
+    }
+    void OnEnable() { if (canvas != null) canvas.gameObject.SetActive(true); }
+    void OnDisable() { if (canvas != null) canvas.gameObject.SetActive(false); }
     void OnDestroy(){RenderPipelineManager.beginCameraRendering -= PositionAtRender;if(canvas!=null)Destroy(canvas.gameObject);}
 }

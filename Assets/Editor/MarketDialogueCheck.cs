@@ -138,7 +138,7 @@ public static class MarketDialogueCheck
                     Require(Mathf.Approximately(rect.localScale.x, 1f) && Mathf.Approximately(dialogue.TalkingImage.GetComponent<CanvasGroup>().alpha, 1f), "Entrance reaches full scale and opacity");
                     Require(Quaternion.Angle(rect.localRotation, Quaternion.identity) < .01f, "Follow through settles at zero");
                     var label = dialogue.TalkingImage.GetComponentInChildren<TMP_Text>();
-                    Require(label.text == MarketNpcBubble.FormatBubbleText(ConversationDialogue.GetOpeningText(Resources.Load<TextAsset>("Dialogue/quest_offer"))), "First greeting keeps all text with sentence breaks");
+                    Require(label.text == MarketNpcBubble.FormatBubbleText(ConversationDialogue.GetOpeningText(Resources.Load<TextAsset>("Dialogue/Market/quest_offer"))), "First greeting keeps all text with sentence breaks");
                     Require(label.textInfo.lineCount > 1 && label.textWrappingMode == TextWrappingModes.Normal, "Greeting wraps at sentence boundaries");
                     Require(Mathf.Approximately(label.fontSize, 21.6f) && label.rectTransform.offsetMin.x == 26f && label.rectTransform.offsetMax.y == -26f, "90 percent text size and 26 unit body padding");
                     ScreenCapture.CaptureScreenshot(Output + "/passing.png");

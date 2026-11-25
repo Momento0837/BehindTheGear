@@ -10,6 +10,7 @@ public sealed class EquipmentTutorialHighlight : MonoBehaviour
     GameObject dim;
     Image border, mouse;
     ControlHintAnimation mouseClip;
+    float animationStarted;
     readonly List<GameObject> layers = new();
     readonly List<Component> added = new();
     Transform target;
@@ -35,18 +36,22 @@ public sealed class EquipmentTutorialHighlight : MonoBehaviour
             var socket = owner.FindTutorialSocket(item); if (socket != null) Raise(socket.gameObject, order + 1);
             border = Image("Cloak White Border", target);
             border.sprite = Resources.Load<InventoryOpeningHintStyle>("UI/InventoryOpeningHintStyle")?.border;
-            mouse = Image("MouseL Equipment Tutorial", target); mouse.preserveAspect = true;
+            mouseClip = ControlHintAnimation.Load("Inventory_Tutorial");
+            mouse = Image("Inventory Equipment Tutorial", target); mouse.preserveAspect = true;
+            mouse.maskable = false;
             mouse.rectTransform.anchorMin = mouse.rectTransform.anchorMax = new Vector2(.5f, 0);
-            mouse.rectTransform.sizeDelta = source.rectTransform.rect.size * .65f;
+            mouse.rectTransform.pivot = mouseClip.Pivot;
+            float height = source.rectTransform.rect.height * .65f * .7f;
+            mouse.rectTransform.sizeDelta = new Vector2(height * mouseClip.Size.x / mouseClip.Size.y, height);
             mouse.rectTransform.anchoredPosition = Vector2.zero;
-            mouseClip = ControlHintAnimation.Load("MouseL");
+            animationStarted = Time.unscaledTime;
         }
         if (border != null)
         {
             float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * 4f);
             border.color = new Color(1, 1, 1, .4f + .6f * pulse);
             border.transform.localScale = Vector3.one * Mathf.Lerp(1, 1.08f, pulse);
-            mouse.sprite = mouseClip.Frame(Time.unscaledTime);
+            mouse.sprite = mouseClip.Frame(Time.unscaledTime - animationStarted);
         }
     }
     void Raise(GameObject go, int order)

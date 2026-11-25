@@ -1,0 +1,148 @@
+{
+  "items": [
+    {
+      "id": "red_cloth",
+      "display": {
+        "name": "붉은 천조각",
+        "description": "몬스터가 떨어뜨린 붉은 천조각입니다."
+      },
+      "rarity": "Normal"
+    },
+    {
+      "id": "health_potion",
+      "display": {
+        "name": "",
+        "description": "체력을 회복하는 붉은 포션입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "mana_potion",
+      "display": {
+        "name": "",
+        "description": "마나를 회복하는 푸른 포션입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "copper_gear",
+      "display": {
+        "name": "",
+        "description": "임시 장비 슬롯 검증용 구리 장비입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "Tattered_Cloak",
+      "display": {
+        "name": "헤진 망토",
+        "description": "쓰레기 더미에서 주웠다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "sky_crystal",
+      "display": {
+        "name": "",
+        "description": "퀘스트 아이템 획득 검증용으로 빛나는 결정입니다."
+      },
+      "rarity": "Normal",
+      "stats": {
+        "increase": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        },
+        "decrease": {
+          "Evasion": 0,
+          "Stealth": 0,
+          "Attack": 0,
+          "Defense": 0,
+          "Persuasion": 0
+        }
+      }
+    },
+    {
+      "id": "old_ballpoint_pen",
+      "display": {
+        "name": "낡은 볼펜",
+        "description": "망토와 함께 발견한 낡은 볼펜. 누군가에게는 중요한 물건일지도 모릅니다."
+      },
+      "rarity": "Legendary"
+    },
+    {
+      "id": "tutorial_recovery_potion",
+      "display": {
+        "name": "회복 물약",
+        "description": "최대 HP의 30% 회복. 사용 후 90초 동안 이동속도 80%. 효과 중 재사용 불가."
+      },
+      "rarity": "Normal"
+    }
+  ]
+}

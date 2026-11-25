@@ -199,6 +199,10 @@ public sealed class PlayerMovement2D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (GetComponent<InventoryUI>()?.EquipmentTutorialActive == true)
+        {
+            horizontalInput = 0; jumpRequested = false; crouchHeld = false; EndDash();
+        }
         if (hitStopped && Time.unscaledTime < hitStopUntil)
         {
             EndDash();
@@ -333,6 +337,8 @@ public sealed class PlayerMovement2D : MonoBehaviour
         bool tookDamage = currentHealth < lastKnownHealth;
         lastKnownHealth = currentHealth;
         if (!tookDamage || animator == null) return;
+        // An accepted attack keeps its animation/hit timing; lethal damage still wins.
+        if (currentHealth > 0 && attackAnimationPlaying) return;
         meleeAttack?.CancelComboSwing();
 
         attackAnimationPlaying = false;
@@ -463,7 +469,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         if (animator == null) return;
         if (hasAttackTriggerParameter) animator.ResetTrigger(AttackTriggerHash);
         if (hasIsMovingParameter) animator.SetBool(IsMovingParameterHash, cinematicWalking);
-        if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, IsGrounded());
+        if (hasIsGroundedParameter) animator.SetBool(IsGroundedParameterHash, cinematicWalking || IsGrounded());
     }
 
     private bool cinematicWalking;

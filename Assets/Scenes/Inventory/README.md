@@ -37,7 +37,7 @@ Project 창의 **Create > Behind The Gear > Inventory Item**으로 아이템을 
 - 보스 드랍: `InventoryDropper.DropBossLoot()`
 - JSON 보상 지급: `InventoryRewardGrant.GrantConfiguredRewards(inventory)`
 
-`QuestRewardExample.json`은 다음 형식의 예시입니다.
+JSON 보상 데이터의 형식은 다음과 같습니다.
 
 ```json
 {

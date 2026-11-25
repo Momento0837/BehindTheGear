@@ -31,7 +31,7 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         var presentation = template.CreateTutorialPresentation(transform);
         try
         {
-            presentation.Play(Resources.Load<TextAsset>("Dialogue/base_upgrade_tutorial"));
+            presentation.Play(Resources.Load<TextAsset>("Dialogue/Hideout/base_upgrade_tutorial"));
             while (presentation.IsPlaying) yield return null;
             bridge.State.baseTutorialComplete = true;
             bridge.SetSelenaRecruited();
