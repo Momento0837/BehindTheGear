@@ -29,8 +29,8 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         var actor = PlayerTargetRegistry.Current;
         var bridge = actor != null ? actor.GetComponent<HideOutPlayerBridge>() : null;
         if (bridge == null || !bridge.Initialized) yield break;
-        var baseScene = GetComponent<HideOutScene>();
-        while (SceneFadeTransition.IsRunning || baseScene != null && baseScene.EntryAnimationPlaying) yield return null;
+        // Start when the black transition clears, even while the map entrance is still playing.
+        while (SceneFadeTransition.IsRunning) yield return null;
         if (bridge.State.baseTutorialComplete)
         {
             TryShowAfterTreatment(this, bridge, transform);
@@ -72,8 +72,7 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
     private static IEnumerator Play(Transform parent, HideOutPlayerBridge bridge, Transform inputRoot,
         ConversationDialogue template, TextAsset content, TextAsset potionContent, bool afterTreatment)
     {
-        var raycasters = inputRoot.GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.enabled).ToArray();
-        foreach (var r in raycasters) r.enabled = false;
+        var inputLock = BasePresentationInputLock.Acquire(inputRoot);
         ConversationDialogue presentation = null;
         try
         {
@@ -111,7 +110,7 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         }
         finally
         {
-            foreach (var r in raycasters) if (r != null) r.enabled = true;
+            inputLock.Dispose();
             if (presentation != null) Destroy(presentation.gameObject);
             active = null;
         }

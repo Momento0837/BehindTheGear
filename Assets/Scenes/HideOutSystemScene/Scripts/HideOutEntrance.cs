@@ -233,6 +233,8 @@ namespace BehindTheGear.HideOut
             foreach (var root in origin.GetRootGameObjects())
             {
                 var flow = root.GetComponent<StorySceneFlow>();
+                // Complete the entrance objective only after the destination has loaded successfully.
+                if (flow != null) flow.CompleteHideoutEntranceQuest(bridge.State.fieldReturn);
                 if (flow != null && flow.MoveSelenaIntoBase() && bridge.State.fieldReturn?.story != null)
                     bridge.State.fieldReturn.story.hasSelena = false;
             }

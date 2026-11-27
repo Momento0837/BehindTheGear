@@ -25,6 +25,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     [Header("NPC dialogue framing")]
     [SerializeField, Range(.3f, 1f)] private float dialogueZoomRatio = .75f;
     [SerializeField, Min(.01f)] private float dialogueSmoothTime = .8f;
+    private const float MysteryDialogueLowerViewportFraction = .1f;
 
     private Rigidbody2D targetBody;
     private Camera attachedCamera;
@@ -46,6 +47,15 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private Transform deathTarget;
     private Transform walkingCompanion;
     private float walkingFocusWeight;
+    private bool pursuitFocus;
+    private float? pursuitWorldX;
+    private bool pursuitTimedPan, pursuitPanBlur;
+    private float pursuitPanDuration, pursuitPanElapsed, pursuitPanStartX;
+    private float pursuitBlurVelocity;
+    private float pursuitLensSmoothTime = .12f;
+    private bool mysteryDialogue;
+    private float dialogueLowerOffset;
+    private float dialogueLowerVelocity;
     private readonly List<Vector2> focusFloorPlanes = new();
 
     private void CaptureFocusFloor()
@@ -78,7 +88,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             {
                 Ray ray = attachedCamera.ViewportPointToRay(new Vector3(i, 0f, 0f));
                 if (plane.Raycast(ray, out float distance))
-                    y = Mathf.Max(y, floor.y - (ray.GetPoint(distance).y - renderedY));
+                    y = Mathf.Max(y, floor.y - dialogueLowerOffset - (ray.GetPoint(distance).y - renderedY));
             }
         }
         return y;
@@ -103,7 +113,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         lensVelocity = 0f;
     }
 
-    public void BeginDialogueFocus(ConversationDialogue owner, Transform player)
+    public void BeginDialogueFocus(ConversationDialogue owner, Transform player, bool lowerForMysteryNpc = false)
     {
         if (owner == null || attachedCamera == null || !isActiveAndEnabled) return;
         if (!hasDialogueLens)
@@ -115,6 +125,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             lensVelocity = 0f;
         }
         dialogueOwner = owner;
+        mysteryDialogue = lowerForMysteryNpc;
         dialoguePlayer = player;
         // Animated sprite bounds vary between frames; keep a steady composition for this conversation.
         dialogueSubjects = SubjectBounds(player != null ? player : target);
@@ -129,7 +140,96 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         lookAhead = lookAheadVelocity = 0f;
         followVelocity = Vector3.zero;
         dialogueOwner = null;
+        mysteryDialogue = false;
         dialoguePlayer = null;
+    }
+
+    public void BeginPursuitFocus(float zoomSmoothTime = .12f)
+    {
+        if (attachedCamera == null || !isActiveAndEnabled) return;
+        BeginDialogueFocusForDeath();
+        pursuitFocus = true;
+        pursuitLensSmoothTime = Mathf.Max(.01f, zoomSmoothTime);
+        pursuitWorldX = null;
+        pursuitTimedPan = pursuitPanBlur = false;
+        PrototypeScreenEffects.StoryPanBlurPixels = 0f;
+        pursuitBlurVelocity = 0f;
+    }
+
+    public void AimPursuitView(bool rightSide, float duration = 0f, bool motionBlur = false)
+    {
+        if (!pursuitFocus) return;
+        float playerX = target != null ? target.position.x + followOffset.x : transform.position.x;
+        pursuitWorldX = rightSide && clampToHorizontalBounds ? horizontalWorldBounds.y
+            : rightSide ? playerX + 8f : playerX;
+        pursuitPanDuration = Mathf.Max(0f, duration);
+        pursuitPanElapsed = 0f;
+        pursuitPanStartX = transform.position.x;
+        pursuitTimedPan = pursuitPanDuration > 0f;
+        pursuitPanBlur = pursuitTimedPan && motionBlur;
+        PrototypeScreenEffects.StoryPanBlurPixels = 0f;
+        pursuitBlurVelocity = 0f;
+    }
+
+    private float StepPursuitPan(float destinationX, float deltaTime)
+    {
+        pursuitPanElapsed = Mathf.Min(pursuitPanDuration, pursuitPanElapsed + Mathf.Max(0f, deltaTime));
+        float progress = pursuitPanDuration > 0f ? pursuitPanElapsed / pursuitPanDuration : 1f;
+        if (progress >= 1f) pursuitTimedPan = false;
+        return Mathf.Lerp(pursuitPanStartX, destinationX, Mathf.SmoothStep(0f, 1f, progress));
+    }
+
+    private void UpdatePursuitBlur(float displacementX, float deltaTime)
+    {
+        if (!pursuitPanBlur || attachedCamera == null || deltaTime <= 0f) return;
+        float z = target != null ? target.position.z : 0f;
+        Vector3 center = new Vector3(transform.position.x, transform.position.y, z);
+        float pixelsPerUnit = Mathf.Abs(attachedCamera.WorldToScreenPoint(center + Vector3.right).x
+            - attachedCamera.WorldToScreenPoint(center).x);
+        // A fixed exposure duration makes the blur proportional to actual screen-space speed,
+        // independent of frame rate. Short or clamped movements naturally produce less blur.
+        float desired = Mathf.Clamp(Mathf.Abs(displacementX) / deltaTime * pixelsPerUnit / 120f, 0f, 48f);
+        float current = PrototypeScreenEffects.StoryPanBlurPixels;
+        float smooth = desired > current ? .035f : .1f;
+        current = Mathf.SmoothDamp(current, desired, ref pursuitBlurVelocity,
+            smooth, Mathf.Infinity, deltaTime);
+        if (!pursuitTimedPan && desired < .01f && current < .01f)
+        {
+            current = pursuitBlurVelocity = 0f;
+            pursuitPanBlur = false;
+        }
+        PrototypeScreenEffects.StoryPanBlurPixels = Mathf.Clamp(current, 0f, 48f);
+    }
+
+    public bool PursuitPositionSettled
+    {
+        get
+        {
+            if (!pursuitFocus || !pursuitWorldX.HasValue || attachedCamera == null) return true;
+            if (pursuitTimedPan || (pursuitPanBlur && PrototypeScreenEffects.StoryPanBlurPixels > .1f)) return false;
+            return Mathf.Abs(transform.position.x - ClampHorizontalPosition(pursuitWorldX.Value)) < .12f;
+        }
+    }
+
+    public bool PursuitViewSettled
+    {
+        get
+        {
+            if (!pursuitFocus || !pursuitWorldX.HasValue || attachedCamera == null) return true;
+            if (!PursuitPositionSettled) return false;
+            float lens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
+            float desiredLens = (attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView) * .9f;
+            return Mathf.Abs(lens - desiredLens) < .03f;
+        }
+    }
+
+    public void EndPursuitFocus()
+    {
+        pursuitFocus = false;
+        pursuitWorldX = null;
+        pursuitTimedPan = pursuitPanBlur = false;
+        pursuitBlurVelocity = 0f;
+        PrototypeScreenEffects.StoryPanBlurPixels = 0f;
     }
 
     public void BeginWalkingFocus(Transform companion)
@@ -146,11 +246,14 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     {
         walkingCompanion = null;
         walkingFocusWeight = 0;
-        if (dialogueOwner == null && deathTarget == null) RestoreDialogueLens();
+        if (dialogueOwner == null && deathTarget == null && !pursuitFocus) RestoreDialogueLens();
     }
 
     private void RestoreDialogueLens()
     {
+        EndPursuitFocus();
+        mysteryDialogue = false;
+        dialogueLowerOffset = dialogueLowerVelocity = 0f;
         deathTarget = null;
         walkingCompanion = null;
         walkingFocusWeight = 0;
@@ -197,6 +300,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             else attachedCamera.fieldOfView = walkingLens;
             return;
         }
+        float targetLowerOffset = 0f;
+        if (pursuitFocus) desiredLens *= .9f;
         if (dialogueOwner != null && player != null)
         {
             Bounds subjects = dialogueSubjects;
@@ -211,14 +316,27 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
                 : Mathf.Clamp(2f * Mathf.Atan(halfHeight / distance) * Mathf.Rad2Deg, 1f, 179f);
             desiredPosition.x = subjects.center.x;
             desiredPosition.y -= .35f;
+            if (mysteryDialogue) targetLowerOffset = halfHeight * 2f * MysteryDialogueLowerViewportFraction;
         }
+        // Ease the lower composition and floor allowance together, including the return to gameplay.
+        dialogueLowerOffset = Mathf.SmoothDamp(dialogueLowerOffset, targetLowerOffset,
+            ref dialogueLowerVelocity, dialogueSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+        desiredPosition.y -= dialogueLowerOffset;
+        float lens = UpdateFocusLens(desiredLens, Time.unscaledDeltaTime);
+        if (dialogueOwner == null && !pursuitFocus && Mathf.Abs(lens - desiredLens) < .001f && dialogueLowerOffset < .001f)
+            RestoreDialogueLens();
+    }
+
+    private float UpdateFocusLens(float desiredLens, float deltaTime)
+    {
         float currentLens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
+        // The first shout keeps the original gentle zoom while its bubble only waits for the pan.
+        float lensSmoothTime = pursuitFocus ? pursuitLensSmoothTime : dialogueSmoothTime;
         float lens = Mathf.SmoothDamp(currentLens, desiredLens, ref lensVelocity,
-            dialogueSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+            lensSmoothTime, Mathf.Infinity, deltaTime);
         if (attachedCamera.orthographic) attachedCamera.orthographicSize = lens;
         else attachedCamera.fieldOfView = lens;
-        if (dialogueOwner == null && Mathf.Abs(lens - desiredLens) < .001f)
-            RestoreDialogueLens();
+        return lens;
     }
 
     public void SetStoryBounds(Vector2 bounds)
@@ -320,11 +438,14 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             desiredPosition.y = desiredCameraY;
         }
         bool dialogueTransition = hasDialogueLens;
-        bool focusedOnSubject = dialogueOwner != null || deathTarget != null || walkingCompanion != null;
+        bool focusedOnSubject = dialogueOwner != null || deathTarget != null || walkingCompanion != null || pursuitFocus;
         // Zoom out gently, but resume responsive player tracking immediately.
         if (dialogueTransition && !focusedOnSubject)
             desiredPosition.x = target.position.x + followOffset.x + StoryLookOffset;
         UpdateDialogueFraming(ref desiredPosition);
+        // Clamp the cinematic destination before smoothing, so the pan eases into the map edge.
+        if (pursuitFocus && pursuitWorldX.HasValue)
+            desiredPosition.x = ClampHorizontalPosition(pursuitWorldX.Value);
         desiredPosition.z = cameraZ;
         float trackingSmoothTime = focusedOnSubject ? dialogueSmoothTime : smoothTime;
         if (walkingCompanion != null && dialogueOwner == null && deathTarget == null)
@@ -337,12 +458,18 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             maxFollowSpeed,
             dialogueTransition ? Time.unscaledDeltaTime : Time.deltaTime);
 
+        if (pursuitFocus && pursuitTimedPan && pursuitWorldX.HasValue)
+        {
+            smoothedPosition.x = StepPursuitPan(ClampHorizontalPosition(pursuitWorldX.Value), Time.unscaledDeltaTime);
+            followVelocity.x = 0f;
+        }
         float clampedX = ClampHorizontalPosition(smoothedPosition.x);
         if (!Mathf.Approximately(clampedX, smoothedPosition.x)) followVelocity.x = 0f;
         smoothedPosition.x = clampedX;
         float clampedY = ClampFocusHeight(smoothedPosition.y);
         if (!Mathf.Approximately(clampedY, smoothedPosition.y)) followVelocity.y = 0f;
         smoothedPosition.y = clampedY;
+        UpdatePursuitBlur(smoothedPosition.x - transform.position.x, Time.unscaledDeltaTime);
         transform.position = smoothedPosition;
     }
 
@@ -388,6 +515,26 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         if (attachedCamera != null) attachedCamera.ResetWorldToCameraMatrix();
         position.x = ClampHorizontalPosition(position.x);
         transform.position = position;
+    }
+
+    public bool TryGetRightMapEdge(out Vector3 edge)
+    {
+        edge = new Vector3(horizontalWorldBounds.y, 0f, 0f);
+        if (!clampToHorizontalBounds || attachedCamera == null) return false;
+
+        // Use the same depth plane that limits the camera. With perspective parallax,
+        // the playable x boundary alone can lie beyond the visible artwork's right edge.
+        float minX = float.NegativeInfinity, maxX = float.PositiveInfinity;
+        LimitForPlane(horizontalWorldBounds.x, horizontalWorldBounds.y, 0f, ref minX, ref maxX);
+        foreach (Bounds art in mapArtwork)
+        {
+            float artMinX = float.NegativeInfinity, artMaxX = float.PositiveInfinity;
+            LimitForPlane(art.min.x + .03f, art.max.x - .03f, art.center.z, ref artMinX, ref artMaxX);
+            if (artMaxX >= maxX) continue;
+            maxX = artMaxX;
+            edge = new Vector3(art.max.x - .03f, 0f, art.center.z);
+        }
+        return true;
     }
 
     private float ClampHorizontalPosition(float x)

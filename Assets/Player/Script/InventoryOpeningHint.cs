@@ -44,6 +44,7 @@ public sealed class InventoryOpeningHint : MonoBehaviour
         icon.gameObject.AddComponent<Button>().onClick.AddListener(owner.OpenInventory);
         border = MakeImage("White Border Pulse");
         border.sprite = style.border;
+        border.type = Image.Type.Sliced;
         border.enabled = false;
         elapsed = fadeElapsed = 0;
         dismissing = false;

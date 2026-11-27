@@ -108,8 +108,6 @@ public sealed partial class StorySceneFlow
     private IEnumerator WaitForRestoredCombat()
     {
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || monsters.Any(m => m != null && m.CurrentHealth > 0)) yield return null;
-        ready = true;
-        portal.SetActive(true);
-        AdvanceGuide("forest_exit");
+        yield return FinishForestCombat();
     }
 }

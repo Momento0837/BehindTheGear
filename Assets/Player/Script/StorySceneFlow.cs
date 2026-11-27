@@ -247,10 +247,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield break;
         }
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || monsters.Any(m => m != null && m.CurrentHealth > 0)) yield return null;
-        ready = true;
-        portal.SetActive(true);
-        AdvanceGuide("forest_exit");
-        controlTutorial.ArmPortal(portal);
+        yield return FinishForestCombat();
     }
 
     private IEnumerator Garbage(bool resumeCollected = false, bool restoring = false)
@@ -379,11 +376,13 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield return SceneFadeTransition.FadeThrough(() =>
             {
                 PrepareMarket();
+                PortalDeparture.ResumeCameraForArrival(player);
                 arrival = PortalArrival.Prepare(player);
             });
             if (arrival != null) yield return arrival.Enter();
             // Show the arrival objective once the character has entered the map.
             ShowGuide("market_arrival");
+            yield return MarketPursuit();
         }
         finally
         {

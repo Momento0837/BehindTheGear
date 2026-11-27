@@ -90,7 +90,7 @@ namespace BehindTheGear.HideOut
         private HideOutLockedFog lockedFog;
         private HideOutCameraController controller;
         private Camera viewCamera;
-        private GraphicRaycaster[] raycasters;
+        private BasePresentationInputLock inputLock;
         private bool started, previousCameraLock;
         private Material sweepMaterial;
         private Action completed;
@@ -138,8 +138,7 @@ namespace BehindTheGear.HideOut
             UpdateEntranceUI(-1);
             previousCameraLock = controller != null && controller.PresentationLocked;
             if (controller != null) controller.PresentationLocked = true;
-            raycasters = inputRoot.GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.enabled).ToArray();
-            foreach (var raycaster in raycasters) raycaster.enabled = false;
+            inputLock = BasePresentationInputLock.Acquire(inputRoot);
             IsPlaying = true; Stage = "WaitingForFade";
             Apply(icons, -1, config.iconDuration); Apply(clouds, -1, config.fogZoomDuration); Apply(map, -1, config.mapZoomDuration);
             StartCoroutine(Play());
@@ -386,7 +385,8 @@ namespace BehindTheGear.HideOut
             if (sweepMaterial != null) Destroy(sweepMaterial);
             lockedFog?.SetEntranceSuspended(false);
             if (controller != null) controller.PresentationLocked = previousCameraLock;
-            if (raycasters != null) foreach (var raycaster in raycasters) if (raycaster != null) raycaster.enabled = true;
+            inputLock?.Dispose();
+            inputLock = null;
             var callback = completed; completed = null;
             if (isActiveAndEnabled) callback?.Invoke();
         }

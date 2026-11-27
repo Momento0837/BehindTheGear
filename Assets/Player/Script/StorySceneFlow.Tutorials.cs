@@ -136,79 +136,98 @@ public sealed partial class StorySceneFlow
         PrototypeScreenEffects.OverridePixels = to;
     }
 
+    private float NeighborhoodStopDistance
+    {
+        get
+        {
+            var sprite = player.GetComponent<SpriteRenderer>()?.sprite;
+            return 50f / (sprite != null ? Mathf.Max(.01f, sprite.pixelsPerUnit) : 16f);
+        }
+    }
+
+    // Use the same reachable collider-center limits as PlayerMapBounds2D.
+    private float NeighborhoodWalkStopX(float desiredX)
+    {
+        var limits = player.GetComponent<PlayerMapBounds2D>();
+        var hitbox = player.GetComponent<BoxCollider2D>();
+        if (limits == null || !limits.HasHorizontalBounds || hitbox == null) return desiredX;
+        float halfWidth = hitbox.bounds.extents.x;
+        float offset = player.transform.TransformVector(hitbox.offset).x;
+        Vector2 range = limits.HorizontalBounds;
+        float minX = range.x + halfWidth - offset;
+        float maxX = range.y - halfWidth - offset;
+        if (minX > maxX) minX = maxX = (range.x + range.y) * .5f - offset;
+        return Mathf.Clamp(desiredX, minX, maxX);
+    }
+
     private IEnumerator WalkToHideout()
     {
         var entrance = InScene<HideOutEntrance>().FirstOrDefault();
-        if (entrance == null || selena == null) yield break;
-        var controls = AcquireTutorialControls();
+        var walkingCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
+        if (entrance == null || selena == null)
+        {
+            walkingCamera?.EndWalkingFocus();
+            player.SetCinematicWalking(false);
+            if (selena != null) selena.GetComponent<Animator>()?.SetBool("IsMoving", false);
+            yield break;
+        }
+        AcquireTutorialControls();
         var body = player.GetComponent<Rigidbody2D>();
         var npcAnimator = selena.GetComponent<Animator>();
-        var bubble = selena.gameObject.AddComponent<AutomaticNpcBubble>();
-        var lines = ConversationDialogue.GetGreetingLines(Resources.Load<TextAsset>("Dialogue/Neighborhood/neighborhood_conversation"), 3);
-        float ppu = player.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit;
-        float stopDistance = 50f / ppu;
+        float stopDistance = NeighborhoodStopDistance;
+        float direction = Mathf.Sign(entrance.transform.position.x - player.transform.position.x);
+        float stopX = NeighborhoodWalkStopX(entrance.transform.position.x - direction * stopDistance);
         // The F hint appears at the automatic stop, so that position must be interactive.
         var entranceTrigger = entrance.GetComponent<BoxCollider2D>();
         if (entranceTrigger != null)
         {
             var size = entranceTrigger.size;
-            size.x = Mathf.Max(size.x, 2f * (stopDistance + .25f) / Mathf.Max(.001f, Mathf.Abs(entrance.transform.lossyScale.x)));
+            float reachableGap = Mathf.Abs(entrance.transform.position.x - stopX);
+            size.x = Mathf.Max(size.x, 2f * (reachableGap + .25f) / Mathf.Max(.001f, Mathf.Abs(entrance.transform.lossyScale.x)));
             entranceTrigger.size = size;
         }
         entrance.GetComponent<Interactable2D>().AllowFromEitherSide = true;
-        float direction = Mathf.Sign(entrance.transform.position.x - player.transform.position.x);
-        var walkingCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
+        float zoomOutDistance = Mathf.Max(.01f, direction * (stopX - body.position.x));
         walkingCamera?.BeginWalkingFocus(selena);
-        float focusElapsed = 0f;
-        float zoomOutDistance = -1f;
-        bubble.Begin(dialogue.TalkingImage, lines);
-        player.SetCinematicWalking(true); npcAnimator?.SetBool("IsMoving", true);
+        walkingCamera?.SetWalkingFocusWeight(1f);
+        player.SetCinematicWalking(true);
+        npcAnimator?.SetBool("IsMoving", true);
+        if (npcAnimator != null) npcAnimator.speed = 1f;
         player.GetComponent<PlayerSpriteFacing>()?.FaceAttack(direction);
-        bool moving = true;
         try
         {
-            while (direction * (entrance.transform.position.x - body.position.x) > stopDistance)
+            // Ground friction can stop a dynamic body a few hundredths short as its velocity approaches zero.
+            // Finish within contact tolerance, then align the final position instead of waiting forever.
+            while (direction * (stopX - body.position.x) > .05f)
             {
-                float remaining = Mathf.Max(0f, direction * (entrance.transform.position.x - body.position.x) - stopDistance);
-                focusElapsed += Time.deltaTime;
-                if (zoomOutDistance < 0f && bubble.RevealedLineCount >= lines.Length)
-                    zoomOutDistance = Mathf.Max(.01f, remaining);
-                float focus = zoomOutDistance < 0f ? Mathf.SmoothStep(0, 1, focusElapsed / .8f)
-                    : Mathf.SmoothStep(0, 1, Mathf.Clamp01(remaining / zoomOutDistance));
-                walkingCamera?.SetWalkingFocusWeight(focus);
-                float speed = player.RunningSpeed * .5f;
-                var walkAnimator = player.GetComponent<Animator>();
-                if (walkAnimator != null) walkAnimator.speed = .3f;
-                if (npcAnimator != null) npcAnimator.speed = .3f;
+                float remaining = Mathf.Max(0f, direction * (stopX - body.position.x));
+                // The entrance is already zoomed in; return to normal over the visible walk.
+                walkingCamera?.SetWalkingFocusWeight(Mathf.SmoothStep(0f, 1f,
+                    Mathf.Clamp01(remaining / zoomOutDistance)));
+                float speed = Mathf.Min(player.RunningSpeed,
+                    remaining / Mathf.Max(Time.fixedDeltaTime, Time.deltaTime));
                 body.linearVelocity = new Vector2(direction * speed, body.linearVelocity.y);
                 var target = new Vector3(player.transform.position.x - direction * SelenaFollowDistance, selena.position.y, selena.position.z);
                 selena.position = Vector3.MoveTowards(selena.position, target, speed * Time.deltaTime);
                 var sprite = selena.GetComponent<SpriteRenderer>(); if (sprite != null) sprite.flipX = direction < 0;
                 yield return null;
             }
+            body.position = new Vector2(stopX, body.position.y);
             var state = player.GetComponent<PrototypeTutorialState>() ?? player.gameObject.AddComponent<PrototypeTutorialState>();
             state.SelenaArrived = true;
+            AdvanceGuide(HideoutEntranceGuide);
             var hint = entrance.GetComponent<WorldInteractionHint>() ?? entrance.gameObject.AddComponent<WorldInteractionHint>();
             hint.ShowUntilDismissed = true;
-            body.linearVelocity = new Vector2(0, body.linearVelocity.y);
-            walkingCamera?.EndWalkingFocus();
-            player.SetCinematicWalking(false); npcAnimator?.SetBool("IsMoving", false);
-            if (npcAnimator != null) npcAnimator.speed = 1f;
-            ReleaseTutorialControls(); moving = false;
-            // Dialogue timing never changes running speed or delays control at the destination.
-            while (bubble != null && bubble.IsPlaying) yield return null;
         }
         finally
         {
+            body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
+            walkingCamera?.SetWalkingFocusWeight(0f);
             walkingCamera?.EndWalkingFocus();
-            if (moving)
-            {
-                body.linearVelocity = new Vector2(0, body.linearVelocity.y);
-                player.SetCinematicWalking(false); npcAnimator?.SetBool("IsMoving", false);
+            player.SetCinematicWalking(false);
+            npcAnimator?.SetBool("IsMoving", false);
             if (npcAnimator != null) npcAnimator.speed = 1f;
-                ReleaseTutorialControls();
-            }
-            if (bubble != null) Destroy(bubble);
+            ReleaseTutorialControls();
         }
     }
 }

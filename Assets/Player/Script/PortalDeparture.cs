@@ -4,6 +4,41 @@ using UnityEngine;
 
 public static class PortalDeparture
 {
+    private sealed class CameraSuspension
+    {
+        public readonly PlayerMovement2D Player;
+        private readonly PlayerCameraFollow2D follow;
+        private readonly bool wasEnabled;
+        private bool released;
+
+        public CameraSuspension(PlayerMovement2D player, PlayerCameraFollow2D cameraFollow)
+        {
+            Player = player;
+            follow = cameraFollow;
+            wasEnabled = follow != null && follow.enabled;
+            activeCameraSuspension = this;
+            if (follow != null) follow.enabled = false;
+        }
+
+        public void Release()
+        {
+            if (released) return;
+            released = true;
+            if (follow != null) follow.enabled = wasEnabled;
+            if (ReferenceEquals(activeCameraSuspension, this)) activeCameraSuspension = null;
+        }
+    }
+
+    private static CameraSuspension activeCameraSuspension;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void Reset() => activeCameraSuspension = null;
+
+    // Called under the black cover, before arrival captures and temporarily disables the camera.
+    public static void ResumeCameraForArrival(PlayerMovement2D player)
+    {
+        if (activeCameraSuspension != null && activeCameraSuspension.Player == player)
+            activeCameraSuspension.Release();
+    }
     public static IEnumerator Travel(PlayerMovement2D player, ScenePortal2D portal, Func<IEnumerator> next)
     {
         var controls = player.GetComponent<PlayerControlLock>();
@@ -15,13 +50,13 @@ public static class PortalDeparture
         bool inventoryEnabled = inventory != null && inventory.enabled;
         bool boundsEnabled = bounds != null && bounds.enabled;
         bool simulated = body != null && body.simulated;
-        bool followEnabled = follow != null && follow.enabled;
+        CameraSuspension cameraSuspension = null;
         controls?.Acquire();
         try
         {
             if (inventory != null) inventory.enabled = false;
             if (bounds != null) bounds.enabled = false;
-            if (follow != null) follow.enabled = false;
+            cameraSuspension = new CameraSuspension(player, follow);
             if (body != null) { body.linearVelocity = Vector2.zero; body.simulated = false; }
             int direction = portal.ExitDirection;
             player.SetCinematicWalking(true);
@@ -51,7 +86,7 @@ public static class PortalDeparture
                 if (bounds != null) bounds.enabled = boundsEnabled;
             }
             if (inventory != null) inventory.enabled = inventoryEnabled;
-            if (follow != null) follow.enabled = followEnabled;
+            cameraSuspension?.Release();
             if (controls != null) controls.Release();
         }
     }

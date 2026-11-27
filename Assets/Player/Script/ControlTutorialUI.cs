@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public sealed class ControlTutorialUI : MonoBehaviour
 {
+    public const float DisplaySizeMultiplier = 1.1f;
     private Image image;
     private Image backdrop;
     private RectTransform rect;
@@ -73,7 +74,7 @@ public sealed class ControlTutorialUI : MonoBehaviour
     {
         clip = ControlHintAnimation.Load(name);
         float width = name == "WASDSpace" ? 158.4f : name == "MouseL" ? 240f : 59.4f;
-        rect.sizeDelta = clip.Size * (width / clip.Size.x);
+        rect.sizeDelta = clip.Size * (width * DisplaySizeMultiplier / clip.Size.x);
         started = Time.unscaledTime;
         image.sprite = clip.Frame(0); image.enabled = true;
         rect.anchoredPosition = new Vector2(-rect.sizeDelta.x - 40f, 0f);
@@ -154,7 +155,7 @@ public sealed class ControlTutorialUI : MonoBehaviour
         }
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(fromRight ? 1 : 0, .5f);
         clip = portalVisual.Animation;
-        rect.sizeDelta = portalVisual.Size * (portalVisual.DisplayWidth / portalVisual.Size.x);
+        rect.sizeDelta = portalVisual.Size * (portalVisual.DisplayWidth * DisplaySizeMultiplier / portalVisual.Size.x);
         started = Time.unscaledTime;
         image.sprite = portalVisual.Frame(0); image.color = Color.white; image.enabled = true;
         rect.anchoredPosition = new Vector2((fromRight ? 1 : -1) * (rect.sizeDelta.x + 40), 0);

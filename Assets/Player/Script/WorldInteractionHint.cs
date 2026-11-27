@@ -32,14 +32,7 @@ public sealed class WorldInteractionHint : MonoBehaviour
         if (lastAnchor != bounds.center)
         {
             lastAnchor = bounds.center;
-            fixedY = bounds.max.y + .5f;
-            foreach (var hit in Physics2D.RaycastAll(bounds.center, Vector2.down, 20f))
-            {
-                if (hit.collider.isTrigger || hit.collider.GetComponentInParent<PlayerMovement2D>() != null
-                    || hit.collider.GetComponentInParent<MonsterFollowController>() != null) continue;
-                fixedY = hit.point.y + player.GetComponent<Collider2D>().bounds.size.y + 1.05f;
-                break;
-            }
+            fixedY = ResolveHeight(bounds, player);
         }
         float distance = Mathf.Abs(player.transform.position.x - bounds.ClosestPoint(player.transform.position).x);
         var interaction = GetComponent<Interactable2D>();
@@ -53,5 +46,43 @@ public sealed class WorldInteractionHint : MonoBehaviour
         Vector3 scale = transform.lossyScale;
         visual.transform.localScale = new Vector3(.36f / Mathf.Max(.001f, Mathf.Abs(scale.x)), .36f / Mathf.Max(.001f, Mathf.Abs(scale.y)), 1);
     }
+
+    // Shared by F interaction prompts and authored world tutorial sprites.
+    public static float ResolveHeight(Bounds anchor, PlayerMovement2D player)
+    {
+        TryResolveHeight(anchor, player, out float height);
+        return height;
+    }
+
+    public static bool TryResolveHeight(Bounds anchor, PlayerMovement2D player, out float height)
+    {
+        height = anchor.max.y + .5f;
+        var body = player != null ? player.GetComponent<Collider2D>() : null;
+        if (body == null) return false;
+        float playerHeight = body.bounds.size.y;
+        if (playerHeight <= 0f && body is BoxCollider2D box)
+            playerHeight = box.size.y * Mathf.Abs(body.transform.lossyScale.y);
+        if (playerHeight <= 0f && body is CapsuleCollider2D capsule)
+            playerHeight = capsule.size.y * Mathf.Abs(body.transform.lossyScale.y);
+        if (playerHeight <= 0f) return false;
+
+        int groundMask = LayerMask.GetMask("Ground");
+        foreach (var hit in Physics2D.RaycastAll(anchor.center, Vector2.down, 20f, groundMask))
+        {
+            if (hit.collider.isTrigger || hit.normal.y < .5f) continue;
+            height = hit.point.y + playerHeight + 1.05f;
+            return true;
+        }
+        // Older maps may not tag their floor with the Ground layer.
+        foreach (var hit in Physics2D.RaycastAll(anchor.center, Vector2.down, 20f))
+        {
+            if (hit.collider.isTrigger || hit.collider.GetComponentInParent<PlayerMovement2D>() != null
+                || hit.collider.GetComponentInParent<MonsterFollowController>() != null) continue;
+            height = hit.point.y + playerHeight + 1.05f;
+            return true;
+        }
+        return false;
+    }
+
     private void OnDisable() { alpha = 0; if (visual != null) visual.color = Color.clear; }
 }
