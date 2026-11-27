@@ -1,3 +1,7 @@
+상호작용 직후에는 망토 장착 튜토리얼이 시작됩니다.
+장착 완료 후 인벤토리가 닫히고, 플레이어 머리 위의 ? 말풍선이 끝난 뒤 garbage_pursuit_monologue.json의 대사가 처음부터 재생됩니다.
+기존 garbage_pickup_monologue.json의 대사는 이 파일 앞부분으로 이동했으며, pickup 파일은 더 이상 사용하지 않습니다.
+
 garbage_pursuit_monologue.json에서 말풍선을 먼저 띄우고 싶은 대사에 다음 항목을 넣으세요.
 "연출": "추격 말풍선"
 

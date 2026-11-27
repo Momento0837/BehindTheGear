@@ -10,8 +10,8 @@ using UnityEngine.UI;
 
 namespace BehindTheGear.HideOut
 {
-    // Runtime-only prototype view. Game state, upgrades and saving remain owned by HideOutPlayerBridge.
-    public sealed class HideOutScene : MonoBehaviour
+    // Prefab-backed presentation; game state, upgrades and saving remain owned by HideOutPlayerBridge.
+    public sealed partial class HideOutScene : MonoBehaviour
     {
         private const float ReferenceWidth = 1600f;
         private const float ReferenceHeight = 900f;
@@ -36,6 +36,10 @@ namespace BehindTheGear.HideOut
         }
 
         public HideOutSettings settings;
+        [Tooltip("Editable full Canvas. When assigned, its layout is used without rebuilding the UI.")]
+        public HideOutCanvasView canvasPrefab;
+        [Tooltip("Authored 2D base artwork. When assigned, no procedural 3D environment is generated.")]
+        public HideOutSpriteEnvironment spriteEnvironment;
         [Tooltip("Existing gameplay rig used only when playing the base scene without a live player.")]
         public GameObject trainingPlayerPrefab;
         [Tooltip("Seconds for each half of the training scene fade, after the facility camera arrives.")]
@@ -150,6 +154,8 @@ namespace BehindTheGear.HideOut
         private readonly Dictionary<Facility, Image> hotspotRings = new();
         private readonly Dictionary<Facility, Button> facilityButtons = new();
         private readonly Dictionary<Facility, TMP_Text> facilityLevelLabels = new();
+        private readonly Dictionary<Facility, TMP_Text> facilityNameLabels = new();
+        private readonly Dictionary<Facility, string> authoredFacilityNames = new();
         private readonly Dictionary<Facility, Transform> cameraAnchors = new();
         private readonly Dictionary<Facility, Transform> facilityWorldAnchors = new();
         private readonly Dictionary<Facility, RectTransform> facilityOverlayRoots = new();
@@ -228,15 +234,27 @@ namespace BehindTheGear.HideOut
             player.UpgradeSucceeded += OnFacilityUpgraded;
             player.Inventory.Changed += Refresh;
             Refresh();
+            if (spriteEnvironment != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                LateUpdate(); // Establish screen positions before sorting icons by distance from screen center.
+                entryPresentation = gameObject.AddComponent<BaseEntrancePresentation>();
+                entryPresentation.Begin(spriteEnvironment, hideoutCamera, cameraController,
+                    facilityOverlayRoots, ui, Refresh);
+                RefreshFacilityInput();
+            }
             StartCoroutine(GreetAfterContinue());
         }
+
+        private BaseEntrancePresentation entryPresentation;
+        public bool EntryAnimationPlaying => entryPresentation != null && entryPresentation.IsPlaying;
 
         // 이어하기 (Continue) only: Selena welcomes the player back once, in the base view, after the fade-in.
         // Other Selena lines stay tied to their booths. Skipped before the base tutorial / recruitment.
         private System.Collections.IEnumerator GreetAfterContinue()
         {
             if (!SelenaGameState.TakeContinueGreeting()) yield break;
-            while (SceneFadeTransition.IsRunning) yield return null;
+            while (SceneFadeTransition.IsRunning || EntryAnimationPlaying) yield return null;
             yield return null;
             if (editorPreview || player == null || !player.Initialized || !player.State.baseTutorialComplete) yield break;
             SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Continued), transform);
@@ -320,6 +338,8 @@ namespace BehindTheGear.HideOut
 
         private void Update()
         {
+            UpdateTreatmentTutorialHint();
+            if (BaseArrivalTutorial.IsShowing || EntryAnimationPlaying) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame)
                 ToggleFacilityLocksForTesting();
@@ -353,7 +373,6 @@ namespace BehindTheGear.HideOut
         private void BuildUI()
         {
             if (!editorPreview) EnsureEventSystem();
-            circleSprite = CreateCircleSprite();
 
             hideoutCamera ??= gameObject.scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<Camera>(true))
@@ -363,6 +382,14 @@ namespace BehindTheGear.HideOut
             hideoutCamera.clearFlags = CameraClearFlags.SolidColor;
             hideoutCamera.backgroundColor = new Color(.008f, .012f, .015f, 1f);
             BuildTopViewMap();
+
+            if (canvasPrefab != null)
+            {
+                BindCanvas(Instantiate(canvasPrefab, transform, false));
+                ConfigureTopViewCamera();
+                return;
+            }
+            circleSprite = CreateCircleSprite();
 
             var canvasObject = new GameObject("HideOut UI", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             ui = canvasObject.transform;
@@ -392,7 +419,7 @@ namespace BehindTheGear.HideOut
             // covers the HP/MP/coin/AP cards (now y 14..62 after the 0.8 top-HUD scale; originally y 18..78). 650x820 * .76 = 494x623 -> y 88..711, right edge 1580.
             upgradeOverlay.transform.Find("Upgrade Panel").localScale = Vector3.one * .76f;
             Rect(upgradeOverlay.transform.Find("Upgrade Panel").GetComponent<RectTransform>(), 1086, 88, 650, 820);
-            Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
+            if (boundCanvas == null) Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
             ConfigureTopViewCamera();
         }
 
@@ -406,6 +433,20 @@ namespace BehindTheGear.HideOut
 
         private void BuildTopViewMap()
         {
+            if (spriteEnvironment != null)
+            {
+                spriteEnvironment.Initialize(hideoutCamera);
+                facilityWorldAnchors.Clear();
+                cameraAnchors.Clear();
+                foreach (var area in spriteEnvironment.areas)
+                {
+                    if (area == null) continue;
+                    if (area.iconAnchor != null) facilityWorldAnchors[area.facility] = area.iconAnchor;
+                    if (area.focusAnchor != null) cameraAnchors[area.facility] = area.focusAnchor;
+                }
+                overviewCameraAnchor = MapAnchor("OverviewCameraAnchor", spriteEnvironment.OverviewPosition(hideoutCamera));
+                return;
+            }
             var environmentObject = new GameObject("HideOut Isometric Diorama");
             environmentObject.transform.SetParent(transform, false);
             isometricEnvironment = environmentObject.AddComponent<HideOutIsometricEnvironment>();
@@ -441,7 +482,7 @@ namespace BehindTheGear.HideOut
         private Transform MapAnchor(string name, Vector3 position)
         {
             var anchor = new GameObject(string.IsNullOrWhiteSpace(name) ? "FacilityCameraAnchor" : name);
-            anchor.transform.SetParent(isometricEnvironment.transform, false);
+            anchor.transform.SetParent(spriteEnvironment != null ? transform : isometricEnvironment.transform, false);
             anchor.transform.position = position;
             return anchor.transform;
         }
@@ -450,6 +491,17 @@ namespace BehindTheGear.HideOut
         {
             cameraController = hideoutCamera.GetComponent<HideOutCameraController>()
                 ?? hideoutCamera.gameObject.AddComponent<HideOutCameraController>();
+            if (spriteEnvironment != null)
+            {
+                var presentation = JsonUtility.FromJson<HideOutTopViewPresentation>(JsonUtility.ToJson(settings.topView));
+                float overviewSize = spriteEnvironment.OverviewSize(hideoutCamera);
+                presentation.minimumOrthographicSize = spriteEnvironment.minimumCameraSize;
+                presentation.maximumOrthographicSize = overviewSize;
+                cameraController.Configure(overviewCameraAnchor.position, Quaternion.identity, overviewSize,
+                    presentation.cameraMoveDuration, spriteEnvironment.worldBounds, presentation, true);
+                if (!editorPreview) cameraController.MoveCompleted += Refresh;
+                return;
+            }
             cameraController.Configure(overviewCameraAnchor.position, Quaternion.Euler(settings.topView.cameraEuler),
                 settings.topView.overviewOrthographicSize, settings.topView.cameraMoveDuration,
                 isometricEnvironment.WorldBounds, settings.topView);
@@ -798,6 +850,8 @@ namespace BehindTheGear.HideOut
                 if (facilityWorldAnchors.ContainsKey(facility))
                     BuildFacilityOverlayIcon(parent, facility, DisplayName(facility), icon => DrawRegisteredIcon(facility, icon));
 
+            if (spriteEnvironment != null) return; // The authored dummy is entered through its facility icon.
+
             dummyTargetButton = Button(parent, "Training Dummy Screen Target", 0, 0, 150, 210,
                 OnDummySelected, new Color(1f, 1f, 1f, .001f), 0);
             dummyTargetRect = dummyTargetButton.GetComponent<RectTransform>();
@@ -829,7 +883,10 @@ namespace BehindTheGear.HideOut
             hotspotRings[facility] = ring;
 
             var button = Button(root, label + " Facility Icon", 48, -2, 88, 88,
-                () => SelectFacility(facility), new Color(.055f, .065f, .067f, .98f), 0);
+                () => SelectFacility(facility), Color.black, 0);
+            var iconColors = button.colors;
+            iconColors.disabledColor = Color.white;
+            button.colors = iconColors;
             button.GetComponent<Image>().sprite = circleSprite;
             facilityButtons[facility] = button;
             var outline = button.gameObject.AddComponent<Outline>();
@@ -839,6 +896,8 @@ namespace BehindTheGear.HideOut
 
             // Facility name / level under the icon: larger and bold for readability over the 3D base.
             TMP_Text nameLabel = Text(root, label, 0, 91, 184, 30, 22, Color.white);
+            facilityNameLabels[facility] = nameLabel;
+            authoredFacilityNames[facility] = label;
             nameLabel.alignment = TextAlignmentOptions.Center;
             UIFontTheme.Apply(nameLabel, UIFontTheme.Bold);
             TMP_Text level = Text(root, "", 0, 122, 184, 28, 19, Accent);
@@ -850,7 +909,8 @@ namespace BehindTheGear.HideOut
 
         private void DrawRegisteredIcon(Facility facility, Transform parent)
         {
-            var sprite = settings.FindPresentation(facility)?.icon;
+            var sprite = spriteEnvironment != null ? spriteEnvironment.Find(facility)?.icon : null;
+            sprite ??= settings.FindPresentation(facility)?.icon;
             if (sprite != null) { var image = Box(parent, "Registered Icon", 18, 18, 52, 52, Color.white); image.sprite = sprite; image.preserveAspect = true; return; }
             if (facility == Facility.Clinic) DrawMedicalIcon(parent);
             else if (facility == Facility.Storage) DrawStorageIcon(parent);
@@ -1156,7 +1216,8 @@ namespace BehindTheGear.HideOut
         {
             if (editorPreview || HideOutModel.IsExhibition(facility)) return;
             Refresh(); // Apply the persisted appearance before the animation hook.
-            if (isometricEnvironment.isActiveAndEnabled) isometricEnvironment.PlayUpgradeFeedback(facility);
+            if (spriteEnvironment != null) spriteEnvironment.PlayUpgradeFeedback(facility, level);
+            else if (isometricEnvironment != null && isometricEnvironment.isActiveAndEnabled) isometricEnvironment.PlayUpgradeFeedback(facility);
             onFacilityUpgraded.Invoke((int)facility, level);
         }
 
@@ -1227,7 +1288,7 @@ namespace BehindTheGear.HideOut
 
         private void ExitHideOut()
         {
-            if (trainingTransitionPending || SceneFadeTransition.IsRunning || selenaLeavingLine || SelenaBaseDialogue.IsShowing) return;
+            if (EntryAnimationPlaying || trainingTransitionPending || SceneFadeTransition.IsRunning || selenaLeavingLine || SelenaBaseDialogue.IsShowing || BaseArrivalTutorial.IsShowing) return;
             // leaving: Selena says one line first; the exit runs after the player closes it.
             // When she stays silent (not recruited, no dialogue template) the exit runs immediately as before.
             if (SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Leaving), transform,
@@ -1356,6 +1417,7 @@ namespace BehindTheGear.HideOut
 
         private void SelectFacility(Facility facility)
         {
+            if (BaseArrivalTutorial.IsShowing || EntryAnimationPlaying) return;
             if (IsLocked(facility)) return;
             if (editorPreview) { if (hasSelection && selected == facility) HideEditorDetails(); else ShowEditorSample(facility); return; }
             if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
@@ -1387,7 +1449,9 @@ namespace BehindTheGear.HideOut
             RefreshFacilityInput();
 
             trainingTransitionPending = UsesFacilityRoom(facility);
-            if (!cameraController.TryFocus(anchor, focus.orthographicSize, () => OpenSelectedFacility(facility)))
+            float focusSize = spriteEnvironment != null ? spriteEnvironment.Find(facility)?.focusSize ?? focus.orthographicSize : focus.orthographicSize;
+            if (spriteEnvironment != null) focusSize = spriteEnvironment.FacilityFocusSize(focusSize);
+            if (!cameraController.TryFocus(anchor, focusSize, () => OpenSelectedFacility(facility)))
             {
                 trainingTransitionPending = false;
                 hasSelection = false;
@@ -1427,7 +1491,8 @@ namespace BehindTheGear.HideOut
                 double readyBefore = player.State.clinicReadyAt;
                 player.Heal();
                 // after_heal: only when the existing heal transaction actually ran (it moves clinicReadyAt).
-                if (player.State.clinicReadyAt != readyBefore)
+                if (player.State.clinicReadyAt != readyBefore
+                    && !BaseArrivalTutorial.TryShowAfterTreatment(this, player, transform))
                     SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.AfterHeal), transform);
             }
             else if (selected == Facility.Potions) player.ReceivePotions();
@@ -1490,7 +1555,7 @@ namespace BehindTheGear.HideOut
 
         private void ReturnToOverview()
         {
-            if (trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController == null || cameraController.IsMoving) return;
+            if (EntryAnimationPlaying || trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController == null || cameraController.IsMoving) return;
             dummyTesting = false;
             exhibitionPanel.SetActive(false);
             HideStoragePanelSilently();
@@ -1555,7 +1620,7 @@ namespace BehindTheGear.HideOut
             trainingPanelTarget = target;
             trainingPanelParent = dummyPanel.transform.parent;
             dummyPanel.transform.SetParent(parent, false);
-            Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
+            if (boundCanvas == null) Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
             dummyTestButton.gameObject.SetActive(false);
             dummyPanel.SetActive(true);
             RefreshDummyPanel();
@@ -1566,7 +1631,7 @@ namespace BehindTheGear.HideOut
             if (trainingPanelParent == null) return;
             dummyPanel.SetActive(false);
             dummyPanel.transform.SetParent(trainingPanelParent, false);
-            Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
+            if (boundCanvas == null) Rect(dummyPanel.GetComponent<RectTransform>(), 202, 500, 1196, 270);
             trainingPanelParent = null;
             trainingPanelTarget = null;
             dummyTestButton.gameObject.SetActive(true);
@@ -1758,7 +1823,9 @@ namespace BehindTheGear.HideOut
         private void ShowFacilityTooltip(Facility facility, RectTransform anchor)
         {
             bool locked = IsLocked(facility);
-            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
+            tooltipText.text = locked ? "???\nLv. ?" : HideOutModel.IsExhibition(facility)
+                ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기"
+                : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  선택 가능";
             ShowTooltip(anchor);
         }
 
@@ -1838,8 +1905,9 @@ namespace BehindTheGear.HideOut
                 roomNameText.text = BaseOverviewName;
                 if (cameraController != null) cameraController.SnapToOverview();
             }
-            foreach (var cover in isometricEnvironment.GetComponentsInChildren<HideOutFacilityLockCover>(true))
-                cover.SetLocked(!unlock);
+            if (isometricEnvironment != null)
+                foreach (var cover in isometricEnvironment.GetComponentsInChildren<HideOutFacilityLockCover>(true))
+                    cover.SetLocked(!unlock);
             HideTooltip();
             Refresh();
         }
@@ -1850,10 +1918,7 @@ namespace BehindTheGear.HideOut
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (testFacilitiesUnlocked) return false;
 #endif
-            if (facility == Facility.Clinic && player.State.baseTutorialComplete) return false;
-            if (facility != Facility.Bed) return true;
-            var presentation = settings.FindPresentation(facility);
-            return presentation != null && presentation.prototypeLocked || HideOutModel.Locked(player.State, facility);
+            return !HideOutModel.StoryUnlocked(player.State, facility);
         }
 
         private string DisplayName(Facility facility)
@@ -1906,8 +1971,10 @@ namespace BehindTheGear.HideOut
             resourceValues[1].text = $"{state.mana}/{player.MaxMana}";
             resourceValues[2].text = state.coins.ToString("N0");
             resourceValues[3].text = state.actionPoints.ToString("N0");
-            resourceBars[0].rectTransform.sizeDelta = new Vector2(ResourceGaugeWidth * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), 3f);
-            resourceBars[1].rectTransform.sizeDelta = new Vector2(ResourceGaugeWidth * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), 3f);
+            Vector2 hpGauge = boundCanvas != null ? boundCanvas.resourceTracks[0].rect.size : new Vector2(ResourceGaugeWidth, 3f);
+            Vector2 mpGauge = boundCanvas != null ? boundCanvas.resourceTracks[1].rect.size : new Vector2(ResourceGaugeWidth, 3f);
+            resourceBars[0].rectTransform.sizeDelta = new Vector2(hpGauge.x * Mathf.Clamp01((float)player.Health.CurrentHealth / Math.Max(1, player.Health.MaxHealth)), hpGauge.y);
+            resourceBars[1].rectTransform.sizeDelta = new Vector2(mpGauge.x * Mathf.Clamp01((float)state.mana / Math.Max(1, player.MaxMana)), mpGauge.y);
             feedbackText.text = player.Message;
             if (questSummaryText != null) questSummaryText.text = QuestTracker.CurrentQuestName + (QuestTracker.ShowObjective ? "\n" + QuestTracker.CurrentObjective : "");
             RefreshStorageAppearance();
@@ -1924,31 +1991,43 @@ namespace BehindTheGear.HideOut
             foreach (var pair in hotspotRings)
             {
                 bool active = hasSelection && pair.Key == selected;
+                var authored = PrefabFacility(pair.Key);
                 float alpha = active && pair.Key == Facility.Dummy && dummyTesting ? .58f : .38f;
-                pair.Value.color = active ? new Color(Accent.r, Accent.g, Accent.b, alpha) : AccentSoft;
-                pair.Value.rectTransform.sizeDelta = active ? new Vector2(116, 116) : new Vector2(108, 108);
+                pair.Value.color = active ? new Color(Accent.r, Accent.g, Accent.b, alpha) : authored?.normalRingColor ?? AccentSoft;
+                Vector2 normalSize = authored?.normalRingSize ?? new Vector2(108, 108);
+                pair.Value.rectTransform.sizeDelta = active ? normalSize * (116f / 108f) : normalSize;
                 if (facilityButtons.TryGetValue(pair.Key, out Button button))
                 {
                     var outline = button.GetComponent<Outline>();
                     if (outline != null)
                         outline.effectColor = active
                             ? new Color(1f, .68f, .22f, 1f)
-                            : new Color(.76f, .77f, .72f, .7f);
+                            : authored?.normalOutlineColor ?? new Color(.76f, .77f, .72f, .7f);
                 }
             }
         }
 
         private void RefreshFacilityLevels()
         {
+            foreach (var pair in facilityNameLabels)
+                if (pair.Value != null) pair.Value.text = IsLocked(pair.Key) ? "???" : authoredFacilityNames[pair.Key];
             foreach (var pair in facilityLevelLabels)
-                pair.Value.text = IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}";
+                pair.Value.text = IsLocked(pair.Key) ? "Lv. ?" : $"Lv. {player.State.levels[(int)pair.Key]}";
             foreach (var pair in shortcutLabels)
             {
-                pair.Value.text = $"{DisplayName(pair.Key)}\n" + (IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}");
-                shortcutButtons[pair.Key].GetComponent<Image>().color = hasSelection && selected == pair.Key ? AccentSoft : PanelSoft;
+                pair.Value.text = IsLocked(pair.Key) ? "???\nLv. ?" : $"{DisplayName(pair.Key)}\nLv. {player.State.levels[(int)pair.Key]}";
+                shortcutButtons[pair.Key].GetComponent<Image>().color = hasSelection && selected == pair.Key ? AccentSoft : PrefabFacility(pair.Key)?.normalShortcutColor ?? PanelSoft;
             }
-            isometricEnvironment.RefreshFacilityVisuals(player.State.levels);
-            isometricEnvironment.ApplyArt(settings, player.State.levels);
+            if (spriteEnvironment != null)
+            {
+                spriteEnvironment.ApplyLevels(player.State.levels);
+                spriteEnvironment.ApplyLocks(IsLocked);
+            }
+            else if (isometricEnvironment != null)
+            {
+                isometricEnvironment.RefreshFacilityVisuals(player.State.levels);
+                isometricEnvironment.ApplyArt(settings, player.State.levels);
+            }
         }
 
         private void RefreshFacilityInput()
@@ -1957,9 +2036,9 @@ namespace BehindTheGear.HideOut
             if (testFacilityToggleLabel != null)
                 testFacilityToggleLabel.text = testFacilitiesUnlocked ? "TEST  다시 잠금 [F8]" : "TEST  전체 해금 [F8]";
 #endif
-            bool moving = trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
-            foreach (var pair in facilityButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));
-            foreach (var pair in shortcutButtons) HideOutFacilityLockCover.ShowLock(pair.Value, IsLocked(pair.Key));
+            bool moving = EntryAnimationPlaying || BaseArrivalTutorial.IsShowing || trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
+            foreach (var pair in facilityButtons) RefreshFacilityArtwork(pair.Value, IsLocked(pair.Key));
+            foreach (var pair in shortcutButtons) RefreshFacilityArtwork(pair.Value, IsLocked(pair.Key));
             foreach (var pair in facilityButtons) pair.Value.interactable = !IsLocked(pair.Key) && !moving && (!dummyTesting || selected == pair.Key);
             foreach (var pair in shortcutButtons) pair.Value.interactable = !IsLocked(pair.Key) && !moving && (!dummyTesting || selected == pair.Key);
             if (dummyTargetButton != null)
@@ -2094,7 +2173,7 @@ namespace BehindTheGear.HideOut
             dummyDamageText.text = weapon != null && player.Melee != null ? player.EquippedWeaponFinalDamage.ToString() : "-";
             dummyBonusText.text = weapon != null ? $"+{player.EquippedWeaponDummyBonus}" : "+0";
             var target = trainingPanelTarget != null ? trainingPanelTarget : dummy;
-            dummyLastDamageText.text = target.Hits > 0 ? target.LastDamage.ToString() : "-";
+            dummyLastDamageText.text = target != null && target.Hits > 0 ? target.LastDamage.ToString() : "-";
 
             var lines = new List<string>();
             if (cost == null) lines.Add("최대 강화 단계");
@@ -2147,7 +2226,8 @@ namespace BehindTheGear.HideOut
             upgradeTitle.text = DisplayName(selected);
             upgradeLevel.text = $"현재 강화 단계  Lv. {level}";
             progressText.text = maximum > 0 && level < maximum ? $"Lv. {level}   →   Lv. {level + 1}" : $"Lv. {level}   ·   최대 단계";
-            progressFill.rectTransform.sizeDelta = new Vector2(602f * (maximum > 0 ? Mathf.Clamp01(level / (float)maximum) : 0f), 22f);
+            Vector2 progressSize = boundCanvas != null ? boundCanvas.progressTrack.rect.size : new Vector2(602f, 22f);
+            progressFill.rectTransform.sizeDelta = new Vector2(progressSize.x * (maximum > 0 ? Mathf.Clamp01(level / (float)maximum) : 0f), progressSize.y);
             timerText.text = "강화 시간  ·  즉시 완료";
             if (selected == Facility.Potions) timerText.text = missingPotion ? "물약 정의 설정 누락" : IsLocked(selected) ? "셀레나 영입 필요" : $"수령 대기 {Math.Max(0, state.potionsReadyAt - player.Now):0}초";
             if (selected == Facility.Clinic && !IsLocked(selected))

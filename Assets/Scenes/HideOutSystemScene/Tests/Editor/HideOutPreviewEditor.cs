@@ -27,7 +27,7 @@ public sealed class HideOutPreviewEditor : Editor
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling
             || PrefabStageUtility.GetCurrentPrefabStage() != null || previewRoot != null) return;
         foreach (var view in Object.FindObjectsByType<HideOutScene>(FindObjectsSortMode.None))
-            if (view.editorAutoPreview && view.settings != null && view.gameObject.hideFlags == HideFlags.None
+            if (view.spriteEnvironment == null && view.editorAutoPreview && view.settings != null && view.gameObject.hideFlags == HideFlags.None
                 && view.gameObject.scene.path == view.settings.scenePath)
             { Generate(view); return; }
     }
@@ -39,7 +39,7 @@ public sealed class HideOutPreviewEditor : Editor
     }
     public static void Generate(HideOutScene source)
     {
-        if (Application.isPlaying || PrefabStageUtility.GetCurrentPrefabStage() != null || source.settings == null) return;
+        if (Application.isPlaying || PrefabStageUtility.GetCurrentPrefabStage() != null || source.settings == null || source.spriteEnvironment != null) return;
         Clear(); owner = source;
         previewRoot = new GameObject("HideOut Editor Preview (temporary)");
         UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(previewRoot, source.gameObject.scene);
@@ -62,6 +62,11 @@ public sealed class HideOutPreviewEditor : Editor
         if (Application.isPlaying) return;
         var source = (HideOutScene)target;
         EditorGUILayout.Space();
+        if (source.spriteEnvironment != null)
+        {
+            EditorGUILayout.HelpBox("2D 기지는 씬에 배치한 스프라이트를 그대로 사용합니다. Base의 Hide Out Sprite Environment에서 Areas(시설·아이콘·카메라)와 Upgrade Props(등장 단계), Drop Pixels·Duration을 조절하세요. 시설 UI는 Play에서 확인할 수 있습니다.", MessageType.Info);
+            return;
+        }
         EditorGUILayout.HelpBox("씬 열기 / Play 종료 시 Scene·Game 미리보기를 복원합니다. 샘플 데이터만 사용하며 Play 진입 전 정리됩니다. 외형 수정 후에는 갱신 버튼을 누르세요.", MessageType.Info);
         using (new EditorGUI.DisabledScope(PrefabStageUtility.GetCurrentPrefabStage() != null || source.settings == null))
         {

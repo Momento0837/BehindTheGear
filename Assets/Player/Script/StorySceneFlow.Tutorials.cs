@@ -100,23 +100,18 @@ public sealed partial class StorySceneFlow
         }
     }
 
-    private IEnumerator GarbagePickupReaction()
+    private IEnumerator GarbageEquipmentReaction()
     {
-        AcquireTutorialControls();
         var reaction = player.gameObject.AddComponent<AutomaticNpcBubble>();
         reaction.PlayerReaction = true;
         try
         {
             reaction.Begin(dialogue.TalkingImage, new[] { "?" });
             while (reaction.IsPlaying) yield return null;
-            Destroy(reaction);
-            reaction = null;
-            yield return Say("Garbage/garbage_pickup_monologue");
         }
         finally
         {
             if (reaction != null) Destroy(reaction);
-            ReleaseTutorialControls();
         }
     }
 

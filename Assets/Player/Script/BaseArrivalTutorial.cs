@@ -6,6 +6,13 @@ using BehindTheGear.HideOut;
 
 public sealed class BaseArrivalTutorial : MonoBehaviour
 {
+    private static ConversationDialogue active;
+    public static bool IsShowing => active != null;
+    public const string TreatmentDialoguePath = "Dialogue/Hideout/base_treatment_tutorial";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetState() => active = null;
+
     public static bool ClinicUnlocked
     {
         get
@@ -15,38 +22,83 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
             return bridge != null && bridge.Initialized && bridge.State.baseTutorialComplete;
         }
     }
-    IEnumerator Start()
+    private IEnumerator Start()
     {
         yield return null;
         var actor = PlayerTargetRegistry.Current;
-        if (actor == null) yield break;
+        var bridge = actor != null ? actor.GetComponent<HideOutPlayerBridge>() : null;
+        if (bridge == null || !bridge.Initialized) yield break;
+        var baseScene = GetComponent<HideOutScene>();
+        while (SceneFadeTransition.IsRunning || baseScene != null && baseScene.EntryAnimationPlaying) yield return null;
+        if (bridge.State.baseTutorialComplete)
+        {
+            TryShowAfterTreatment(this, bridge, transform);
+            yield break;
+        }
         var progress = actor.GetComponent<PrototypeTutorialState>();
-        var bridge = actor.GetComponent<HideOutPlayerBridge>();
-        if (progress == null || !progress.SelenaArrived || bridge == null || bridge.State.baseTutorialComplete) yield break;
-        while (SceneFadeTransition.IsRunning) yield return null;
-        var template = FindObjectsByType<ConversationDialogue>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(d => d.BodyText != null);
-        if (template == null) { Debug.LogError("[Base tutorial] No dialogue template available."); yield break; }
-        var raycasters = GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.enabled).ToArray();
+        if (progress == null || !progress.SelenaArrived) yield break;
+        TryShow(this, bridge, transform, "Dialogue/Hideout/base_upgrade_tutorial", false);
+    }
+
+    public static bool TryShowAfterTreatment(MonoBehaviour host, HideOutPlayerBridge bridge, Transform inputRoot)
+    {
+        if (bridge == null || !bridge.Initialized || !bridge.State.baseTutorialComplete
+            || !bridge.State.baseFirstTreatmentComplete || bridge.State.baseTreatmentDialogueComplete) return false;
+        return TryShow(host, bridge, inputRoot, TreatmentDialoguePath, true);
+    }
+
+    private static bool TryShow(MonoBehaviour host, HideOutPlayerBridge bridge, Transform inputRoot, string path, bool afterTreatment)
+    {
+        if (host == null || !host.isActiveAndEnabled || IsShowing || SelenaBaseDialogue.IsShowing) return false;
+        var content = Resources.Load<TextAsset>(path);
+        var template = FindObjectsByType<ConversationDialogue>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .FirstOrDefault(d => d.BodyText != null && !d.IsPlaying);
+        if (content == null || template == null)
+        {
+            Debug.LogError($"[Base tutorial] Missing dialogue JSON or presentation: {path}");
+            return false;
+        }
+        host.StartCoroutine(Play(host.transform, bridge, inputRoot, template, content, afterTreatment));
+        return true;
+    }
+
+    private static IEnumerator Play(Transform parent, HideOutPlayerBridge bridge, Transform inputRoot,
+        ConversationDialogue template, TextAsset content, bool afterTreatment)
+    {
+        var raycasters = inputRoot.GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.enabled).ToArray();
         foreach (var r in raycasters) r.enabled = false;
-        var presentation = template.CreateTutorialPresentation(transform);
+        ConversationDialogue presentation = null;
         try
         {
-            presentation.Play(Resources.Load<TextAsset>("Dialogue/Hideout/base_upgrade_tutorial"));
-            while (presentation.IsPlaying) yield return null;
-            bridge.State.baseTutorialComplete = true;
-            bridge.SetSelenaRecruited();
-            var reward = Resources.Load<InventoryItemDefinition>("Story/TutorialRecoveryPotion");
-            if (reward != null && bridge.Inventory.Add(reward, 1) != 1)
+            active = presentation = template.CreateTutorialPresentation(parent);
+            presentation.Play(content);
+            // A missing/empty JSON must never grant an unlock.
+            if (!presentation.IsPlaying) yield break;
+            while (presentation != null && presentation.IsPlaying) yield return null;
+            if (presentation == null || bridge == null) yield break;
+            // Separate completion from any heal/button transaction on this frame.
+            yield return null;
+            bool completed = bridge.Change(state =>
             {
-                // Preserve the one-time reward even when the bag is full.
-                bridge.State.storage.Add(new ItemStack(reward.ItemId, 1));
-                bridge.SetMessage("가방이 가득 차 회복 물약을 창고에 보관했습니다.");
+                if (afterTreatment) state.baseTreatmentDialogueComplete = true;
+                else { state.baseTutorialComplete = true; state.selenaRecruited = true; }
+                return afterTreatment ? "물약 보관대가 열렸습니다." : "치료구역이 열렸습니다.";
+            });
+            if (completed && !afterTreatment)
+            {
+                var reward = Resources.Load<InventoryItemDefinition>("Story/TutorialRecoveryPotion");
+                if (reward != null && bridge.Inventory.Add(reward, 1) != 1)
+                {
+                    bridge.State.storage.Add(new ItemStack(reward.ItemId, 1));
+                    bridge.SetMessage("가방이 가득 차 회복 물약을 창고에 보관했습니다.");
+                }
             }
         }
         finally
         {
             foreach (var r in raycasters) if (r != null) r.enabled = true;
             if (presentation != null) Destroy(presentation.gameObject);
+            active = null;
         }
     }
 }

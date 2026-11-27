@@ -109,7 +109,7 @@ namespace BehindTheGear.HideOut
             try
             {
                 Capture(State);
-                var candidate = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+                var candidate = CopyState();
                 string result = operation(candidate); // Failed operations throw before publishing.
                 SaveSnapshotValidation.StampFacilities(candidate, Settings);
                 Validate(candidate);
@@ -208,7 +208,7 @@ namespace BehindTheGear.HideOut
             busy = true; lastCommandFrame = Time.frameCount;
             try
             {
-                var snapshot = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+                var snapshot = CopyState();
                 Capture(snapshot);
                 snapshot.version = 2;
                 snapshot.facilities.Clear();
@@ -242,13 +242,29 @@ namespace BehindTheGear.HideOut
         public void Load()
         {
             if (busy) return;
-            try { RestoreSnapshot(ManualSaveStore.Read(SavePath)); SetMessage("저장 복원 완료"); }
+            try
+            {
+                var snapshot = ManualSaveStore.Read(SavePath);
+                // Direct-scene sandbox saves have no field destination. Unity serializes inline null
+                // classes as empty objects; do not mistake that placeholder for a real return record.
+                if (Sandbox && string.IsNullOrEmpty(snapshot.fieldReturn?.scenePath)) snapshot.fieldReturn = null;
+                RestoreSnapshot(snapshot);
+                SetMessage("저장 복원 완료");
+            }
             catch (Exception e) { SetMessage("불러오기 실패: " + e.Message); }
         }
+
+        private HideOutSave CopyState()
+        {
+            var copy = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+            if (State.fieldReturn == null) copy.fieldReturn = null;
+            return copy;
+        }
+
         public void RestoreSnapshot(HideOutSave snapshot)
         {
             Validate(snapshot);
-            var previous = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+            var previous = CopyState();
             Capture(previous);
             try
             {
@@ -368,6 +384,9 @@ namespace BehindTheGear.HideOut
                 s.equipment = new string[6];
                 s.quickSlots = new string[3];
                 s.selenaRecruited = false;
+                s.baseTutorialComplete = false;
+                s.baseFirstTreatmentComplete = false;
+                s.baseTreatmentDialogueComplete = false;
                 s.clinicSpeedLevel = 0;
                 s.clinicReadyAt = 0;
                 s.potionsReadyAt = 0;

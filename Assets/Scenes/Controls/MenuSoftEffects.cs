@@ -24,7 +24,7 @@ public sealed class MenuSoftEffects : MonoBehaviour
         foreach (var label in GetComponentsInChildren<TextMeshProUGUI>(true))
         {
             var button = label.GetComponentInParent<Button>();
-            if (button == null || (button.name != "Start" && button.name != "Quit")) continue;
+            if (button == null || (button.name != "Start" && button.name != "Quit" && button.name != "Setting")) continue;
             label.gameObject.AddComponent<MenuTextGlow>().Configure(buttonTextGlowRadius, buttonTextGlowOpacity);
         }
         if (effectShader == null) return;

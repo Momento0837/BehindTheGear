@@ -8,4 +8,4 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: b8ccc3fb51844d0da5839ebe632756a4, type: 3}
-  pixelsPerUnit: 100
+  pixelsPerUnit: 11
