@@ -202,20 +202,26 @@ namespace BehindTheGear.HideOut
             if (!HideOutModel.ReceivePotions(s, Settings.rules, Settings, Now, out string message)) throw new InvalidOperationException(message);
             return message;
         });
+        /// <summary>Validated snapshot of the current game, exactly what Save() writes (also used by the quit auto-save).</summary>
+        public HideOutSave CaptureSnapshot()
+        {
+            var snapshot = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
+            Capture(snapshot);
+            snapshot.version = 2;
+            snapshot.facilities.Clear();
+            foreach (Facility f in Enum.GetValues(typeof(Facility)))
+                snapshot.facilities.Add(new FacilityProgress { facilityId = Settings.FindPresentation(f).facilityId,
+                    level = snapshot.levels[(int)f], unlocked = !HideOutModel.Locked(snapshot, f) });
+            Validate(snapshot);
+            return snapshot;
+        }
         public bool Save()
         {
             if (busy || lastCommandFrame == Time.frameCount) return false;
             busy = true; lastCommandFrame = Time.frameCount;
             try
             {
-                var snapshot = JsonUtility.FromJson<HideOutSave>(JsonUtility.ToJson(State));
-                Capture(snapshot);
-                snapshot.version = 2;
-                snapshot.facilities.Clear();
-                foreach (Facility f in Enum.GetValues(typeof(Facility)))
-                    snapshot.facilities.Add(new FacilityProgress { facilityId = Settings.FindPresentation(f).facilityId,
-                        level = snapshot.levels[(int)f], unlocked = !HideOutModel.Locked(snapshot, f) });
-                Validate(snapshot);
+                var snapshot = CaptureSnapshot();
                 ManualSaveStore.Write(SavePath, snapshot);
                 SetMessage("저장 완료");
                 CloudSaveSync.UploadAfterBedSave(this); // Never throws; no-op unless signed in and on the real slot.

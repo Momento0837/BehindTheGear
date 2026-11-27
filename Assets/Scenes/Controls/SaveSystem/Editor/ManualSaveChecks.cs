@@ -161,9 +161,8 @@ public static class ManualSaveChecks
         SaveGameSession.ReturnToMenu();
         while (SceneManager.GetActiveScene().name != "ControlSchemeSelect" || SceneFadeTransition.IsRunning) yield return null;
         menu = Object.FindFirstObjectByType<ManualSaveMenu>(); yield return null;
-        menu.NewGame(); menu.Cancel(); Check(!menu.ChoosingControls, "overwrite cancellation keeps menu and slot");
-        menu.NewGame(); menu.Confirm();
-        Check(File.ReadAllBytes(ManualSaveStore.SlotPath).SequenceEqual(original), "overwrite approval starts new session without replacing file");
+        menu.NewGame(); menu.Cancel();
+        Check(!menu.ChoosingControls && File.ReadAllBytes(ManualSaveStore.SlotPath).SequenceEqual(original), "new game cancellation keeps menu and slot");
         SaveGameSession.ReturnToMenu();
         while (SceneFadeTransition.IsRunning || Object.FindFirstObjectByType<ManualSaveMenu>() == menu) yield return null;
         menu = Object.FindFirstObjectByType<ManualSaveMenu>(); yield return null; menu.Continue();
@@ -253,7 +252,7 @@ public static class ManualSaveChecks
         menu.NewGame(); menu.Confirm(); Object.FindFirstObjectByType<ControlSchemeSelectScene>().SelectArrowKeys();
         while (SceneManager.GetActiveScene().name != "Forest" || SceneFadeTransition.IsRunning) yield return null;
         inventory = Object.FindFirstObjectByType<PlayerInventory>();
-        Check(File.ReadAllBytes(ManualSaveStore.SlotPath).SequenceEqual(lastGood), "approved overwrite keeps previous save during new field play");
+        Check(!ManualSaveStore.Exists && !File.Exists(ManualSaveStore.SlotPath + ".bak"), "approved new game deletes the previous save immediately");
         Object.FindFirstObjectByType<HideOutEntrance>().GetComponent<Interactable2D>().Interact(inventory.gameObject);
         while (Object.FindFirstObjectByType<HideOutScene>() == null) yield return null;
         yield return null; bridge = inventory.GetComponent<HideOutPlayerBridge>();

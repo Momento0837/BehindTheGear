@@ -22,14 +22,20 @@ public sealed class ManualSaveMenu : MonoBehaviour
     private Button newGameButton, continueButton, deleteButton, confirmButton, cancelButton;
     private CloudAccountPanel cloudPanel; // Optional account cloud save (Cloud/ folder).
     private GameObject selectionBeforeConfirmation;
-    private Action confirmed;
+    private Action confirmed, cancelled;
     private bool visible = true;
     private bool departing;
+    private bool autoSaveOffered;
     public void SetVisible(bool value)
     {
         visible = value;
         if (panel != null) panel.SetActive(value && !ChoosingControls);
-        if (value && panel != null && panel.activeInHierarchy) SelectPreferredButton();
+        if (value && panel != null && panel.activeInHierarchy)
+        {
+            if (confirmation != null && confirmation.activeSelf) SelectButton(cancelButton);
+            else SelectPreferredButton();
+            OfferQuitAutoSave();
+        }
     }
     public bool ChoosingControls { get; private set; }
     private void Start()
@@ -67,6 +73,47 @@ public sealed class ManualSaveMenu : MonoBehaviour
         confirmation.SetActive(false); Refresh();
         panel.SetActive(visible);
         if (visible) SelectPreferredButton();
+        StartCoroutine(OfferAfterStartup());
+    }
+    private IEnumerator OfferAfterStartup()
+    {
+        yield return null; // let the startup scene decide whether the slot menu is shown yet
+        OfferQuitAutoSave();
+    }
+
+    // ---------- Auto-save written when the game was closed without saving (QuitAutoSave) ----------
+    private void OfferQuitAutoSave()
+    {
+        if (autoSaveOffered || departing || !visible || panel == null || !panel.activeInHierarchy || confirmation.activeSelf) return;
+        if (!QuitAutoSave.Exists) return;
+        autoSaveOffered = true;
+        string when = "";
+        try { when = $" ({QuitAutoSave.SavedAt:M월 d일 HH:mm})"; } catch (Exception) { }
+        Ask("마지막으로 플레이한 시점이 자동 저장되어 있습니다" + when + ".\n이 진행 상황을 불러오시겠습니까?",
+            LoadQuitAutoSave, "예", false, "아니요", DiscardQuitAutoSave);
+    }
+    private void LoadQuitAutoSave()
+    {
+        if (departing || SceneFadeTransition.IsRunning) return;
+        try
+        {
+            var save = ManualSaveStore.Read(QuitAutoSave.FilePath);
+            HideOutPlayerBridge.ValidateSnapshot(save, settings);
+            if (continuePlayerPrefab == null) throw new InvalidOperationException("이어하기 플레이어 프리팹이 연결되지 않았습니다.");
+            QuitAutoSave.Delete(); // Used once: the loaded run auto-saves again if it is closed without saving.
+            StartCoroutine(Depart(() => SaveGameSession.Continue(save, settings, continuePlayerPrefab)));
+        }
+        catch (Exception error)
+        {
+            DiscardQuitAutoSave();
+            if (status != null) status.text = "자동 저장 불러오기 실패: " + error.Message;
+        }
+    }
+    private void DiscardQuitAutoSave()
+    {
+        try { QuitAutoSave.Delete(); }
+        catch (Exception error) { Debug.LogWarning("[Save Menu] 자동 저장 삭제 실패: " + error.Message); }
+        Refresh();
     }
     private void CreateTitle(Transform parent)
     {
@@ -132,13 +179,28 @@ public sealed class ManualSaveMenu : MonoBehaviour
     {
         if (departing || SceneFadeTransition.IsRunning) return;
         if (CloudBusy()) return;
-        if (ManualSaveStore.Exists) Ask("새 게임을 시작할까요?\n세이브 포인트에서 처음 저장하면 기존 진행 기록을 덮어씁니다."
-            + (CloudAccountService.SignedIn ? "\n(로그인한 계정의 저장도 함께 바뀝니다)" : ""), Begin, "시작하기");
+        bool includeCloud = CloudAccountService.SignedIn && CloudSaveSync.ProductionSlotActive;
+        if (ManualSaveStore.Exists) Ask("새 게임을 시작할까요?\n기존 저장 데이터는 바로 삭제되며 복구할 수 없습니다."
+            + (includeCloud ? "\n(로그인한 계정의 저장도 함께 삭제됩니다)" : ""), Begin, "시작하기", true);
         else Begin();
     }
     private void Begin()
     {
         if (departing) return;
+        // A new game replaces the old progress right away, so Continue cannot bring back the previous save.
+        try { QuitAutoSave.Delete(); }
+        catch (Exception error) { Debug.LogWarning("[Save Menu] 자동 저장 삭제 실패: " + error.Message); }
+        if (ManualSaveStore.Exists)
+        {
+            bool includeCloud = CloudAccountService.SignedIn && CloudSaveSync.ProductionSlotActive;
+            try { ManualSaveStore.DeleteSlot(); }
+            catch (Exception error) { Refresh(); if (status != null) status.text = "기존 저장 삭제 실패: " + error.Message; return; }
+            if (includeCloud) CloudSaveSync.DeleteCloudSave((ok, message) =>
+            {
+                if (!ok) Debug.LogWarning("[ManualSaveMenu] 새 게임: 계정 저장 삭제 실패 · " + message);
+            });
+            Refresh();
+        }
         StartCoroutine(Depart(() =>
         {
             SaveGameSession.BeginNewGame();
@@ -175,7 +237,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         Ask(includeCloud ? "이 PC와 계정에 보관된 저장 데이터를 모두 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다."
             : "저장 데이터를 삭제할까요?\n삭제한 진행 상황은 복구할 수 없습니다.", () =>
         {
-            try { ManualSaveStore.DeleteSlot(); Refresh(); }
+            try { ManualSaveStore.DeleteSlot(); QuitAutoSave.Delete(); Refresh(); }
             catch (Exception error) { status.text = "삭제 실패: " + error.Message; return; }
             if (includeCloud) CloudSaveSync.DeleteCloudSave((ok, message) =>
             {
@@ -191,27 +253,30 @@ public sealed class ManualSaveMenu : MonoBehaviour
         if (status != null) status.text = "계정과 동기화하는 중입니다. 잠시 후 다시 시도하세요.";
         return true;
     }
-    private void Ask(string text, Action action, string confirmText = "확인", bool destructive = false)
+    private void Ask(string text, Action action, string confirmText = "확인", bool destructive = false,
+        string cancelText = "취소", Action onCancel = null)
     {
         if (departing) return;
         selectionBeforeConfirmation = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
         var tone = destructive ? SaveConfirmGraphic.Tone.Danger : SaveConfirmGraphic.Tone.Caution;
         confirmationPanel?.SetTone(tone); confirmStyle?.SetTone(tone); cancelStyle?.SetTone(tone);
-        confirmed = action; question.text = text; confirmation.SetActive(true);
+        confirmed = action; cancelled = onCancel; question.text = text; confirmation.SetActive(true);
         confirmationPanel?.PlayIntro();
         confirmButton.GetComponentInChildren<TMP_Text>().text = confirmText;
+        cancelButton.GetComponentInChildren<TMP_Text>().text = cancelText;
         SelectButton(cancelButton);
     }
     public void Confirm()
     {
         if (departing) return;
-        var action = confirmed; confirmed = null; confirmation.SetActive(false); action?.Invoke();
+        var action = confirmed; confirmed = null; cancelled = null; confirmation.SetActive(false); action?.Invoke();
         if (panel.activeInHierarchy) SelectPreferredButton();
     }
     public void Cancel()
     {
         if (departing) return;
-        confirmed = null; confirmation.SetActive(false);
+        var onCancel = cancelled; confirmed = null; cancelled = null; confirmation.SetActive(false);
+        onCancel?.Invoke();
         var previous = selectionBeforeConfirmation != null ? selectionBeforeConfirmation.GetComponent<Button>() : null;
         if (previous != null && previous.IsInteractable() && previous.gameObject.activeInHierarchy) SelectButton(previous);
         else SelectPreferredButton();
