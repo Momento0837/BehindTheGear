@@ -349,7 +349,6 @@ MonoBehaviour:
           amount: 20
     clinicCooldownReduction: 30
     minimumClinicCooldown: 60
-    downgradeRefundRate: 0.5
     clinicSpeedUpgrades:
     - coins: 10
       actionPoints: 1
@@ -401,6 +400,7 @@ MonoBehaviour:
       materials:
       - itemId: hideout_scrap
         amount: 20
+    downgradeRefundRate: 0.5
   font: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   items:
   - {fileID: 11400000, guid: 100dcf7c1cb74dd299649367a890d35b, type: 2}
@@ -413,7 +413,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d88c47c8aa6e47f09cad433586a9a40b, type: 2}
   - {fileID: 11400000, guid: 6b8ed0f2824f8dc499ff3fa59e354f47, type: 2}
   - {fileID: 11400000, guid: 1860f24bcea2cac498bd0d04945e4dbf, type: 2}
-  scenePath: Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity
+  scenePath: Assets/!UI/Base/Base_Test.unity
   testWeaponId: hideout_test_weapon
   appearanceSprites:
   - {fileID: 21300000, guid: a26f70f6ad5e4f80b311a0befad20829, type: 3}

@@ -210,6 +210,7 @@ public sealed class ConversationDialogue : MonoBehaviour
             : portraitLibrary != null ? portraitLibrary.Resolve(speaker, expression) : null;
         portraitImage.preserveAspect = true;
         portraitImage.enabled = portraitImage.sprite != null;
+        DialoguePortraitOutline.Apply(portraitImage, mystery ? animatedPortrait : portraitImage);
         UpdatePortraitFrame();
     }
 

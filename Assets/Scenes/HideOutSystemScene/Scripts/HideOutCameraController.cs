@@ -17,6 +17,7 @@ namespace BehindTheGear.HideOut
         private float overviewSize, moveDuration;
         private Bounds explorationBounds;
         private bool configured;
+        private bool xyPlane;
 
         private float dragThresholdPixels, dragSensitivity, movementSmoothTime, maximumMoveSpeed;
         private bool useInertia;
@@ -32,6 +33,7 @@ namespace BehindTheGear.HideOut
         private int suppressClickUntilFrame = -1;
 
         public bool IsMoving { get; private set; }
+        public bool PresentationLocked { get; set; }
         public bool IsOverview => State == HideOutCameraState.Overview && !IsMoving;
         public bool ShouldSuppressFacilityClick => dragging || Time.frameCount <= suppressClickUntilFrame
             || pointerPressed && Mouse.current != null
@@ -40,8 +42,9 @@ namespace BehindTheGear.HideOut
         public event Action MoveCompleted;
 
         public void Configure(Vector3 overview, Quaternion rotation, float size, float duration, Bounds bounds,
-            HideOutTopViewPresentation presentation)
+            HideOutTopViewPresentation presentation, bool useXYPlane = false)
         {
+            xyPlane = useXYPlane;
             controlledCamera = GetComponent<Camera>();
             controlledCamera.orthographic = true;
             baseRotation = rotation;
@@ -68,7 +71,7 @@ namespace BehindTheGear.HideOut
 
         private void Update()
         {
-            if (!configured || controlledCamera == null || IsMoving) return;
+            if (!configured || controlledCamera == null || IsMoving || PresentationLocked || BaseArrivalTutorial.IsShowing) return;
             float deltaTime = Mathf.Max(.0001f, Time.unscaledDeltaTime);
             HandlePointer(deltaTime);
             if (State == HideOutCameraState.FreeExplore) UpdateFreeExplore(deltaTime);
@@ -76,7 +79,7 @@ namespace BehindTheGear.HideOut
 
         public bool TryFocus(Transform anchor, float orthographicSize, Action completed)
         {
-            if (!configured || IsMoving || anchor == null) return false;
+            if (!configured || IsMoving || PresentationLocked || anchor == null) return false;
             CancelManualMotion();
             State = HideOutCameraState.FacilityFocus;
             StartCoroutine(MoveRoutine(anchor.position, Mathf.Clamp(orthographicSize, minimumSize, maximumSize),
@@ -86,7 +89,7 @@ namespace BehindTheGear.HideOut
 
         public bool TryReturnToOverview(Action completed)
         {
-            if (!configured || IsMoving) return false;
+            if (!configured || IsMoving || PresentationLocked) return false;
             CancelManualMotion();
             StartCoroutine(MoveRoutine(overviewPosition, overviewSize, HideOutCameraState.Overview, completed));
             return true;
@@ -160,10 +163,11 @@ namespace BehindTheGear.HideOut
         private void ApplyPan(Vector2 screenDelta, float deltaTime)
         {
             float worldPerPixel = 2f * controlledCamera.orthographicSize / Mathf.Max(1f, Screen.height);
-            Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
-            Vector3 up = Vector3.ProjectOnPlane(transform.up, Vector3.up).normalized;
+            Vector3 planeNormal = xyPlane ? Vector3.forward : Vector3.up;
+            Vector3 right = Vector3.ProjectOnPlane(transform.right, planeNormal).normalized;
+            Vector3 up = Vector3.ProjectOnPlane(transform.up, planeNormal).normalized;
             Vector3 movement = (-screenDelta.x * right - screenDelta.y * up) * worldPerPixel * dragSensitivity;
-            movement.y = 0f;
+            if (xyPlane) movement.z = 0f; else movement.y = 0f;
             movement = Vector3.ClampMagnitude(movement, maximumMoveSpeed * deltaTime);
             Vector3 before = targetPosition;
             targetPosition = ClampPosition(targetPosition + movement, controlledCamera.orthographicSize);
@@ -186,6 +190,7 @@ namespace BehindTheGear.HideOut
             Vector3 unclamped = targetPosition;
             targetPosition = ClampPosition(targetPosition, controlledCamera.orthographicSize);
             if (Mathf.Abs(unclamped.x - targetPosition.x) > .00001f) inertiaVelocity.x = smoothVelocity.x = 0f;
+            if (xyPlane && Mathf.Abs(unclamped.y - targetPosition.y) > .00001f) inertiaVelocity.y = smoothVelocity.y = 0f;
             if (Mathf.Abs(unclamped.z - targetPosition.z) > .00001f) inertiaVelocity.z = smoothVelocity.z = 0f;
             transform.position = targetPosition;
             transform.rotation = baseRotation;
@@ -193,6 +198,16 @@ namespace BehindTheGear.HideOut
 
         private Vector3 ClampPosition(Vector3 candidate, float requestedSize)
         {
+            if (xyPlane)
+            {
+                float halfWidth = requestedSize * controlledCamera.aspect;
+                candidate.z = overviewPosition.z;
+                candidate.x = ClampAxis(candidate.x, explorationBounds.min.x + halfWidth - boundsPadding,
+                    explorationBounds.max.x - halfWidth + boundsPadding, explorationBounds.center.x);
+                candidate.y = ClampAxis(candidate.y, explorationBounds.min.y + requestedSize - boundsPadding,
+                    explorationBounds.max.y - requestedSize + boundsPadding, explorationBounds.center.y);
+                return candidate;
+            }
             candidate.y = overviewPosition.y;
             Vector2 minOffset = new(float.PositiveInfinity, float.PositiveInfinity);
             Vector2 maxOffset = new(float.NegativeInfinity, float.NegativeInfinity);

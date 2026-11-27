@@ -19,13 +19,17 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
     [Range(0f, 8f)] public float hazeSpreadPixels = 1f;
     private MotionPass pass;
     private ItemForegroundPass itemPass;
+    private BehindTheGear.HideOut.BaseGroundAtmospherePass baseGroundPass;
     public override void Create()
     {
         pass = new MotionPass();
         itemPass = new ItemForegroundPass();
+        baseGroundPass = new BehindTheGear.HideOut.BaseGroundAtmospherePass();
     }
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
+        if (BehindTheGear.HideOut.BaseGroundAtmosphere.TryGet(renderingData.cameraData.camera, out _))
+            renderer.EnqueuePass(baseGroundPass);
         var cameraType = renderingData.cameraData.cameraType;
         if (cameraType == CameraType.Game || cameraType == CameraType.SceneView)
             renderer.EnqueuePass(itemPass);
