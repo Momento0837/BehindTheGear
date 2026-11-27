@@ -84,15 +84,7 @@ public sealed class InventoryOpeningHint : MonoBehaviour
         elapsed += Time.unscaledDeltaTime;
         dim.color = new Color(0, 0, 0, .3f * Mathf.SmoothStep(0, 1, elapsed / .5f));
         AlignIcon();
-        // Two 1.6-second pulses, followed by one second of rest.
-        float cycle = Mathf.Repeat(Mathf.Max(0, elapsed - .5f), 4.2f);
-        border.enabled = elapsed >= .5f && cycle < 3.2f;
-        if (!border.enabled) return;
-        float time = Mathf.Repeat(cycle, 1.6f);
-        float progress = Mathf.Clamp01(time / .8f);
-        border.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.5f, 1f, progress);
-        float alpha = time < .8f ? Mathf.Lerp(.2f, 1f, progress) : time < 1.1f ? 1f : 1f - Mathf.Clamp01((time - 1.1f) / .5f);
-        border.color = new Color(1, 1, 1, alpha);
+        TutorialHighlightPulse.Apply(border, elapsed);
     }
 
     private void AlignIcon()

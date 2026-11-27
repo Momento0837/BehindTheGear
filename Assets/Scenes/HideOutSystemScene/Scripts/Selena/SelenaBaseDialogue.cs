@@ -31,7 +31,7 @@ namespace BehindTheGear.HideOut
         // click that closes the line does not also press base buttons underneath.
         public static bool TrySay(MonoBehaviour host, HideOutPlayerBridge bridge, SelenaLineState state, Transform inputRoot, Action finished = null)
         {
-            if (host == null || !host.isActiveAndEnabled || IsShowing || !SelenaGameState.SelenaPresent(bridge)) return false;
+            if (host == null || !host.isActiveAndEnabled || IsShowing || BaseArrivalTutorial.IsShowing || !SelenaGameState.SelenaPresent(bridge)) return false;
             var template = UnityEngine.Object.FindObjectsByType<ConversationDialogue>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .FirstOrDefault(d => d.BodyText != null && !d.IsPlaying);
             if (template == null) { Debug.LogWarning("[Selena] No ConversationDialogue template in the loaded scenes."); return false; }

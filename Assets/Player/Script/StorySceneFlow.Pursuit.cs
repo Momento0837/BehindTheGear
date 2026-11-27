@@ -31,11 +31,12 @@ public sealed partial class StorySceneFlow
             while (bubble.IsPlaying) yield return null;
             if (camera != null) camera.StoryLookOffset = 0;
         }
-        // Hold one continuous lock across inventory close, shout and Ethan's monologue.
+        // Hold one continuous lock across inventory close, Ethan's reaction, and the merged monologue/shout.
         controls?.Acquire();
         try
         {
             ui?.CloseForStoryDialogue();
+            yield return GarbageEquipmentReaction();
             dialogue.BeforeLineEvent = BeforeLine;
             yield return Say("Garbage/garbage_pursuit_monologue");
         }

@@ -145,6 +145,10 @@ namespace PixelBridge.LayerSprites
             }
             var texture = AssetImporter.GetAtPath(path) as TextureImporter;
             if (texture == null) throw new IOException("TextureImporter를 찾을 수 없습니다. " + path);
+            // Existing PNGs belong to the artist: updating their pixels must not reset PPU,
+            // filtering, compression, pivot, slicing, platform overrides, or any other .meta settings.
+            // The link's PPU/default import settings apply only when creating a new layer PNG.
+            if (managed && exists) return;
             var settings = new TextureImporterSettings();
             texture.ReadTextureSettings(settings);
             if (texture.userData == marker && texture.textureType == TextureImporterType.Sprite &&

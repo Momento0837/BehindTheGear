@@ -32,6 +32,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HideOutSystemScene/BedScene/BedScene.unity
     guid: ea6555f8d1163724eaacc53a6468eb3a
+  - enabled: 1
+    path: Assets/!UI/Base/Base_Test.unity
+    guid: fde53dbf58740ee44944271da4631a23
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -12,4 +12,6 @@ Unity 6에서 Aseprite 원본의 첫 프레임을 레이어별 스프라이트�
 
 원본을 저장하고 Unity가 새로 고치면 PNG가 갱신됩니다. 같은 레이어의 그림을 수정하면 파일 참조가 유지됩니다. 레이어를 숨기거나 삭제하면 도구가 생성한 해당 PNG도 삭제되므로 이를 사용하던 오브젝트를 확인하세요. 다시 표시하면 PNG가 새로 생성됩니다.
 
+기존 PNG의 Inspector에서 설정한 PPU, Filter Mode, Compression, 피벗, 슬라이스, 플랫폼별 설정은 재출력 시 유지됩니다. `.pblayers`의 Pixels Per Unit과 기본 임포트 설정은 **새 PNG를 처음 생성할 때만** 적용합니다. 기존 PNG 설정을 바꾸려면 해당 PNG의 Inspector에서 직접 수정하세요.
+
 원본 옆의 `.pblayers`는 자동 갱신을 위한 연결 에셋입니다. 이전 버전에서 이 에셋 안의 Sprite를 연결한 경우에도 기존 참조를 사용할 수 있습니다. 팀 저장소에는 원본, `.pblayers`, `.sprites` 폴더와 각각의 `.meta`를 함께 넣으세요. 실행 파일 경로는 각 컴퓨터에서 **Tools → Pixel Bridge → Layer Sprites → Select Aseprite**로 지정할 수 있습니다.

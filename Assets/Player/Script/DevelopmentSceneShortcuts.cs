@@ -10,7 +10,7 @@ public sealed class DevelopmentSceneShortcuts : MonoBehaviour
 {
     public const string ForestPath = "Assets/Scenes/Main/Forest.unity";
     public const string MarketPath = "Assets/Scenes/Main/Market.unity";
-    public const string HideOutPath = "Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity";
+    public const string HideOutPath = "Assets/!UI/Base/Base_Test.unity";
     private static DevelopmentSceneShortcuts instance;
     private bool switching;
 

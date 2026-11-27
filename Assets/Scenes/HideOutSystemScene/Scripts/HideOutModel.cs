@@ -80,6 +80,8 @@ namespace BehindTheGear.HideOut
         public int baseInventorySlots = 15;
         public bool selenaRecruited;
         public bool baseTutorialComplete;
+        public bool baseFirstTreatmentComplete;
+        public bool baseTreatmentDialogueComplete;
         public int clinicSpeedLevel; // Treatment booth time-reduction level; missing in older saves -> 0.
         public double clinicReadyAt, potionsReadyAt, activeClock;
         public List<ExtensionState> extensions = new();
@@ -138,6 +140,14 @@ namespace BehindTheGear.HideOut
         public static double PotionCooldown(HideOutSave s, HideOutRules r) => Math.Max(Math.Max(1, r.minimumPotionCooldown), r.potionCooldown - s.levels[4] * r.potionReduction);
         public static bool IsExhibition(Facility facility) => facility == Facility.Dining || facility == Facility.Workshop;
         public static bool Locked(HideOutSave s, Facility facility) => IsExhibition(facility) || facility == Facility.Potions && !s.selenaRecruited;
+        // Story visibility is separate from the legacy upgrade-capability flags stored in v2 saves.
+        public static bool StoryUnlocked(HideOutSave s, Facility facility) => facility switch
+        {
+            Facility.Bed or Facility.Dining => true,
+            Facility.Clinic => s.baseTutorialComplete,
+            Facility.Potions => s.baseTutorialComplete && s.baseTreatmentDialogueComplete,
+            _ => false
+        };
         public static int Count(List<ItemStack> slots, string id)
         {
             int result = 0; foreach (var slot in slots) if (!slot.Empty && slot.id == id) result += slot.count; return result;
@@ -321,6 +331,7 @@ namespace BehindTheGear.HideOut
             if (now < s.clinicReadyAt) { message = "치료 부스 쿨타임 중입니다."; return false; }
             int restored = Math.Min(maxHP - s.hp, Healing(s, rules));
             s.hp += restored; s.clinicReadyAt = now + ClinicCooldown(s, rules);
+            if (s.baseTutorialComplete) s.baseFirstTreatmentComplete = true;
             message = $"HP {restored} 회복"; return true;
         }
         public static bool ReceivePotions(HideOutSave s, HideOutRules rules, IHideOutItems items, double now, out string message)

@@ -322,7 +322,6 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || !collected) yield return null;
         if (!resumeCollected)
         {
-            yield return GarbagePickupReaction();
             AdvanceGuide("equipment_tutorial");
             player.GetComponent<InventoryUI>()?.BeginEquipmentHint(tutorialGear);
         }

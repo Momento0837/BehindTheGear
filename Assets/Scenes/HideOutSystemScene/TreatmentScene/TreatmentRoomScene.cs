@@ -113,6 +113,8 @@ namespace BehindTheGear.HideOut
         private Image gaugeFillImage, gaugeReadyImage, healButtonImage, healCross, healFlashImage, continueMark;
         private TMP_Text clockLabel, stateLabel, healButtonLabel, systemLabel;
         private TMP_Text bodyLabel;
+        private Button tutorialHealButton, tutorialBackButton, tutorialAdvanceButton;
+        private TutorialButtonHighlight treatmentTutorialHint;
         // Same HP / MP / coin / AP cards as the base's top-right HUD (HideOutScene.BuildResourceHud).
         private readonly TMP_Text[] resourceValues = new TMP_Text[4];
         private readonly RectTransform[] resourceBars = new RectTransform[2];
@@ -219,12 +221,14 @@ namespace BehindTheGear.HideOut
             introTime = 0f;
             yield return new WaitForSecondsRealtime(introSeconds * .6f);
             enterRoutine = null;
+            if (BaseArrivalTutorial.TryShowAfterTreatment(this, Player, transform)) yield break;
             Say(TreatmentTalkEvent.Enter, null);
         }
 
         private void Update()
         {
-            if (!bound || leaving) return;
+            UpdateTreatmentTutorialHint();
+            if (!bound || leaving || BaseArrivalTutorial.IsShowing) return;
             float dt = Time.unscaledDeltaTime;
             AnimateIntro(dt);
             AnimatePortrait(dt);
@@ -241,7 +245,23 @@ namespace BehindTheGear.HideOut
 
         // ---------- Actions ----------
 
-        private bool CanAct => bound && !leaving && Player != null && Player.Initialized && !SceneFadeTransition.IsRunning;
+        private void UpdateTreatmentTutorialHint()
+        {
+            Button target = null;
+            if (CanAct && screen != null && screen.gameObject.activeInHierarchy && introTime >= introSeconds
+                && enterRoutine == null && Player.State.baseTutorialComplete)
+            {
+                if (!Player.State.baseFirstTreatmentComplete)
+                    target = typing || holding ? tutorialAdvanceButton
+                        : CurrentTimerState(Remaining()) == TimerState.Ready ? tutorialHealButton : null;
+                else if (Player.State.baseTreatmentDialogueComplete && Player.State.potionsReadyAt <= 0)
+                    target = tutorialBackButton;
+            }
+            if (target != null && treatmentTutorialHint == null) treatmentTutorialHint = gameObject.AddComponent<TutorialButtonHighlight>();
+            if (treatmentTutorialHint != null) treatmentTutorialHint.SetTarget(target);
+        }
+
+        private bool CanAct => bound && !leaving && Player != null && Player.Initialized && !SceneFadeTransition.IsRunning && !BaseArrivalTutorial.IsShowing;
 
         // Temporary heal button (final trigger not designed yet). Kept public: old scene listeners call UseBooth.
         public void Heal()
@@ -259,7 +279,18 @@ namespace BehindTheGear.HideOut
             else if (Player.Health.CurrentHealth >= Player.Health.MaxHealth) result = TreatmentTalkEvent.HealNotNeeded;
             else result = TreatmentTalkEvent.HealUnavailable;
             ShowSystemMessage(Player.Message);
-            Say(result, Player.Message, restored);
+            if (healed && BaseArrivalTutorial.TryShowAfterTreatment(this, Player, transform))
+            {
+                // The story conversation owns the first successful treatment's dialogue.
+                if (enterRoutine != null) StopCoroutine(enterRoutine);
+                if (lineRoutine != null) StopCoroutine(lineRoutine);
+                enterRoutine = lineRoutine = null;
+                ++talkTicket;
+                typing = holding = false;
+                dialogueGroup.alpha = 0;
+                dialogueGroup.blocksRaycasts = false;
+            }
+            else Say(result, Player.Message, restored);
             RefreshAll();
         }
 
@@ -341,7 +372,7 @@ namespace BehindTheGear.HideOut
 
         public void ReturnToBase()
         {
-            if (!bound || leaving || SceneFadeTransition.IsRunning) return;
+            if (!bound || leaving || SceneFadeTransition.IsRunning || BaseArrivalTutorial.IsShowing) return;
             leaving = true;
             Player.StartCoroutine(HideOutTravel.ExitTreatment(this));
         }
@@ -762,6 +793,7 @@ namespace BehindTheGear.HideOut
             BuildBackdrop(t);
             BuildPortrait(t);
             var back = MakeButton(t, "Back to base", 40, 28, 250, 42, ReturnToBase, WithAlpha(slateColor, .85f), chamfer);
+            tutorialBackButton = back;
             Label(back.transform, "← 기지로 돌아가기", 16, 0, 180, 42, 18, linenColor, TextAlignmentOptions.MidlineLeft);
             var key = Box(back.transform, "ESC key", 194, 11, 42, 20, WithAlpha(linenColor, .16f));
             Label(key.transform, "ESC", 0, 0, 42, 20, 13, WithAlpha(linenColor, .8f), TextAlignmentOptions.Center);
@@ -818,6 +850,7 @@ namespace BehindTheGear.HideOut
             if (sprite != null)
             {
                 image.sprite = sprite;
+                DialoguePortraitOutline.Apply(window, image);
                 // Cover the square window, keeping the picture's aspect.
                 float aspect = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
                 portraitImage.sizeDelta = aspect >= 1f ? new Vector2(544f * aspect, 544f) : new Vector2(544f, 544f / aspect);
@@ -867,6 +900,7 @@ namespace BehindTheGear.HideOut
 
             // Temporary heal trigger + the bridge's exact result (numbers live here, not in Selena's lines).
             var heal = MakeButton(c, "Heal", 28, 204, 280, 50, Heal, WithAlpha(slateColor, .18f), chamfer);
+            tutorialHealButton = heal;
             healButtonImage = heal.GetComponent<Image>();
             healCross = Cross(heal.transform, 20, 16, 18, linenColor);
             healButtonLabel = Label(heal.transform, "치료 받기", 0, 0, 280, 50, 20, slateColor, TextAlignmentOptions.Center);
@@ -968,6 +1002,7 @@ namespace BehindTheGear.HideOut
             box.sprite = chamfer; box.type = Image.Type.Sliced; box.raycastTarget = true;
             Box(box.transform, "Brass rule", 8, 0, 1504, 3, brassColor);
             var advance = box.gameObject.AddComponent<Button>(); advance.transition = Selectable.Transition.None;
+            tutorialAdvanceButton = advance;
             advance.onClick.AddListener(AdvanceDialogue);
             bodyLabel = Label(box.transform, "", 32, 26, 1456, 130, 30, linenColor, TextAlignmentOptions.TopLeft);
             continueMark = Box(box.transform, "Continue mark", 1480, 142, 10, 10, brassColor);

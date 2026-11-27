@@ -12,6 +12,7 @@ public static class ProjectStartupScene
     private const string InventoryTestPath = "Assets/Scenes/Inventory/InventoryTestScene.unity";
     private const string UiTestPath = "Assets/UI/UITest.unity";
     private const string HideOutTestPath = "Assets/Scenes/HideOutSystemScene/HideOutSystemScene.unity";
+    private const string SpriteBaseTestPath = "Assets/!UI/Base/Base_Test.unity";
 
     // Temporary direct-play switch for HideOut development.
     // Set to false to use control selection for HideOut development too.
@@ -36,7 +37,7 @@ public static class ProjectStartupScene
 
         if (activeScenePath == InventoryTestPath
             || activeScenePath == UiTestPath
-            || (AllowHideOutDirectPlay && activeScenePath == HideOutTestPath))
+            || (AllowHideOutDirectPlay && (activeScenePath == HideOutTestPath || activeScenePath == SpriteBaseTestPath)))
         {
             EditorSceneManager.playModeStartScene = null;
             return true;
