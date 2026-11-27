@@ -1,0 +1,10 @@
+PASS all locked regions distribute interior clouds and keep large cloud cores separated
+PASS visible depth-dependent parallax: far=0.184, near=0.797 world units
+PASS 2.3-second replacement cadence, sequential 1-second fades, and bounded cloud count
+PASS one 100-95-100 percent pulse per region, one-second cycles with no idle gap
+PASS random sway starts, +/-2 screen pixels, five-second round trip; effects run at timeScale zero
+PASS unlock during replacement: five-pixel outward motion, half-second smooth fade, no leftover clouds
+PASS rapid unlock/re-lock restores full opacity and original cloud count
+PASS unlock while the map is suspended plays on return
+Runtime errors: 0
+PASS fog animation checks

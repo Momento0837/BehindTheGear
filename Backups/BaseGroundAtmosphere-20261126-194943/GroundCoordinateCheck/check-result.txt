@@ -1,0 +1,25 @@
+PASS BaseGroundMask compiles on the current graphics device
+PASS BaseGroundAtmosphere compiles on the current graphics device
+PASS BaseScreenNoise compiles on the current graphics device
+PASS effect registered for the base camera
+PASS sample authored wall and floor interiors
+Samples wall=206, max wall change=0.00000, floor=125, darkened=105
+Wall sample world=(1.62, 1.55, 0.00), screen=(1165.90, 623.88, 10.00), change=0.00000
+Wall sample world=(1.62, 1.91, 0.00), screen=(1165.90, 654.39, 10.00), change=0.00000
+Wall sample world=(1.98, 1.91, 0.00), screen=(1196.40, 654.39, 10.00), change=0.00000
+Wall sample world=(2.35, 1.91, 0.00), screen=(1226.90, 654.39, 10.00), change=0.00000
+Wall sample world=(7.07, 1.91, 0.00), screen=(1623.45, 654.39, 10.00), change=0.00000
+Wall sample world=(1.62, 2.27, 0.00), screen=(1165.90, 684.89, 10.00), change=0.00000
+Wall sample world=(1.98, 2.27, 0.00), screen=(1196.40, 684.89, 10.00), change=0.00000
+Wall sample world=(2.35, 2.27, 0.00), screen=(1226.90, 684.89, 10.00), change=0.00000
+PASS floor effects do not darken authored walls
+PASS black atmosphere visibly renders on the floor
+Ground anchoring samples=100, mean attenuation difference=0.00238
+PASS ground fog stays at the same world points when the camera pans
+PASS screen noise uses 3 percent opacity and cannot intercept input
+Noise range=0.0000-0.0275, channel difference=0.0000
+PASS noise renders achromatic variation across the screen
+PASS effects turn off when leaving the base environment
+PASS effects restore when returning to the base
+Runtime errors: 0
+PASS atmosphere rendering checks

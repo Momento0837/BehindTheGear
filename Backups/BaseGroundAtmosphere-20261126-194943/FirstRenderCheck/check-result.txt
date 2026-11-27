@@ -1,0 +1,12 @@
+PASS BaseGroundMask compiles on the current graphics device
+PASS BaseGroundAtmosphere compiles on the current graphics device
+PASS BaseScreenNoise compiles on the current graphics device
+PASS effect registered for the base camera
+PASS sample authored wall and floor interiors
+Samples wall=206, max wall change=0.01046, floor=125, darkened=88
+FAIL System.InvalidOperationException: floor effects do not darken authored walls
+  at BaseGroundAtmosphereChecks.Require (System.Boolean condition, System.String message) [0x00009] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseGroundAtmosphereChecks.cs:41 
+  at BaseGroundAtmosphereChecks+<Verify>d__13.MoveNext () [0x004a8] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseGroundAtmosphereChecks.cs:140 
+  at BaseGroundAtmosphereChecks+<Run>d__9.MoveNext () [0x001cc] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseGroundAtmosphereChecks.cs:62 
+Runtime errors: 0
+FAIL atmosphere rendering checks

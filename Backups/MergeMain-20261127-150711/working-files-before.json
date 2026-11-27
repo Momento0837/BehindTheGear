@@ -1,0 +1,14 @@
+[
+  {
+    "path": "Assets/Player/Script/PlayerMeleeAttack.cs",
+    "sha256": "CF833C68A71A6E54CC57EC67C9BDDB577165160FECA832C356FFD27121DE5567"
+  },
+  {
+    "path": "Assets/Scenes/Controls/SaveSystem/ManualSaveMenu.cs",
+    "sha256": "52F1DBCC5C27ED6C12687C05185495498C54AAF1F23CAB11D9006EFA678AD504"
+  },
+  {
+    "path": "Assets/Scenes/HideOutSystemScene/Scripts/HideOutPlayerBridge.cs",
+    "sha256": "9D47C251DB862811A27ABF4303E182840F84CA13E45BE4EDFD454E072482E20D"
+  }
+]

@@ -1,0 +1,209 @@
+PASS all seven authored fog sprites connected
+PASS Bed and Dining open initially
+PASS fresh sandbox starts before story dialogue
+PASS Storage keeps circle and gates artwork/input
+PASS Storage fog exists only when locked, with 5-7 spaced interior clouds
+PASS Storage adds 3-5 perimeter clouds only while locked
+PASS Storage perimeter clouds preserve the central cloud scale
+PASS Storage perimeter follows its room instead of the exported transparent canvas
+PASS Storage interior cloud 1 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage interior cloud 2 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage interior cloud 3 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage interior cloud 4 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage interior cloud 5 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage satellite stays within the inset +/-5px bounds
+PASS Storage interior cloud 6 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage interior cloud 7 remains a large fog sprite
+PASS Storage adds two large clouds without adding satellites
+PASS Storage name and level conceal locked identity
+PASS Storage shortcut also conceals locked identity
+PASS Storage circular background remains opaque black when locked
+PASS Clinic keeps circle and gates artwork/input
+PASS Clinic fog exists only when locked, with 5-7 spaced interior clouds
+PASS Clinic adds 3-5 perimeter clouds only while locked
+PASS Clinic perimeter clouds preserve the central cloud scale
+PASS Clinic perimeter follows its room instead of the exported transparent canvas
+PASS Clinic interior cloud 1 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic interior cloud 2 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic interior cloud 3 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic interior cloud 4 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic interior cloud 5 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic satellite stays within the inset +/-5px bounds
+PASS Clinic interior cloud 6 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic interior cloud 7 remains a large fog sprite
+PASS Clinic adds two large clouds without adding satellites
+PASS Clinic name and level conceal locked identity
+PASS Clinic shortcut also conceals locked identity
+PASS Clinic circular background remains opaque black when locked
+PASS Dummy keeps circle and gates artwork/input
+PASS Dummy fog exists only when locked, with 5-7 spaced interior clouds
+PASS Dummy adds 3-5 perimeter clouds only while locked
+PASS Dummy perimeter clouds preserve the central cloud scale
+PASS Dummy perimeter follows its room instead of the exported transparent canvas
+PASS Dummy interior cloud 1 remains a large fog sprite
+PASS Dummy adds two large clouds without adding satellites
+PASS Dummy satellite stays within the inset +/-5px bounds
+PASS Dummy interior cloud 2 remains a large fog sprite
+PASS Dummy adds two large clouds without adding satellites
+PASS Dummy satellite stays within the inset +/-5px bounds
+PASS Dummy satellite stays within the inset +/-5px bounds
+PASS Dummy interior cloud 3 remains a large fog sprite
+PASS Dummy adds two large clouds without adding satellites
+PASS Dummy satellite stays within the inset +/-5px bounds
+PASS Dummy satellite stays within the inset +/-5px bounds
+PASS Dummy interior cloud 4 remains a large fog sprite
+PASS Dummy adds two large clouds without adding satellites
+PASS Dummy interior cloud 5 remains a large fog sprite
+PASS Dummy adds two large clouds without adding satellites
+PASS Dummy name and level conceal locked identity
+PASS Dummy shortcut also conceals locked identity
+PASS Dummy circular background remains opaque black when locked
+PASS Bed keeps circle and gates artwork/input
+PASS Bed fog exists only when locked, with 5-7 spaced interior clouds
+PASS Bed adds 3-5 perimeter clouds only while locked
+PASS Bed perimeter clouds preserve the central cloud scale
+PASS Bed name and level conceal locked identity
+PASS Bed shortcut also conceals locked identity
+PASS Bed circular background remains opaque black when locked
+PASS Potions keeps circle and gates artwork/input
+PASS Potions fog exists only when locked, with 5-7 spaced interior clouds
+PASS Potions adds 3-5 perimeter clouds only while locked
+PASS Potions perimeter clouds preserve the central cloud scale
+PASS Potions perimeter follows its room instead of the exported transparent canvas
+PASS Potions interior cloud 1 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions interior cloud 2 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions interior cloud 3 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions interior cloud 4 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions interior cloud 5 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions satellite stays within the inset +/-5px bounds
+PASS Potions interior cloud 6 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions interior cloud 7 remains a large fog sprite
+PASS Potions adds two large clouds without adding satellites
+PASS Potions name and level conceal locked identity
+PASS Potions shortcut also conceals locked identity
+PASS Potions circular background remains opaque black when locked
+PASS Gym keeps circle and gates artwork/input
+PASS Gym fog exists only when locked, with 5-7 spaced interior clouds
+PASS Gym adds 3-5 perimeter clouds only while locked
+PASS Gym perimeter clouds preserve the central cloud scale
+PASS Gym perimeter follows its room instead of the exported transparent canvas
+PASS Gym interior cloud 1 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym interior cloud 2 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym interior cloud 3 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym interior cloud 4 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym interior cloud 5 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym satellite stays within the inset +/-5px bounds
+PASS Gym interior cloud 6 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym interior cloud 7 remains a large fog sprite
+PASS Gym adds two large clouds without adding satellites
+PASS Gym name and level conceal locked identity
+PASS Gym shortcut also conceals locked identity
+PASS Gym circular background remains opaque black when locked
+PASS Dining keeps circle and gates artwork/input
+PASS Dining fog exists only when locked, with 5-7 spaced interior clouds
+PASS Dining adds 3-5 perimeter clouds only while locked
+PASS Dining perimeter clouds preserve the central cloud scale
+PASS Dining name and level conceal locked identity
+PASS Dining shortcut also conceals locked identity
+PASS Dining circular background remains opaque black when locked
+PASS Workshop keeps circle and gates artwork/input
+PASS Workshop fog exists only when locked, with 5-7 spaced interior clouds
+PASS Workshop adds 3-5 perimeter clouds only while locked
+PASS Workshop perimeter clouds preserve the central cloud scale
+PASS Workshop perimeter follows its room instead of the exported transparent canvas
+PASS Workshop interior cloud 1 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop interior cloud 2 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop interior cloud 3 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop interior cloud 4 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop satellite stays within the inset +/-5px bounds
+PASS Workshop interior cloud 5 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop interior cloud 6 remains a large fog sprite
+PASS Workshop adds two large clouds without adding satellites
+PASS Workshop name and level conceal locked identity
+PASS Workshop shortcut also conceals locked identity
+PASS Workshop circular background remains opaque black when locked
+PASS large and small clouds have varied Z depth
+PASS orthographic camera movement produces depth parallax
+PASS arrival tutorial resolves the current story player
+PASS Selena arrival flag automatically starts conversation before Clinic unlock
+PASS finishing arrival dialogue unlocks Clinic
+PASS Clinic fog disappears while Potions stays covered
+PASS Clinic opens existing treatment room with same player
+PASS successful first treatment starts JSON conversation but keeps Potions locked
+PASS Potions is gated until final dialogue advance
+PASS room exit is blocked during story conversation
+PASS complete treatment dialogue unlocks Potions
+PASS completed conversation does not repeat
+PASS new progression flags survive save JSON round trip
+PASS treatment returns to Base_Test
+PASS unlocked potion artwork appears and whole fog group disappears
+PASS unlock restores the real facility name and level in both UI locations
+PASS other locked regions retain fog
+PASS base UI input restored after conversations
+PASS progression saves through the existing validated save system
+PASS isolated load preparation
+PASS actual load restores arrival, first treatment, and dialogue completion flags
+PASS loaded progression restores potion artwork and clears its fog
+Runtime errors: 0
+PASS base story progression
