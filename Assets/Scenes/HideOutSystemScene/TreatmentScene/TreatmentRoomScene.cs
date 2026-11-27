@@ -599,8 +599,8 @@ namespace BehindTheGear.HideOut
 
         private void RefreshCard(StatCard card, int level, int max, string effect, UpgradeCost cost)
         {
-            card.level.text = level.ToString();
-            card.levelText.text = max > 0 ? $"Lv {level} / {max}" : $"Lv {level}";
+            card.level.text = HideOutModel.DisplayLevel(level).ToString(); // Shown from Lv 1; pips still count upgrades.
+            card.levelText.text = max > 0 ? $"Lv {HideOutModel.DisplayLevel(level)} / {HideOutModel.DisplayLevel(max)}" : $"Lv {HideOutModel.DisplayLevel(level)}";
             for (int i = 0; i < card.pips.Length; i++)
                 card.pips[i].color = i < level ? card.color : WithAlpha(slateColor, .12f);
             card.effect.text = effect;

@@ -6,9 +6,11 @@ using UnityEngine.UI;
 
 namespace BehindTheGear.HideOut
 {
-    // Shows one Selena pool line in the base with the existing story Dialogue UI, the same way BaseArrivalTutorial
+    // Shows one Selena line in the base with the existing story Dialogue UI, the same way BaseArrivalTutorial
     // does (a temporary copy of the scene's ConversationDialogue canvas). Speaker "Selena" makes ConversationDialogue
     // use the existing Selena portrait as a temporary image until the Live2D portrait exists.
+    // The line is a real-time one (SelenaRealtime, local SLM server) when one was prefetched for this exact state;
+    // otherwise it is picked from the reviewed line pool. The base never waits for the server.
     public static class SelenaBaseDialogue
     {
         [Serializable] private sealed class OneLineFile { public Line[] lines; }
@@ -33,8 +35,10 @@ namespace BehindTheGear.HideOut
             var template = UnityEngine.Object.FindObjectsByType<ConversationDialogue>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .FirstOrDefault(d => d.BodyText != null && !d.IsPlaying);
             if (template == null) { Debug.LogWarning("[Selena] No ConversationDialogue template in the loaded scenes."); return false; }
-            string text = SelenaLinePool.Shared.Pick(state, out string slotId);
+            string slotId = "realtime";
+            if (!SelenaRealtime.TryTake(bridge, state, out string text)) text = SelenaLinePool.Shared.Pick(state, out slotId);
             if (string.IsNullOrEmpty(text)) return false;
+            SelenaRealtime.NoteSpoken(text);
             Debug.Log($"[Selena] {state.eventId} -> {slotId}: {text}");
             showing = true;
             host.StartCoroutine(Play(host.transform, template, text, inputRoot, () => { SelenaGameState.OnSpoken(bridge, state.eventId); finished?.Invoke(); }));

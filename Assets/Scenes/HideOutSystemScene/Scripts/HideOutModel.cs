@@ -128,6 +128,8 @@ namespace BehindTheGear.HideOut
         public static int Healing(HideOutSave s, HideOutRules r) => Math.Max(1, (int)Math.Ceiling(r.baseHealing * (1d + s.levels[0] * (double)r.clinicPercentPerLevel)));
         public static int MaxMana(HideOutSave s, HideOutRules r) => s.baseMana + (int)Math.Floor(s.baseMana * s.levels[5] * (double)r.gymPercentPerLevel + .00001d);
         // Level 0 equals the previous Math.Max(1, clinicCooldown); reductions never go below minimumClinicCooldown.
+        // Levels are stored from 0 (saves, cost tables, validation); players see them from Lv. 1.
+        public static int DisplayLevel(int level) => Math.Max(0, level) + 1;
         public static double ClinicCooldown(HideOutSave s, HideOutRules r)
         {
             double floor = Math.Max(1, Math.Min(r.clinicCooldown, r.minimumClinicCooldown));

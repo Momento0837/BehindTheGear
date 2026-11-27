@@ -114,6 +114,14 @@ namespace BehindTheGear.HideOut
             return string.Empty;
         }
 
+        // Display name of the equipped weapon / cloak, for the real-time line ("" when there is none).
+        public static string GearName(HideOutPlayerBridge bridge, string gear)
+        {
+            if (bridge == null || !bridge.Initialized) return string.Empty;
+            var item = gear == "weapon" ? EquippedWeapon(bridge) : gear == "cloak" ? EquippedCloak(bridge) : null;
+            return item != null ? item.DisplayName ?? string.Empty : string.Empty;
+        }
+
         public static void RememberGear(HideOutPlayerBridge bridge)
         {
             if (bridge == null || !bridge.Initialized) return;
@@ -130,15 +138,22 @@ namespace BehindTheGear.HideOut
         // 4. new_equipment   newly equipped weapon/cloak not commented on yet
         // 5. clinic_ready / clinic_cooldown
         // after_heal is not chosen here: it answers a successful heal directly.
-        public static SelenaLineState ChooseClinicVisit(HideOutPlayerBridge bridge)
+        public static SelenaLineState ChooseClinicVisit(HideOutPlayerBridge bridge) => ClinicVisit(bridge, true);
+
+        // The same choice without recording anything (SelenaRealtime prefetches the next visit line with it).
+        // Before the first real visit there is no gear baseline yet, so no gear counts as new - exactly what
+        // ChooseClinicVisit then answers.
+        public static SelenaLineState PeekClinicVisit(HideOutPlayerBridge bridge) => ClinicVisit(bridge, false);
+
+        private static SelenaLineState ClinicVisit(HideOutPlayerBridge bridge, bool record)
         {
-            if (!gearBaseline) RememberGear(bridge);
+            if (record && !gearBaseline) RememberGear(bridge);
             var probe = Collect(bridge, SelenaEvent.ClinicReady);
             string clinicEvent = probe.clinicReady ? SelenaEvent.ClinicReady : SelenaEvent.ClinicCooldown;
             if (ReturnPending) return Collect(bridge, SelenaEvent.Returned);
             if (probe.health == "badly_hurt" || probe.health == "critical") return Collect(bridge, clinicEvent);
             if (probe.stamina == "tired" || probe.stamina == "exhausted") return Collect(bridge, SelenaEvent.Tired);
-            string gear = NewGear(bridge);
+            string gear = gearBaseline ? NewGear(bridge) : string.Empty;
             if (gear.Length > 0)
             {
                 var state = Collect(bridge, SelenaEvent.NewEquipment);
@@ -146,6 +161,19 @@ namespace BehindTheGear.HideOut
                 return state;
             }
             return Collect(bridge, clinicEvent);
+        }
+
+        // The after_heal state the next successful heal leads to (same arithmetic as HideOutModel.Heal), or null
+        // when the booth cannot heal right now. SelenaRealtime asks for that line before the heal is pressed.
+        public static SelenaLineState? PeekAfterHeal(HideOutPlayerBridge bridge)
+        {
+            if (bridge == null || !bridge.Initialized || bridge.Health == null || bridge.Settings == null || !ClinicReady(bridge)) return null;
+            int hp = bridge.Health.CurrentHealth, max = bridge.Health.MaxHealth;
+            if (hp <= 0 || hp >= max) return null;
+            var state = Collect(bridge, SelenaEvent.AfterHeal);
+            state.health = HealthBand(hp + Math.Min(max - hp, HideOutModel.Healing(bridge.State, bridge.Settings.rules)), max);
+            state.clinicReady = false; // The heal starts the cooldown.
+            return state;
         }
 
         // Bookkeeping after a line was actually shown.
