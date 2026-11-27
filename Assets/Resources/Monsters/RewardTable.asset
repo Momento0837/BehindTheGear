@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d191687f74289ffd3f09e5158d25642, type: 3}
+  m_Name: RewardTable
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterRewardTable
+  basePart: {fileID: 11400000, guid: a5a85a23e3084a11a6f4ccd7793b1164, type: 2}
+  maxCoinPickups: 8
+  entries:
+  - rank: 4
+    coins: {x: 1, y: 1}
+    coinChance: 0.1
+    basePartChance: 0.01
+    baseParts: {x: 1, y: 1}
+    actionPointChance: 0.01
+    actionPoints: {x: 1, y: 1}
+  - rank: 0
+    coins: {x: 1, y: 2}
+    coinChance: 1
+    basePartChance: 0.03
+    baseParts: {x: 1, y: 1}
+    actionPointChance: 0.25
+    actionPoints: {x: 1, y: 1}
+  - rank: 1
+    coins: {x: 4, y: 7}
+    coinChance: 1
+    basePartChance: 0.3
+    baseParts: {x: 1, y: 1}
+    actionPointChance: 0.15
+    actionPoints: {x: 1, y: 2}
+  - rank: 2
+    coins: {x: 12, y: 20}
+    coinChance: 1
+    basePartChance: 1
+    baseParts: {x: 1, y: 2}
+    actionPointChance: 0.5
+    actionPoints: {x: 2, y: 3}
+  - rank: 3
+    coins: {x: 30, y: 50}
+    coinChance: 1
+    basePartChance: 1
+    baseParts: {x: 3, y: 5}
+    actionPointChance: 1
+    actionPoints: {x: 3, y: 5}

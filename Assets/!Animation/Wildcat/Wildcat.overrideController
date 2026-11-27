@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Wildcat
+  m_Controller: {fileID: 9100000, guid: 43f2891d2550373489bca1b0d46ec253, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: a9cbaf8c3e5ace24486970e52745a999, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 026297741a0db9feb8a43183466d2daf, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: b9a3238f59882ce4f9108a660f9b90a0, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: fa12ca05e6f8ed18c7b72a9565bc44ab, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 5f883aa035cc2794ba06dd357adfe5ce, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: e0cb87c8c330a55ee321b4129ba60db1, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 35859aca3176cc64186b4201816db38f, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: a1343663f398f38e0a8e1dab9d4ccdc4, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 31fe6a74fbc1b8e4e8307b1b4f10bec0, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: c75b21de236821f752cf21a484fc796f, type: 2}

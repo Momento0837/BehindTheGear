@@ -17,7 +17,8 @@ public sealed partial class StorySceneFlow
         hasSelena = selena != null,
         selenaPosition = selena != null ? selena.position : Vector3.zero,
         selenaScale = selena != null ? selena.localScale : Vector3.one,
-        monsters = InScene<MonsterFollowController>().Where(m => m.gameObject.activeInHierarchy && m.CurrentHealth > 0)
+        monsters = InScene<MonsterFollowController>().Where(m => m.gameObject.activeInHierarchy && m.CurrentHealth > 0
+                && !m.IsDevelopmentSpawn && !m.IsAmbientSpawn)
             .Select(m => new FieldMonsterState { position = m.transform.position, health = m.CurrentHealth }).ToArray()
     };
 

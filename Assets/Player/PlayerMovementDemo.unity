@@ -4092,6 +4092,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0930260d461ad842b75384421cae14b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttackController
+  selectedThrowSkill: 0
+  selectedPrimarySkill: 0
   onBasicAttack:
     m_PersistentCalls:
       m_Calls: []
@@ -4142,8 +4144,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement2D
   moveSpeed: 7
   walkSpeed: 5.25
+  dashDistance: 3
+  dashCooldown: 1
   dashDuration: 0.25
   dashAfterimages: 0
+  afterimageInterval: 0.025
+  afterimageLifetime: 0.22
+  afterimageTint: {r: 0.3, g: 0.85, b: 1, a: 0.45}
   jumpVelocity: 15
   crouchSpeedMultiplier: 0.7
   groundLayers:
@@ -4154,6 +4161,7 @@ MonoBehaviour:
     m_Bits: 64
   groundCheckDistance: 0.08
   dropThroughDuration: 0.25
+  meleeImpactNormalizedTime: 0.48
 --- !u!61 &546280978
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -4394,6 +4402,14 @@ MonoBehaviour:
   attackEffectReferenceSprite: {fileID: -3407855339725634011, guid: 2b8a9451d6648fd4395d571c6efd43b2, type: 3}
   attackEffectSortingOrder: 2
   attackEffectBackwardOffset: 0.2
+  swingClips:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  monsterHitClip: {fileID: 0}
+  swingVolume: 0.6
+  hitVolume: 1
+  pitchJitter: 0.05
 --- !u!114 &546280988
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5154,6 +5170,8 @@ MonoBehaviour:
   lookAheadDistance: 1.25
   lookAheadSmoothTime: 0.25
   lookAheadSpeedThreshold: 0.1
+  dialogueZoomRatio: 0.75
+  dialogueSmoothTime: 0.8
 --- !u!114 &623924932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8073,6 +8091,184 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 926005601}
   m_CullTransparentMesh: 1
+--- !u!43 &931166981
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 0
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 0
+    localAABB:
+      m_Center: {x: 0, y: 0, z: 0}
+      m_Extent: {x: 0, y: 0, z: 0}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata: 
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!1 &952128847
 GameObject:
   m_ObjectHideFlags: 0
@@ -11548,6 +11744,8 @@ MonoBehaviour:
   playerControlLock: {fileID: 546280982}
   dialogueAfterVideo: {fileID: 0}
   skipHoldSeconds: 3
+  spaceTextColor: {r: 1, g: 1, b: 1, a: 1}
+  countdownTextColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!328 &1275370405
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -12784,6 +12982,8 @@ MonoBehaviour:
   lookAheadDistance: 1.25
   lookAheadSmoothTime: 0.25
   lookAheadSpeedThreshold: 0.1
+  dialogueZoomRatio: 0.75
+  dialogueSmoothTime: 0.8
 --- !u!1 &1389024293
 GameObject:
   m_ObjectHideFlags: 0
@@ -15993,6 +16193,7 @@ MonoBehaviour:
   questAcceptedDialogue: {fileID: 4900000, guid: 6ac981b5f18b460597a79ab2c269c7ae, type: 3}
   questRejectedDialogue: {fileID: 4900000, guid: 3a4a04a15d314b6e85b43a2f4d903705, type: 3}
   questCompletedDialogue: {fileID: 4900000, guid: 904a1ee5278a4d838a630d53d721d3c8, type: 3}
+  questDefinition: {fileID: 0}
   questItemPrefab: {fileID: 11400000, guid: 6e4c0e586ce24fd0b041292844ae4a7d, type: 3}
   questItemSpawnPoint: {fileID: 6000000001}
   onQuestAccepted:
@@ -16058,7 +16259,7 @@ SpriteRenderer:
   m_Size: {x: 1.8734375, y: 2.05}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &1800720177
 GameObject:
@@ -16272,184 +16473,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1802857540}
   m_CullTransparentMesh: 1
---- !u!43 &1809965626
-Mesh:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 0
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 0
-    localAABB:
-      m_Center: {x: 0, y: 0, z: 0}
-      m_Extent: {x: 0, y: 0, z: 0}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 0
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 0
-    _typelessdata: 
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
 --- !u!1 &1818060091
 GameObject:
   m_ObjectHideFlags: 0
@@ -20659,6 +20682,7 @@ GameObject:
   - component: {fileID: 3000000006}
   - component: {fileID: 3000000007}
   - component: {fileID: 3000000008}
+  - component: {fileID: 3000000009}
   m_Layer: 9
   m_Name: Monster_1
   m_TagString: Untagged
@@ -20828,7 +20852,7 @@ MonoBehaviour:
   maxHealth: 10
   moveSpeed: 3
   attackPower: 10
-  attackDelay: 0.5
+  attackRecovery: 0.7
   recognitionRange: {fileID: 3000000007}
   attackRange: {fileID: 3000000008}
   player: {fileID: 546280981}
@@ -20836,6 +20860,17 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 320
   dropPrefabs: []
+  patrolRadius: 2
+  patrolMoveDuration: 4.5
+  patrolWaitRange: {x: 1, y: 4}
+  lungeEnabled: 0
+  lungeTriggerDistance: 4.5
+  lungeSpeed: 12
+  lungeDuration: 0.22
+  lungeCooldown: 2.5
+  hitStopDuration: 0.05
+  knockbackSpeed: 3
+  knockbackDuration: 0.12
 --- !u!61 &3000000007
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -20928,6 +20963,23 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 6, y: 4}
   m_EdgeRadius: 0
+--- !u!114 &3000000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5391085cb8853b89a6fdc51592979828, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHealthBar
+  widthPixels: 12
+  heightPixels: 1
+  gapAboveSprite: 0.15
+  trailDelay: 0.35
+  trailSpeed: 1.5
 --- !u!114 &3300001001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21035,6 +21087,7 @@ MonoBehaviour:
   window: {fileID: 1855765796}
   shortcutButton: {fileID: 715416658}
   closeButton: {fileID: 2059788340}
+  additionalCloseButtons: []
   slots:
   - {fileID: 1257309956}
   - {fileID: 580718834}
@@ -21246,6 +21299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScenePortal2D
   destinationSceneName: Main
   destinationSpawnPointId: FromDemoRightPortal
+  glowFacesRight: 1
 --- !u!212 &6000000015
 SpriteRenderer:
   serializedVersion: 2
@@ -21442,8 +21496,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueTextEffects
   shakeAmplitude: 1.5
   shakeFrequency: 28
-  settleWaveDuration: 0.7
-  settleDuration: 0.4
   dustPerCharacter: 3
   dustColor: {r: 0.38, g: 0.29, b: 0.22, a: 0.9}
   dustMinSize: 10.58
@@ -21508,7 +21560,7 @@ SpriteRenderer:
   m_Size: {x: 1.8734375, y: 2.05}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

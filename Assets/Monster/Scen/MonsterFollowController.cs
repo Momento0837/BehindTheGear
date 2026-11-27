@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -19,11 +20,32 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     [Header("Drops")]
     [SerializeField] private GameObject[] dropPrefabs;
+    [Tooltip("Reward tier for coins / base parts / AP (Resources/Monsters/RewardTable).")]
+    [SerializeField] private MonsterRank rank = MonsterRank.Common;
 
     [Header("Patrol")]
     [SerializeField, Min(0f)] private float patrolRadius = 2f;
     [SerializeField, Min(.01f)] private float patrolMoveDuration = 4.5f;
     [SerializeField] private Vector2 patrolWaitRange = new Vector2(1f, 4f);
+
+    [Header("Lunge (off by default; enabled by fast monsters such as the wildcat)")]
+    [SerializeField] private bool lungeEnabled;
+    [SerializeField, Min(0f)] private float lungeTriggerDistance = 4.5f;
+    [SerializeField, Min(0f)] private float lungeSpeed = 12f;
+    [SerializeField, Min(0f)] private float lungeDuration = .22f;
+    [SerializeField, Min(0f)] private float lungeCooldown = 2.5f;
+    private float lungeUntil;
+    private float nextLungeTime;
+    private float lungeDirection;
+
+    [Header("Crowding (off by default; small pack monsters such as the wildcat)")]
+    [SerializeField] private bool keepSpacing;
+    [SerializeField, Min(0f)] private float spacing = 1.6f;
+    // Every enabled monster, so spacing monsters can see who is ahead of them on the way to the player.
+    private static readonly List<MonsterFollowController> activeMonsters = new();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetActiveMonsters() => activeMonsters.Clear();
 
     private MonsterRangeTrigger2D attackSensor;
     private MonsterRangeTrigger2D recognitionSensor;
@@ -62,7 +84,60 @@ public sealed class MonsterFollowController : MonoBehaviour
     private Coroutine hitFeedback;
 
     public int CurrentHealth { get; private set; }
+    public int MaxHealth => maxHealth;
+    public bool IsDevelopmentSpawn { get; private set; }
+    // Extra field mobs placed at runtime (e.g. Forest wildcats): not part of story clear checks and not saved in field state.
+    public bool IsAmbientSpawn { get; private set; }
+    public void MarkAmbientSpawn() => IsAmbientSpawn = true;
+    // Development test spawns never advance quests, drop loot or enter field saves.
+    public void MarkDevelopmentSpawn()
+    {
+        IsDevelopmentSpawn = true;
+        loot = System.Array.Empty<InventoryItemDefinition>();
+    }
+
+    // Applies a MonsterProfile (stats, lunge, animation, body/attack box). Call it before Awake, e.g. on a clone
+    // built under an inactive parent, so the range sensors and patrol state are created from the profile values.
+    public void ApplyProfile(MonsterProfile profile, float speedMultiplier = 1f)
+    {
+        if (profile == null) return;
+        tutorialProtected = false;
+        rank = profile.rank;
+        maxHealth = Mathf.Max(1, profile.maxHealth);
+        attackPower = Mathf.Max(1, profile.attackPower);
+        moveSpeed = Mathf.Max(0f, profile.moveSpeed * Mathf.Max(0f, speedMultiplier));
+        attackRecovery = Mathf.Max(.01f, profile.attackRecovery);
+        lungeEnabled = profile.lunge;
+        lungeTriggerDistance = profile.lungeTriggerDistance;
+        lungeSpeed = profile.lungeSpeed * Mathf.Max(0f, speedMultiplier);
+        lungeDuration = profile.lungeDuration;
+        lungeCooldown = profile.lungeCooldown;
+        keepSpacing = profile.keepSpacing;
+        spacing = profile.spacing;
+        CurrentHealth = maxHealth;
+        var profileRenderer = GetComponent<SpriteRenderer>();
+        if (profileRenderer != null) profileRenderer.sortingOrder = profile.sortingOrder;
+        var profileAnimator = GetComponent<Animator>();
+        if (profileAnimator != null && profile.animatorController != null)
+            profileAnimator.runtimeAnimatorController = profile.animatorController;
+        if (!Mathf.Approximately(profile.visualScale, 1f))
+            transform.localScale = Vector3.Scale(transform.localScale, new Vector3(profile.visualScale, profile.visualScale, 1f));
+        if (profile.showHealthBar && GetComponent<MonsterHealthBar>() == null)
+            gameObject.AddComponent<MonsterHealthBar>();
+        if (attackRange != null)
+        {
+            attackRange.size = profile.attackRangeSize;
+            attackRange.offset = profile.attackRangeOffset;
+        }
+        foreach (var box in GetComponents<BoxCollider2D>())
+        {
+            if (box.isTrigger || box == recognitionRange || box == attackRange) continue;
+            box.size = profile.bodySize;
+            box.offset = profile.bodyOffset;
+        }
+    }
     private bool tutorialProtected;
+    private bool impactHitInProgress; // set by TakeMeleeDamage so TakeDamage can tell direct hits from poison ticks
     private InventoryItemDefinition[] loot = System.Array.Empty<InventoryItemDefinition>();
     public void ConfigureLoot(InventoryItemDefinition[] items) => loot = items ?? System.Array.Empty<InventoryItemDefinition>();
     public void SetTutorialProtection(bool value)
@@ -125,11 +200,53 @@ public sealed class MonsterFollowController : MonoBehaviour
         PlayAnimation("Idle");
     }
 
-    private void OnEnable() => IgnorePlayerBodyCollision();
+    private void OnEnable()
+    {
+        IgnorePlayerBodyCollision();
+        if (!activeMonsters.Contains(this)) activeMonsters.Add(this);
+        IgnoreMonsterBodyCollisions();
+    }
+
+    // Spacing monsters keep their distance by AI instead of shoving: body colliders between them and other monsters
+    // are ignored so packs never jitter or tangle (Monster collides with Monster in the project's physics matrix).
+    private void IgnoreMonsterBodyCollisions()
+    {
+        foreach (var other in activeMonsters)
+        {
+            if (other == null || other == this || !(keepSpacing || other.keepSpacing)) continue;
+            foreach (var mine in GetComponentsInChildren<Collider2D>(true))
+            {
+                if (mine.isTrigger) continue;
+                foreach (var theirs in other.GetComponentsInChildren<Collider2D>(true))
+                    if (!theirs.isTrigger) Physics2D.IgnoreCollision(mine, theirs, true);
+            }
+        }
+    }
+
+    // True when another living pack member (keepSpacing) stands between this one and the player, closer than `spacing`.
+    // Other monsters (e.g. GangB) never block: their bodies are ignored, so a small monster slips past them to the player.
+    // Equal positions are broken by instance id so two stacked spawns separate instead of moving as one.
+    private bool IsBlockedByMonsterAhead()
+    {
+        if (!keepSpacing || player == null) return false;
+        float x = body.position.x;
+        float direction = player.position.x < x ? -1f : 1f;
+        foreach (var other in activeMonsters)
+        {
+            if (other == null || other == this || !other.keepSpacing || other.CurrentHealth <= 0 || !other.isActiveAndEnabled) continue;
+            float dx = (other.body != null ? other.body.position.x : other.transform.position.x) - x;
+            if (Mathf.Abs(dx) >= spacing) continue;
+            if (Mathf.Abs(dx) < .01f) { if (other.GetInstanceID() < GetInstanceID()) return true; continue; }
+            if (dx * direction > 0f) return true;
+        }
+        return false;
+    }
 
     private void OnDisable()
     {
+        activeMonsters.Remove(this);
         attackPending = false;
+        lungeUntil = 0f;
         if (hitFeedback != null) StopCoroutine(hitFeedback);
         hitFeedback = null;
         if (animator != null) animator.speed = normalAnimatorSpeed;
@@ -206,6 +323,7 @@ public sealed class MonsterFollowController : MonoBehaviour
                 BeginPatrolWait();
             }
             wasChasing = false;
+            lungeUntil = 0f;
             Patrol();
             return;
         }
@@ -213,6 +331,7 @@ public sealed class MonsterFollowController : MonoBehaviour
 
         if (attackSensor != null && attackSensor.HasPlayer)
         {
+            lungeUntil = 0f;
             Stop();
             Face(player.position.x - body.position.x);
             PlayAnimation("Idle");
@@ -220,7 +339,37 @@ public sealed class MonsterFollowController : MonoBehaviour
             return;
         }
 
+        if (IsBlockedByMonsterAhead())
+        {
+            // Queue behind the pack member in front instead of pushing through it.
+            lungeUntil = 0f;
+            Stop();
+            Face(player.position.x - body.position.x);
+            if (Time.time >= actionUntil) PlayAnimation("Idle");
+            return;
+        }
+        if (TryLunge()) return;
         MoveTowardsCurrentPlayerPosition();
+    }
+
+    // Wildcat-style dash: no wind-up, horizontal burst toward the player, then the normal attack takes over in range.
+    private bool TryLunge()
+    {
+        if (!lungeEnabled || player == null) return false;
+        if (Time.time < lungeUntil)
+        {
+            body.linearVelocity = new Vector2(lungeDirection * lungeSpeed, body.linearVelocity.y);
+            return true;
+        }
+        float offset = player.position.x - body.position.x;
+        if (Time.time < nextLungeTime || Mathf.Abs(offset) > lungeTriggerDistance) return false;
+        lungeDirection = offset < 0f ? -1f : 1f;
+        lungeUntil = Time.time + lungeDuration;
+        nextLungeTime = lungeUntil + lungeCooldown;
+        Face(lungeDirection);
+        PlayAnimation("Walk");
+        body.linearVelocity = new Vector2(lungeDirection * lungeSpeed, body.linearVelocity.y);
+        return true;
     }
 
     public void RecognizePlayer(PlayerHealth health)
@@ -301,6 +450,8 @@ public sealed class MonsterFollowController : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (damage <= 0 || CurrentHealth <= 0) return;
+        lungeUntil = 0f; // any hit cancels a lunge in progress
+        MonsterDamageNumbers.Show(this, damage, !impactHitInProgress);
 
         CurrentHealth = tutorialProtected ? 999 : Mathf.Max(0, CurrentHealth - damage);
         Debug.Log($"[Monster] {name} HP: {CurrentHealth} / {maxHealth}", this);
@@ -322,7 +473,9 @@ public sealed class MonsterFollowController : MonoBehaviour
         knockbackDirection = Mathf.Sign(direction);
         patrolStartX = body.position.x;
         BeginPatrolWait();
-        TakeDamage(damage);
+        impactHitInProgress = true;
+        try { TakeDamage(damage); }
+        finally { impactHitInProgress = false; }
         if (hitFeedback != null) StopCoroutine(hitFeedback);
         hitFeedback = StartCoroutine(HitFeedback());
     }
@@ -384,9 +537,10 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void Die()
     {
-        QuestJournal.Record("kill", "monster", 1);
+        if (!IsDevelopmentSpawn) QuestJournal.Record("kill", "monster", 1);
         Stop();
-        CreateDrops();
+        if (!IsDevelopmentSpawn) CreateDrops();
+        if (!IsDevelopmentSpawn) MonsterRewards.Drop(transform.position, rank);
         foreach (var collider in GetComponentsInChildren<Collider2D>()) collider.enabled = false;
         body.simulated = false;
         StartCoroutine(DeathSequence());
