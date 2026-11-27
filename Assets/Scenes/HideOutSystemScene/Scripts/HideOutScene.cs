@@ -48,6 +48,8 @@ namespace BehindTheGear.HideOut
         public bool TrainingUpgradeVisible => trainingPanelParent != null && dummyPanel.activeSelf;
         [Tooltip("Clinic opens TreatmentScene (fade in, Eden at the booth) instead of the in-base upgrade panel.")]
         public bool useTreatmentRoom = true;
+        [Tooltip("Bed opens BedScene (fade in, bedroom with save / upgrade / Selena) instead of the in-base panel.")]
+        public bool useBedRoom = true;
         // The existing upgrade panel can be lent to a facility room (TreatmentScene) and returned unchanged.
         private RectTransform upgradePanel;
         private TMP_Text upgradeBackLabel;
@@ -331,6 +333,7 @@ namespace BehindTheGear.HideOut
             if (!editorPreview && player != null && player.Initialized)
                 selenaPotionWatch.Tick(this, player, hasSelection && selected == Facility.Potions
                     && upgradeOverlay != null && upgradeOverlay.activeSelf, transform);
+            if (!editorPreview) SelenaRealtime.Tick(player); // Real-time Selena lines: keeps the next visit / leaving line ready.
             if (player == null || !player.Initialized || Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + .25f;
             Refresh();
@@ -1350,7 +1353,7 @@ namespace BehindTheGear.HideOut
             int previous = player.State.levels[(int)Facility.Storage];
             player.UpgradeStorage();
             if (player.State.levels[(int)Facility.Storage] > previous)
-                player.SetMessage($"창고 Lv. {player.State.levels[(int)Facility.Storage]} · 인벤토리 +2 · 창고 +5");
+                player.SetMessage($"창고 Lv. {HideOutModel.DisplayLevel(player.State.levels[(int)Facility.Storage])} · 인벤토리 +2 · 창고 +5");
             Refresh();
         }
 
@@ -1413,6 +1416,10 @@ namespace BehindTheGear.HideOut
                     cameraController.enabled = false; // Same as the dummy: hold the framing, then fade into TreatmentScene.
                     player.StartCoroutine(HideOutTravel.EnterTreatment(this));
                     break;
+                case Facility.Bed when useBedRoom:
+                    cameraController.enabled = false; // Same fade-through entry; BedScene falls back to the in-base panel if missing.
+                    player.StartCoroutine(HideOutTravel.EnterBedroom(this));
+                    break;
                 default: OpenUpgrade(facility); break;
             }
             RefreshFacilityInput();
@@ -1452,7 +1459,7 @@ namespace BehindTheGear.HideOut
             }
             if (facility == Facility.Dummy)
             {
-                dummyLevelText.text = "미리보기 Lv. 0"; dummyWeaponText.text = "샘플 무기";
+                dummyLevelText.text = "미리보기 Lv. 1"; dummyWeaponText.text = "샘플 무기";
                 dummyDamageText.text = "10"; dummyBonusText.text = "+0"; dummyLastDamageText.text = "—";
             }
             RefreshFacilityLevels(); RefreshHotspots();
@@ -1649,7 +1656,7 @@ namespace BehindTheGear.HideOut
             player.UpgradeDummy();
             if (player.State.levels[(int)Facility.Dummy] > previousLevel
                 && player.EquippedWeaponDummyBonus == previousBonus + 1)
-                player.SetMessage($"허수아비 Lv. {player.State.levels[(int)Facility.Dummy]} · 현재 무기 데미지 +{player.EquippedWeaponDummyBonus}");
+                player.SetMessage($"허수아비 Lv. {HideOutModel.DisplayLevel(player.State.levels[(int)Facility.Dummy])} · 현재 무기 데미지 +{player.EquippedWeaponDummyBonus}");
             Refresh();
         }
 
@@ -1674,7 +1681,8 @@ namespace BehindTheGear.HideOut
             ReturnToOverview();
         }
 
-        private bool UsesFacilityRoom(Facility facility) => facility == Facility.Dummy || facility == Facility.Clinic && useTreatmentRoom;
+        private bool UsesFacilityRoom(Facility facility) =>
+            facility == Facility.Dummy || facility == Facility.Clinic && useTreatmentRoom || facility == Facility.Bed && useBedRoom;
 
         // TreatmentScene could not be entered (e.g. not converted yet): keep the clinic usable with the in-base panel.
         public void OpenFacilityPanelFallback(Facility facility)
@@ -1758,7 +1766,7 @@ namespace BehindTheGear.HideOut
         private void ShowFacilityTooltip(Facility facility, RectTransform anchor)
         {
             bool locked = IsLocked(facility);
-            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {player.State.levels[(int)facility]}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
+            tooltipText.text = HideOutModel.IsExhibition(facility) ? $"{DisplayName(facility)}\n추후 구현 · 공간 둘러보기" : $"{DisplayName(facility)}\nLv. {HideOutModel.DisplayLevel(player.State.levels[(int)facility])}  ·  {(locked ? "이용 잠금" : "선택 가능")}";
             ShowTooltip(anchor);
         }
 
@@ -1889,7 +1897,7 @@ namespace BehindTheGear.HideOut
                 Facility.Clinic => $"회복량 {Math.Ceiling(rules.baseHealing * (1d + level * (double)rules.clinicPercentPerLevel))} HP\n회복 성능 +{level * rules.clinicPercentPerLevel:P0}",
                 Facility.Storage => $"가방 슬롯 +{level * rules.inventorySlotsPerLevel}\n창고 슬롯 {rules.baseStorageSlots + level * rules.storageSlotsPerLevel}",
                 Facility.Bed => $"최대 HP +{level * rules.bedHPPerLevel}",
-                Facility.Dummy => $"시설 단계 Lv. {level}\n강화 시 현재 무기 +1",
+                Facility.Dummy => $"시설 단계 Lv. {HideOutModel.DisplayLevel(level)}\n강화 시 현재 무기 +1",
                 Facility.Potions => $"물약 {rules.potionCount}개\n대기 {Math.Max(rules.minimumPotionCooldown, rules.potionCooldown - level * rules.potionReduction):0}초",
                 Facility.Gym => $"최대 MP +{level * rules.gymPercentPerLevel:P0}",
                 _ => "프로토타입 미구현"
@@ -1941,10 +1949,10 @@ namespace BehindTheGear.HideOut
         private void RefreshFacilityLevels()
         {
             foreach (var pair in facilityLevelLabels)
-                pair.Value.text = IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}";
+                pair.Value.text = IsLocked(pair.Key) ? "잠금" : $"Lv. {HideOutModel.DisplayLevel(player.State.levels[(int)pair.Key])}";
             foreach (var pair in shortcutLabels)
             {
-                pair.Value.text = $"{DisplayName(pair.Key)}\n" + (IsLocked(pair.Key) ? "잠금" : $"Lv. {player.State.levels[(int)pair.Key]}");
+                pair.Value.text = $"{DisplayName(pair.Key)}\n" + (IsLocked(pair.Key) ? "잠금" : $"Lv. {HideOutModel.DisplayLevel(player.State.levels[(int)pair.Key])}");
                 shortcutButtons[pair.Key].GetComponent<Image>().color = hasSelection && selected == pair.Key ? AccentSoft : PanelSoft;
             }
             isometricEnvironment.RefreshFacilityVisuals(player.State.levels);
@@ -2025,7 +2033,7 @@ namespace BehindTheGear.HideOut
             int level = player.State.levels[(int)Facility.Storage];
             int maximum = MaxLevel(Facility.Storage);
             var cost = HideOutModel.Next(player.State, settings.rules, Facility.Storage);
-            var costLines = new List<string> { maximum > 0 ? $"Lv. {level} / {maximum}" : $"Lv. {level}" };
+            var costLines = new List<string> { maximum > 0 ? $"Lv. {HideOutModel.DisplayLevel(level)} / {HideOutModel.DisplayLevel(maximum)}" : $"Lv. {HideOutModel.DisplayLevel(level)}" };
             if (cost == null) costLines.Add("최대 강화 단계");
             else
             {
@@ -2089,7 +2097,7 @@ namespace BehindTheGear.HideOut
             var cost = HideOutModel.Next(state, settings.rules, Facility.Dummy);
             int level = state.levels[(int)Facility.Dummy];
 
-            dummyLevelText.text = $"강화 단계  Lv. {level}";
+            dummyLevelText.text = $"강화 단계  Lv. {HideOutModel.DisplayLevel(level)}";
             dummyWeaponText.text = weapon != null ? weapon.DisplayName : "장착 없음";
             dummyDamageText.text = weapon != null && player.Melee != null ? player.EquippedWeaponFinalDamage.ToString() : "-";
             dummyBonusText.text = weapon != null ? $"+{player.EquippedWeaponDummyBonus}" : "+0";
@@ -2145,8 +2153,8 @@ namespace BehindTheGear.HideOut
             }
 
             upgradeTitle.text = DisplayName(selected);
-            upgradeLevel.text = $"현재 강화 단계  Lv. {level}";
-            progressText.text = maximum > 0 && level < maximum ? $"Lv. {level}   →   Lv. {level + 1}" : $"Lv. {level}   ·   최대 단계";
+            upgradeLevel.text = $"현재 강화 단계  Lv. {HideOutModel.DisplayLevel(level)}";
+            progressText.text = maximum > 0 && level < maximum ? $"Lv. {HideOutModel.DisplayLevel(level)}   →   Lv. {HideOutModel.DisplayLevel(level + 1)}" : $"Lv. {HideOutModel.DisplayLevel(level)}   ·   최대 단계";
             progressFill.rectTransform.sizeDelta = new Vector2(602f * (maximum > 0 ? Mathf.Clamp01(level / (float)maximum) : 0f), 22f);
             timerText.text = "강화 시간  ·  즉시 완료";
             if (selected == Facility.Potions) timerText.text = missingPotion ? "물약 정의 설정 누락" : IsLocked(selected) ? "셀레나 영입 필요" : $"수령 대기 {Math.Max(0, state.potionsReadyAt - player.Now):0}초";

@@ -77,8 +77,16 @@ namespace BehindTheGear.HideOut
                 "치료실 컨트롤러가 없습니다. Tools > HideOut > Build Treatment room을 실행하세요.",
                 v => v.OpenFacilityPanelFallback(Facility.Clinic));
 
+        // Bed: same entry into BedScene (save / bed upgrade / Selena). Until Tools > HideOut > Create Bed room has made
+        // the scene, the bed keeps working with the existing in-base panel (save button included).
+        public static IEnumerator EnterBedroom(HideOutScene view)
+            => EnterRoom<BedRoomScene>(view, BedRoomScene.ScenePath, "BedScene",
+                "침실 컨트롤러가 없습니다. Tools > HideOut > Create Bed room을 실행하세요.",
+                v => v.OpenFacilityPanelFallback(Facility.Bed));
+
         public static IEnumerator ExitTraining(ScareCrowTrainingScene training) => ExitRoom(training);
         public static IEnumerator ExitTreatment(TreatmentRoomScene room) => ExitRoom(room);
+        public static IEnumerator ExitBedroom(BedRoomScene room) => ExitRoom(room);
 
         private static IEnumerator EnterRoom<T>(HideOutScene view, string scenePath, string sceneLabel, string missingController,
             Action<HideOutScene> onUnavailable) where T : MonoBehaviour, IHideOutFacilityRoom
