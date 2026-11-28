@@ -242,7 +242,7 @@ public static class LevelSfxMenuChecks
         go.transform.position = new Vector3(5000, 5000, 0);
         var level = PlayerLevel.EnsureOn(go);
         yield return null;
-        Check(go.GetComponent<PlayerLevelBadge>() != null, "PlayerLevel.EnsureOn also adds the badge");
+        Check(go.GetComponent<PlayerLevelBadge>() != null, "PlayerLevel.EnsureOn also adds the gauge");
         int need = level.ExperienceToNext;
         Check(level.Level == 1 && need == 20, $"Starts at Lv 1 needing {need} EXP (expected 20)");
         int levelUps = 0; level.LeveledUp += (l, ap) => levelUps++;
@@ -276,22 +276,21 @@ public static class LevelSfxMenuChecks
         var owner = inventory.gameObject;
         var level = owner.GetComponent<PlayerLevel>();
         var badge = owner.GetComponent<PlayerLevelBadge>();
-        Check(level != null && badge != null, "PlayerLevel and PlayerLevelBadge were added to the player automatically");
+        Check(level != null && badge != null, "PlayerLevel and the EXP gauge were added to the player automatically");
         if (level == null || badge == null) yield break;
 
-        var badgeTransform = owner.transform.Find("Level Badge");
-        var badgeRenderer = badgeTransform != null ? badgeTransform.GetComponent<SpriteRenderer>() : null;
-        Check(badgeRenderer != null && badgeRenderer.sprite != null, "Badge renderer exists");
-        if (badgeRenderer != null)
+        var gauge = GameObject.Find("EXP Gauge");
+        Check(gauge != null && gauge.activeInHierarchy && gauge.GetComponent<Canvas>() != null, "EXP gauge canvas exists and is shown in the field");
+        Check(owner.transform.Find("Level Badge") == null, "The round badge next to the head is gone");
+        if (gauge != null)
         {
-            var sprite = badgeRenderer.sprite;
-            Check(sprite.rect.width == 9 && sprite.rect.height == 9 && Mathf.Approximately(sprite.pixelsPerUnit, 11f),
-                $"Badge is 9x9 px at 11 px/unit ({sprite.rect.width}x{sprite.rect.height}, ppu {sprite.pixelsPerUnit})");
-            var local = badgeRenderer.transform.localPosition;
-            Check(local.x < -.5f && local.y > 1.075f, $"Badge sits up and to the left of the head (local {local.x:F3}, {local.y:F3})");
-            var body = owner.GetComponent<SpriteRenderer>();
-            if (body != null) Check(badgeRenderer.sortingLayerID == body.sortingLayerID && badgeRenderer.sortingOrder > body.sortingOrder, "Badge draws above the player on the same sorting layer");
-            Info($"badge world diameter {badgeRenderer.bounds.size.x:F3} units, player sprite height {(body != null ? body.bounds.size.y : 0):F3}");
+            var frame = (RectTransform)gauge.transform.Find("Frame");
+            var corners = new Vector3[4]; frame.GetWorldCorners(corners);
+            Check(corners[0].y <= 1f && corners[0].x <= 1f && corners[2].x >= Screen.width - 1f && corners[2].y < Screen.height * .06f,
+                $"Gauge spans the bottom edge of the screen (height {corners[2].y - corners[0].y:F0} px of {Screen.height})");
+            var labels = gauge.GetComponentsInChildren<TMP_Text>();
+            Check(labels.Any(l => l.text == "Lv " + level.Level), "Gauge shows the level (" + string.Join(" | ", labels.Select(l => l.text)) + ")");
+            Check(gauge.GetComponent<Canvas>().sortingOrder < 20, "Gauge draws below notices, inventory and menus");
         }
         foreach (var step in Capture("field-badge-lv1")) yield return step;
 
@@ -319,7 +318,12 @@ public static class LevelSfxMenuChecks
 
         level.AddExperience(level.ExperienceToNext);
         yield return 1.2f;
-        Check((int)Read(badge, "shownLevel") == level.Level, $"Badge counted up to Lv {level.Level} after the ring filled");
+        Check((int)Read(badge, "shownLevel") == level.Level, $"Gauge counted up to Lv {level.Level} after it filled");
+        if (gauge != null)
+        {
+            var fill = (RectTransform)gauge.transform.Find("Frame/Track/Fill");
+            Check(Mathf.Abs(fill.anchorMax.x - level.Progress) < .02f, $"Gauge fill matches the EXP progress ({fill.anchorMax.x:F2} vs {level.Progress:F2})");
+        }
         foreach (var step in Capture("field-badge-levelup")) yield return step;
     }
 }
