@@ -216,12 +216,14 @@ namespace BehindTheGear.HideOut
 
         private IEnumerator GreetAfterFade()
         {
-            // Bind runs while the screen is black; once the fade has revealed the room the chart slides in,
-            // then Selena speaks (the one orchestrated entrance of this screen).
+            int greetingTicket = talkTicket;
+            // The chart still starts at reveal; its animation length does not control dialogue timing.
             while (SceneFadeTransition.IsRunning) yield return null;
             introTime = 0f;
-            yield return new WaitForSecondsRealtime(introSeconds * .6f);
+            yield return BaseArrivalTutorial.WaitForArrivalDialogue();
             enterRoutine = null;
+            if (!bound || leaving || !isActiveAndEnabled || greetingTicket != talkTicket
+                || BaseArrivalTutorial.IsShowing) yield break;
             if (BaseArrivalTutorial.TryShowAfterTreatment(this, Player, transform)) yield break;
             Say(TreatmentTalkEvent.Enter, null);
         }

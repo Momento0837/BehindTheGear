@@ -254,9 +254,12 @@ namespace BehindTheGear.HideOut
         private System.Collections.IEnumerator GreetAfterContinue()
         {
             if (!SelenaGameState.TakeContinueGreeting()) yield break;
-            while (SceneFadeTransition.IsRunning || EntryAnimationPlaying) yield return null;
-            yield return null;
-            if (editorPreview || player == null || !player.Initialized || !player.State.baseTutorialComplete) yield break;
+            yield return BaseArrivalTutorial.WaitForArrivalDialogue();
+            if (editorPreview || player == null || !player.Initialized || !player.State.baseTutorialComplete
+                || hasSelection || trainingTransitionPending || selenaLeavingLine || !isActiveAndEnabled
+                || UnityEngine.SceneManagement.SceneManager.GetActiveScene() != gameObject.scene) yield break;
+            // A required treatment tutorial takes priority over the optional welcome line.
+            if (player.State.baseFirstTreatmentComplete && !player.State.baseTreatmentDialogueComplete) yield break;
             SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Continued), transform);
         }
 
@@ -339,7 +342,7 @@ namespace BehindTheGear.HideOut
         private void Update()
         {
             UpdateTreatmentTutorialHint();
-            if (BaseArrivalTutorial.IsShowing || EntryAnimationPlaying) return;
+            if (BaseArrivalTutorial.IsShowing || SelenaBaseDialogue.IsShowing) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame)
                 ToggleFacilityLocksForTesting();
@@ -1288,7 +1291,7 @@ namespace BehindTheGear.HideOut
 
         private void ExitHideOut()
         {
-            if (EntryAnimationPlaying || trainingTransitionPending || SceneFadeTransition.IsRunning || selenaLeavingLine || SelenaBaseDialogue.IsShowing || BaseArrivalTutorial.IsShowing) return;
+            if (trainingTransitionPending || SceneFadeTransition.IsRunning || selenaLeavingLine || SelenaBaseDialogue.IsShowing || BaseArrivalTutorial.IsShowing) return;
             // leaving: Selena says one line first; the exit runs after the player closes it.
             // When she stays silent (not recruited, no dialogue template) the exit runs immediately as before.
             if (SelenaBaseDialogue.TrySay(this, player, SelenaGameState.Collect(player, SelenaEvent.Leaving), transform,
@@ -1417,7 +1420,7 @@ namespace BehindTheGear.HideOut
 
         private void SelectFacility(Facility facility)
         {
-            if (BaseArrivalTutorial.IsShowing || EntryAnimationPlaying) return;
+            if (BaseArrivalTutorial.IsShowing || SelenaBaseDialogue.IsShowing) return;
             if (IsLocked(facility)) return;
             if (editorPreview) { if (hasSelection && selected == facility) HideEditorDetails(); else ShowEditorSample(facility); return; }
             if (trainingTransitionPending || SceneFadeTransition.IsRunning) return;
@@ -1436,6 +1439,7 @@ namespace BehindTheGear.HideOut
                 return;
             }
 
+            entryPresentation?.ReleaseCameraForInteraction();
             selected = facility;
             hasSelection = true;
             exhibitionPanel.SetActive(false);
@@ -1555,7 +1559,9 @@ namespace BehindTheGear.HideOut
 
         private void ReturnToOverview()
         {
-            if (EntryAnimationPlaying || trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController == null || cameraController.IsMoving) return;
+            if (BaseArrivalTutorial.IsShowing || SelenaBaseDialogue.IsShowing || trainingTransitionPending
+                || SceneFadeTransition.IsRunning || cameraController == null || cameraController.IsMoving) return;
+            entryPresentation?.ReleaseCameraForInteraction();
             dummyTesting = false;
             exhibitionPanel.SetActive(false);
             HideStoragePanelSilently();
@@ -2036,7 +2042,7 @@ namespace BehindTheGear.HideOut
             if (testFacilityToggleLabel != null)
                 testFacilityToggleLabel.text = testFacilitiesUnlocked ? "TEST  다시 잠금 [F8]" : "TEST  전체 해금 [F8]";
 #endif
-            bool moving = EntryAnimationPlaying || BaseArrivalTutorial.IsShowing || trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
+            bool moving = BaseArrivalTutorial.IsShowing || SelenaBaseDialogue.IsShowing || trainingTransitionPending || SceneFadeTransition.IsRunning || cameraController != null && cameraController.IsMoving;
             foreach (var pair in facilityButtons) RefreshFacilityArtwork(pair.Value, IsLocked(pair.Key));
             foreach (var pair in shortcutButtons) RefreshFacilityArtwork(pair.Value, IsLocked(pair.Key));
             foreach (var pair in facilityButtons) pair.Value.interactable = !IsLocked(pair.Key) && !moving && (!dummyTesting || selected == pair.Key);

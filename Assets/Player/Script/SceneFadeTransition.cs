@@ -12,6 +12,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     private bool running;
     private IDisposable worldPause;
     private Camera transitionCamera;
+    private BackgroundMusicTrack.ScreenFadeLease musicFade;
     private void SetTransitionCamera(bool active)
     {
         if (active && transitionCamera == null)
@@ -91,7 +92,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
         yield return null;
     }
 
-    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true, Action whenBlack = null, Func<bool> readyToReveal = null)
+    public static void LoadScene(string sceneName, float fadeDuration = .8f, Action<bool> onComplete = null, bool freezeGameplay = true, Action whenBlack = null, Func<bool> readyToReveal = null, bool fadeMusic = true)
     {
         if (instance == null) CreateRuntimeInstance();
 
@@ -101,11 +102,11 @@ public sealed class SceneFadeTransition : MonoBehaviour
             return;
         }
 
-        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay, whenBlack, readyToReveal));
+        instance.StartCoroutine(instance.LoadRoutine(sceneName, fadeDuration, onComplete, freezeGameplay, whenBlack, readyToReveal, fadeMusic));
     }
 
-    public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f)
-        => FadeThrough(InvokeWhileBlack(whileBlack), duration);
+    public static IEnumerator FadeThrough(Action whileBlack, float duration = .8f, bool fadeMusic = true)
+        => FadeThrough(InvokeWhileBlack(whileBlack), duration, fadeMusic);
 
     private static IEnumerator InvokeWhileBlack(Action action)
     {
@@ -114,7 +115,7 @@ public sealed class SceneFadeTransition : MonoBehaviour
     }
 
     // Additive travel can finish loading and bind its camera while the screen stays opaque.
-    public static IEnumerator FadeThrough(IEnumerator whileBlack, float duration = .8f)
+    public static IEnumerator FadeThrough(IEnumerator whileBlack, float duration = .8f, bool fadeMusic = true)
     {
         if (instance == null) CreateRuntimeInstance();
         while (instance.running) yield return null;
@@ -123,9 +124,10 @@ public sealed class SceneFadeTransition : MonoBehaviour
         transition.PrepareOverlay();
         transition.SetTransitionCamera(true);
         transition.FreezeWorld();
+        if (fadeMusic) transition.musicFade = BackgroundMusicTrack.BeginScreenFade();
         try
         {
-            yield return transition.Fade(0f, 1f, duration);
+            yield return transition.Fade(0f, 1f, duration, progress => transition.musicFade?.SetProgress(progress));
             yield return transition.HoldOpaqueFrame();
             if (whileBlack != null) yield return whileBlack;
             yield return transition.HoldOpaqueFrame();
@@ -139,64 +141,74 @@ public sealed class SceneFadeTransition : MonoBehaviour
                 transition.running = false;
                 transition.RestoreWorld();
                 transition.SetTransitionCamera(false);
+                transition.musicFade?.Dispose();
+                transition.musicFade = null;
             }
         }
     }
 
-    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay, Action whenBlack, Func<bool> readyToReveal)
+    private IEnumerator LoadRoutine(string sceneName, float fadeDuration, Action<bool> onComplete, bool freezeGameplay, Action whenBlack, Func<bool> readyToReveal, bool fadeMusic)
     {
         running = true;
         PrepareOverlay();
         SetTransitionCamera(true);
         if (freezeGameplay) FreezeWorld();
         else if (fadeImage != null) fadeImage.raycastTarget = true;
-        yield return Fade(0f, 1f, fadeDuration);
-        yield return HoldOpaqueFrame();
-
-        // Keep outgoing video/UI visible until a completely black frame has been presented.
-        whenBlack?.Invoke();
-        var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
-        AsyncOperation load = null;
+        if (fadeMusic) musicFade = BackgroundMusicTrack.BeginScreenFade();
+        bool succeeded = false;
         try
         {
-            load = SceneManager.LoadSceneAsync(sceneName);
-            if (load != null) load.allowSceneActivation = false;
-        }
-        catch (Exception exception)
-        {
-            Debug.LogException(exception, this);
-        }
+            yield return Fade(0f, 1f, fadeDuration, progress => musicFade?.SetProgress(progress));
+            yield return HoldOpaqueFrame();
 
-        if (load == null)
-        {
-            Debug.LogError($"[Scene Fade] Could not load scene '{sceneName}'. Add it to Build Settings.");
+            // Keep outgoing video/UI visible until a completely black frame has been presented.
+            whenBlack?.Invoke();
+            var dropTransition = RoomDropCache.Prepare(RoomDropCache.SceneRoom(sceneName));
+            AsyncOperation load = null;
+            try
+            {
+                load = SceneManager.LoadSceneAsync(sceneName);
+                if (load != null) load.allowSceneActivation = false;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+
+            if (load == null)
+            {
+                Debug.LogError($"[Scene Fade] Could not load scene '{sceneName}'. Add it to Build Settings.");
+                yield return Fade(1f, 0f, fadeDuration);
+                yield break;
+            }
+
+            while (load.progress < .9f) yield return null;
+            yield return HoldOpaqueFrame();
+            load.allowSceneActivation = true;
+            while (!load.isDone) yield return null;
+            // Let scene startup finish before replacing authored room drops.
+            yield return null; yield return null;
+            if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
+            PrepareOverlay();
+            yield return HoldOpaqueFrame();
+            if (readyToReveal != null)
+            {
+                float deadline = Time.unscaledTime + 10f;
+                while (!readyToReveal() && Time.unscaledTime < deadline) yield return null;
+            }
             yield return Fade(1f, 0f, fadeDuration);
+            succeeded = true;
+        }
+        finally
+        {
+            SetAlpha(0f);
             running = false;
             RestoreWorld();
             SetTransitionCamera(false);
-            onComplete?.Invoke(false);
-            yield break;
+            musicFade?.Dispose();
+            musicFade = null;
+            onComplete?.Invoke(succeeded);
         }
-
-        while (load.progress < .9f) yield return null;
-        yield return HoldOpaqueFrame();
-        load.allowSceneActivation = true;
-        while (!load.isDone) yield return null;
-        // Let scene startup finish before replacing authored room drops.
-        yield return null; yield return null;
-        if (sceneName == "Forest" || sceneName == "Market") RoomDropCache.Commit(dropTransition, SceneManager.GetActiveScene());
-        PrepareOverlay();
-        yield return HoldOpaqueFrame();
-        if (readyToReveal != null)
-        {
-            float deadline = Time.unscaledTime + 10f;
-            while (!readyToReveal() && Time.unscaledTime < deadline) yield return null;
-        }
-        yield return Fade(1f, 0f, fadeDuration);
-        running = false;
-        RestoreWorld();
-        SetTransitionCamera(false);
-        onComplete?.Invoke(true);
     }
 
     private static void CreateRuntimeInstance()
@@ -226,17 +238,21 @@ public sealed class SceneFadeTransition : MonoBehaviour
         root.AddComponent<SceneFadeTransition>();
     }
 
-    private IEnumerator Fade(float from, float to, float duration)
+    private IEnumerator Fade(float from, float to, float duration, Action<float> onProgress = null)
     {
         float elapsed = 0f;
         float safeDuration = Mathf.Max(.01f, duration);
+        onProgress?.Invoke(0f);
         while (elapsed < safeDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            SetAlpha(Mathf.Lerp(from, to, elapsed / safeDuration));
+            float progress = Mathf.Clamp01(elapsed / safeDuration);
+            SetAlpha(Mathf.Lerp(from, to, progress));
+            onProgress?.Invoke(progress);
             yield return null;
         }
         SetAlpha(to);
+        onProgress?.Invoke(1f);
     }
 
     private void SetAlpha(float alpha)
@@ -247,6 +263,8 @@ public sealed class SceneFadeTransition : MonoBehaviour
 
     private void OnDestroy()
     {
+        musicFade?.Dispose();
+        musicFade = null;
         if (running) RestoreWorld();
         if (instance == this) instance = null;
     }

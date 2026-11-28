@@ -79,13 +79,14 @@ public static class PursuitSequenceCheck
             cameraObject.transform.position = new Vector3(right, 0, -10);
             Require(follow.PursuitViewSettled, "Camera arrival respects zoomed right boundary");
             follow.AimPursuitView(false, duration: .5f, motionBlur: true);
-            float left = (float)Call(follow, "ClampHorizontalPosition", (float)Read(follow, "pursuitWorldX"));
+            float rawLeft = (float)Read(follow, "pursuitWorldX");
+            float left = (float)Call(follow, "ClampHorizontalPosition", rawLeft);
             Require(left < right && left >= 44.92f, "Return view moves left toward the player inside map bounds");
             Require(!follow.PursuitViewSettled, "Timed return cannot finish before its half-second motion");
             float previousX = right, endpoint = right, peakBlur = 0f;
             for (int frame = 0; frame < 30; frame++)
             {
-                endpoint = (float)Call(follow, "StepPursuitPan", left, 1f / 60f);
+                endpoint = (float)Call(follow, "StepPursuitPan", rawLeft, 1f / 60f);
                 Call(follow, "UpdatePursuitBlur", endpoint - previousX, 1f / 60f);
                 cameraObject.transform.position = new Vector3(endpoint, 0, -10);
                 previousX = endpoint;
@@ -165,7 +166,7 @@ public static class PursuitSequenceCheck
             Set(follow, "hasDialogueLens", false);
             follow.StoryLookOffset = .7f;
             var rightShout = (IEnumerator)Call(flow, "PanToRightPursuitShout",
-                "Dialogue/Garbage/garbage_pursuit_shout", follow, 1f, true);
+                "Dialogue/Garbage/garbage_pursuit_shout", follow, 1f, .5f);
             Require(rightShout.MoveNext() && rightShout.Current is IEnumerator,
                 "Right shout begins with a camera arrival wait");
             Require((bool)Read(follow, "pursuitFocus") && Mathf.Approximately((float)Read(follow, "pursuitWorldX"), 97.28f)
@@ -177,46 +178,53 @@ public static class PursuitSequenceCheck
             for (int frame = 0; frame < 30; frame++)
             {
                 Call(follow, "UpdateFocusLens", 4.5f, 1f / 60f);
-                float destination = (float)Call(follow, "ClampHorizontalPosition", 97.28f);
-                float panX = (float)Call(follow, "StepPursuitPan", destination, 1f / 60f);
+                float panX = (float)Call(follow, "StepPursuitPan", 97.28f, 1f / 60f);
                 cameraObject.transform.position = new Vector3(panX, 0f, -10f);
                 camera.ResetWorldToCameraMatrix();
             }
-            Require(follow.PursuitPositionSettled && !follow.PursuitViewSettled && !arrival.MoveNext(),
-                "First bubble starts after half-second pan while its gentle zoom continues");
-            Require(camera.orthographicSize > 4.8f, "First shout retains the original gradual zoom rather than snapping in");
+            Require(follow.PursuitPositionSettled && follow.PursuitViewSettled && !arrival.MoveNext(),
+                "First bubble starts after the half-second pan and synchronized zoom both finish");
+            Require(Mathf.Abs(camera.orthographicSize - 4.5f) < .0001f,
+                "Garbage shout reaches its intended zoom at the horizontal arrival time");
             Require(rightShout.MoveNext() && rightShout.Current is IEnumerator,
                 "Bubble playback follows the completed camera movement");
             (rightShout as IDisposable)?.Dispose();
             follow.EndPursuitFocus();
             report.AppendLine("PASS shared Garbage/Market shout camera pan and bubble-after-arrival sequencing");
 
+            foreach (bool orthographic in new[] { true, false })
             foreach (int fps in new[] { 30, 60, 144 })
+            foreach (bool garbage in new[] { true, false })
             {
-                camera.orthographic = false;
+                camera.orthographic = orthographic;
+                camera.orthographicSize = 5f;
                 camera.fieldOfView = 20f;
-                cameraObject.transform.position = new Vector3(55f, 0f, -27.24f);
+                float z = orthographic ? -10f : -27.24f;
+                float normalLens = orthographic ? 5f : 20f;
+                float duration = garbage ? .5f : .8f;
+                string label = (garbage ? "Garbage" : "Market") + (orthographic ? " orthographic" : " perspective") + " at " + fps + " FPS";
+                cameraObject.transform.position = new Vector3(60f, 0f, z);
                 camera.ResetWorldToCameraMatrix();
-                Set(follow, "cameraZ", -27.24f);
+                Set(follow, "cameraZ", z);
                 Set(follow, "hasDialogueLens", false);
                 artwork.Clear();
-                artwork.Add(new Bounds(new Vector3(71.1f, 0f, 5.77f), new Vector3(52.36f, 20f, .01f)));
+                if (!orthographic)
+                    artwork.Add(new Bounds(new Vector3(71.1f, 0f, 5.77f), new Vector3(52.36f, 20f, .01f)));
                 follow.BeginPursuitFocus();
-                follow.AimPursuitView(true, duration: .5f);
-                int frames = Mathf.CeilToInt(.5f * fps) + 1;
-                for (int frame = 0; frame < frames; frame++)
-                {
-                    Call(follow, "UpdateFocusLens", 18f, 1f / fps);
-                    float destination = (float)Call(follow, "ClampHorizontalPosition", 97.28f);
-                    float panX = (float)Call(follow, "StepPursuitPan", destination, 1f / fps);
-                    cameraObject.transform.position = new Vector3(panX, 0f, -27.24f);
-                    camera.ResetWorldToCameraMatrix();
-                }
-                Require(follow.PursuitViewSettled && Mathf.Abs(camera.fieldOfView - 18f) < .03f,
-                    "Perspective map-edge movement and zoom settle in half a second at " + fps + " FPS");
+                follow.AimPursuitView(true, duration: duration);
+                VerifySynchronizedPan(follow, camera, normalLens * .9f, duration, fps, label + " right/zoom-in");
+                follow.AimPursuitView(false, duration: duration, returnToNormalZoom: garbage);
+                VerifySynchronizedPan(follow, camera, normalLens * (garbage ? 1f : .9f), duration, fps,
+                    label + (garbage ? " return/zoom-out" : " left/held zoom"));
                 follow.EndPursuitFocus();
+                if (garbage)
+                {
+                    for (int frame = 0; frame < fps; frame++) Call(follow, "UpdateFocusLens", normalLens, 1f / fps);
+                    Require(Mathf.Abs(Lens(camera) - normalLens) < .0001f,
+                        label + ": ending pursuit after the return causes no extra zoom-out tail");
+                }
             }
-            report.AppendLine("PASS half-second pursuit move and zoom at 30 / 60 / 144 FPS");
+            report.AppendLine("PASS synchronized Garbage 0.5s zoom-in/out and eased Market 0.8s pans with held left zoom; orthographic/perspective at 30 / 60 / 144 FPS");
 
             var actor = player.AddComponent<PlayerMovement2D>();
             Set(actor, "body", player.GetComponent<Rigidbody2D>());
@@ -240,9 +248,9 @@ public static class PursuitSequenceCheck
                 Require(!incoming.Enter().MoveNext() && follow.enabled,
                     "Arrival completion restores camera tracking before Market dialogue");
                 var marketShout = (IEnumerator)Call(flow, "PanToRightPursuitShout",
-                    "Dialogue/Market/market_pursuit_shout", follow, .5f, false);
+                    "Dialogue/Market/market_pursuit_shout", follow, .5f, .8f);
                 Require(marketShout.MoveNext() && (bool)Read(follow, "pursuitFocus")
-                    && Read(follow, "pursuitWorldX") != null,
+                    && Read(follow, "pursuitWorldX") != null && Mathf.Approximately((float)Read(follow, "pursuitPanDuration"), .8f),
                     "Market pursuit acquires its camera after the actual portal arrival lifecycle");
                 (marketShout as IDisposable)?.Dispose();
                 follow.EndPursuitFocus();
@@ -274,6 +282,59 @@ public static class PursuitSequenceCheck
             File.WriteAllText(Folder + "/result.txt", report.ToString());
         }
     }
+    private static float Lens(Camera camera) => camera.orthographic ? camera.orthographicSize : camera.fieldOfView;
+
+    private static void VerifySynchronizedPan(PlayerCameraFollow2D follow, Camera camera, float targetLens,
+        float duration, int fps, string label)
+    {
+        float rawDestination = (float)Read(follow, "pursuitWorldX");
+        float startX = camera.transform.position.x, startLens = Lens(camera), previousProgress = 0f;
+        bool checkedEaseIn = false, checkedEaseOut = false;
+        int frames = Mathf.CeilToInt(duration * fps);
+        for (int frame = 1; frame <= frames; frame++)
+        {
+            float beforeLens = Lens(camera);
+            Call(follow, "UpdateFocusLens", targetLens, 1f / fps);
+            Require(Mathf.Abs(Lens(camera) - beforeLens) < .000001f,
+                label + ": ordinary lens smoothing cannot advance the shared pursuit clock");
+            float x = (float)Call(follow, "StepPursuitPan", rawDestination, 1f / fps);
+            float destination = (float)Call(follow, "ClampHorizontalPosition", rawDestination);
+            float panProgress = (x - startX) / (destination - startX);
+            float timeProgress = Mathf.Clamp01(frame / (duration * fps));
+            Require(panProgress >= previousProgress - .0001f && panProgress <= 1.0001f,
+                label + ": pan progresses monotonically without overshooting");
+            if (Mathf.Abs(targetLens - startLens) > .0001f)
+            {
+                float zoomProgress = (Lens(camera) - startLens) / (targetLens - startLens);
+                Require(Mathf.Abs(panProgress - zoomProgress) < .0001f,
+                    label + ": horizontal and lens progress stay synchronized with the changing map boundary");
+            }
+            else Require(Mathf.Abs(Lens(camera) - targetLens) < .0001f, label + ": the left Market pan holds its zoom");
+            if (timeProgress >= .15f && timeProgress <= .3f)
+            {
+                checkedEaseIn = true;
+                Require(panProgress < timeProgress * .65f, label + ": movement eases into its travel instead of starting at cruising speed");
+            }
+            if (timeProgress >= .7f && timeProgress <= .85f)
+            {
+                checkedEaseOut = true;
+                Require(panProgress > 1f - (1f - timeProgress) * .65f, label + ": movement eases toward its endpoint");
+            }
+            Require(Mathf.Abs((float)Call(follow, "ClampHorizontalPosition", x) - x) < .002f,
+                label + ": every sampled position stays within the currently visible map bounds");
+            camera.transform.position = new Vector3(x, camera.transform.position.y, camera.transform.position.z);
+            camera.ResetWorldToCameraMatrix();
+            previousProgress = panProgress;
+            if (timeProgress < .999f) Require(!follow.PursuitViewSettled, label + ": arrival cannot complete before its duration");
+        }
+        Require(checkedEaseIn && checkedEaseOut && follow.PursuitViewSettled && !(bool)Read(follow, "pursuitTimedPan")
+            && Mathf.Abs(Lens(camera) - targetLens) < .0001f && Mathf.Abs(previousProgress - 1f) < .0001f,
+            label + ": pan and requested lens finish together within one simulated frame of their duration");
+        for (int frame = 0; frame < fps; frame++) Call(follow, "UpdateFocusLens", targetLens, 1f / fps);
+        Require(Mathf.Abs(Lens(camera) - targetLens) < .0001f && Mathf.Abs((float)Read(follow, "lensVelocity")) < .0001f,
+            label + ": no independent lens smoothing tail remains after arrival");
+    }
+
     private static GameObject New(Scene scene, string name, params Type[] components)
     {
         var go = new GameObject(name, components);

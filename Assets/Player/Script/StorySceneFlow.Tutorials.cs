@@ -75,6 +75,7 @@ public sealed partial class StorySceneFlow
                 yield return new WaitForFixedUpdate();
                 elapsed += Time.fixedDeltaTime;
             } while ((elapsed < flight * .5f || !player.IsGroundedForStory) && elapsed < 12);
+            if (player.IsGroundedForStory) GameSoundService.PlayGarbageLanding();
             // Horizontal speed is assigned once; Unity gravity drives the entire visible arc.
             body.linearVelocity = new Vector2(0, body.linearVelocity.y);
             body.linearDamping = damping;

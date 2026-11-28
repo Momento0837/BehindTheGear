@@ -43,7 +43,7 @@ namespace BehindTheGear.HideOut
             public SpriteRenderer[] sprites;
             public Color[] colors;
             public CanvasGroup group;
-            public bool addedGroup;
+            public bool addedGroup, blocksRaycasts;
             public float alpha, distance, delay;
             public Facility? facility;
 
@@ -60,7 +60,11 @@ namespace BehindTheGear.HideOut
                 // keeping layered shadows, colors and outlines of each object together.
                 if (group == null) target.localPosition = position + pivotOffset * (1 - factor);
                 float opacity = Mathf.SmoothStep(0, 1, t);
-                if (group != null) group.alpha = alpha * opacity;
+                if (group != null)
+                {
+                    group.alpha = alpha * opacity;
+                    group.blocksRaycasts = blocksRaycasts && t > 0f;
+                }
                 for (int i = 0; i < sprites.Length; i++)
                     if (sprites[i] != null) { Color c = colors[i]; c.a *= opacity; sprites[i].color = c; }
             }
@@ -76,6 +80,7 @@ namespace BehindTheGear.HideOut
                 if (group != null)
                 {
                     group.alpha = alpha;
+                    group.blocksRaycasts = blocksRaycasts;
                     if (addedGroup) Destroy(group);
                 }
             }
@@ -90,7 +95,6 @@ namespace BehindTheGear.HideOut
         private HideOutLockedFog lockedFog;
         private HideOutCameraController controller;
         private Camera viewCamera;
-        private BasePresentationInputLock inputLock;
         private bool started, previousCameraLock;
         private Material sweepMaterial;
         private Action completed;
@@ -138,7 +142,6 @@ namespace BehindTheGear.HideOut
             UpdateEntranceUI(-1);
             previousCameraLock = controller != null && controller.PresentationLocked;
             if (controller != null) controller.PresentationLocked = true;
-            inputLock = BasePresentationInputLock.Acquire(inputRoot);
             IsPlaying = true; Stage = "WaitingForFade";
             Apply(icons, -1, config.iconDuration); Apply(clouds, -1, config.fogZoomDuration); Apply(map, -1, config.mapZoomDuration);
             StartCoroutine(Play());
@@ -162,6 +165,7 @@ namespace BehindTheGear.HideOut
                 result.addedGroup = result.group == null;
                 if (result.addedGroup) result.group = target.gameObject.AddComponent<CanvasGroup>();
                 result.alpha = result.group.alpha;
+                result.blocksRaycasts = result.group.blocksRaycasts;
                 // Icons arrive from left to right; world objects still reveal outward from screen center.
                 result.distance = RectTransformUtility.WorldToScreenPoint(null, target.position).x;
             }
@@ -369,6 +373,12 @@ namespace BehindTheGear.HideOut
             }
             Finish();
         }
+        // An accepted button click may start camera navigation while the decorative reveal continues.
+        public void ReleaseCameraForInteraction()
+        {
+            if (IsPlaying && controller != null) controller.PresentationLocked = previousCameraLock;
+        }
+
         private void Finish()
         {
             if (!IsPlaying) return;
@@ -385,8 +395,6 @@ namespace BehindTheGear.HideOut
             if (sweepMaterial != null) Destroy(sweepMaterial);
             lockedFog?.SetEntranceSuspended(false);
             if (controller != null) controller.PresentationLocked = previousCameraLock;
-            inputLock?.Dispose();
-            inputLock = null;
             var callback = completed; completed = null;
             if (isActiveAndEnabled) callback?.Invoke();
         }

@@ -60,6 +60,10 @@ public sealed class MonsterFollowController : MonoBehaviour
     private Color normalColor;
     private float normalAnimatorSpeed;
     private Coroutine hitFeedback;
+    private bool deathLandingPlayed;
+    private AudioSource movementSoundSource;
+    private int lastWalkDirection;
+    private int lastFootContactFrame = -1;
 
     public int CurrentHealth { get; private set; }
     private bool tutorialProtected;
@@ -129,6 +133,9 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void OnDisable()
     {
+        lastWalkDirection = 0;
+        lastFootContactFrame = -1;
+        if (movementSoundSource != null) movementSoundSource.Stop();
         attackPending = false;
         if (hitFeedback != null) StopCoroutine(hitFeedback);
         hitFeedback = null;
@@ -290,6 +297,8 @@ public sealed class MonsterFollowController : MonoBehaviour
     {
         if (!isActiveAndEnabled || !attackPending || CurrentHealth <= 0 || animationState != "Attack") return;
         attackPending = false;
+        // The frame-34 swing is audible even if the player has moved out of the hit range.
+        GameSoundService.PlayGangBAttack();
         if (attackSensor == null || !attackSensor.HasPlayer || playerHealth == null
             || playerHealth.IsDead || PlayerSkills.IsHiddenFromMonsters(playerHealth)
             || Time.time < skillStaggerUntil || IsSightBlocked()) return;
@@ -384,12 +393,22 @@ public sealed class MonsterFollowController : MonoBehaviour
 
     private void Die()
     {
+        deathLandingPlayed = false;
+        if (movementSoundSource != null) movementSoundSource.Stop();
         QuestJournal.Record("kill", "monster", 1);
         Stop();
         CreateDrops();
         foreach (var collider in GetComponentsInChildren<Collider2D>()) collider.enabled = false;
         body.simulated = false;
         StartCoroutine(DeathSequence());
+    }
+
+    // The GangB body Dead clip calls this at frame 32.
+    public void OnDeathLanding(float volume)
+    {
+        if (CurrentHealth > 0 || deathLandingPlayed) return;
+        deathLandingPlayed = true;
+        GameSoundService.PlayDeathLanding(volume);
     }
 
     private IEnumerator DeathSequence()
@@ -440,6 +459,52 @@ public sealed class MonsterFollowController : MonoBehaviour
             spriteRenderer.flipX = direction > 0f;
     }
 
+    private bool CanHearWalking => isActiveAndEnabled && CurrentHealth > 0
+        && body != null && body.simulated && Mathf.Abs(body.linearVelocity.y) <= .2f
+        && Time.timeScale > 0f && Time.time >= actionUntil && Time.time >= skillStaggerUntil
+        && Time.time >= knockbackUntil && Time.unscaledTime >= hitStopUntil
+        && !SceneFadeTransition.IsRunning && !CutsceneVideoSequence.IsAnyVisible
+        && GameSoundService.CurrentMap != GameSoundMap.None;
+
+    // GangB Walk.anim invokes this at frames 0 and 42; pauses and speed changes follow the Animator.
+    public void OnFootstepContact()
+    {
+        if (!CanHearWalking || animationState != "Walk" || Mathf.Abs(body.linearVelocity.x) <= .001f
+            || lastFootContactFrame == Time.frameCount) return;
+        lastFootContactFrame = Time.frameCount;
+        PlayMovementSound(false);
+    }
+
+    private void RecordWalkDirection(float velocity)
+    {
+        if (Mathf.Abs(velocity) <= .001f) return;
+        int direction = velocity < 0f ? -1 : 1;
+        bool reversed = lastWalkDirection != 0 && lastWalkDirection != direction;
+        lastWalkDirection = direction;
+        if (reversed && CanHearWalking) PlayMovementSound(true);
+    }
+
+    private void PlayMovementSound(bool loose)
+    {
+        if (player == null) return;
+        // Use XY distance: the 2D camera's Z offset must not quiet nearby footsteps.
+        float distance = Vector2.Distance(transform.position, player.position);
+        float gain = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(3f, 18f, distance));
+        if (gain <= 0f) return;
+        if (movementSoundSource == null)
+        {
+            var child = new GameObject("Movement Sounds");
+            child.transform.SetParent(transform, false);
+            movementSoundSource = child.AddComponent<AudioSource>();
+            movementSoundSource.playOnAwake = false;
+            movementSoundSource.spatialBlend = 0f;
+            movementSoundSource.dopplerLevel = 0f;
+            movementSoundSource.priority = 128;
+        }
+        // A per-monster source keeps player StopFootstep() from cutting off these sounds.
+        GameSoundService.PlayMonsterFootstep(movementSoundSource, loose, gain);
+    }
+
     private void BeginPatrolWait()
     {
         patrolWaiting = true;
@@ -468,6 +533,7 @@ public sealed class MonsterFollowController : MonoBehaviour
             Mathf.Clamp01(patrolElapsed / patrolMoveDuration));
         float velocity = (target - body.position.x) / Time.fixedDeltaTime;
         body.linearVelocity = new Vector2(velocity, body.linearVelocity.y);
+        RecordWalkDirection(velocity);
         Face(velocity);
         PlayAnimation(Mathf.Abs(velocity) > .001f ? "Walk" : "Idle");
         if (patrolElapsed >= patrolMoveDuration)
@@ -511,6 +577,7 @@ public sealed class MonsterFollowController : MonoBehaviour
     {
         float direction = Mathf.Sign(player.position.x - body.position.x);
         body.linearVelocity = new Vector2(direction * moveSpeed, body.linearVelocity.y);
+        RecordWalkDirection(direction * moveSpeed);
         Face(direction);
         PlayAnimation("Walk");
     }

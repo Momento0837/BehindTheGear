@@ -11,6 +11,19 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
     public const string TreatmentDialoguePath = "Dialogue/Hideout/base_treatment_tutorial";
     public const string PotionDialoguePath = "Dialogue/Hideout/base_potion_tutorial";
 
+    // All arrival lines use the fully revealed screen as their clock, not the decorative UI animation.
+    public static IEnumerator WaitForArrivalDialogue()
+    {
+        float readyAt = -1f;
+        while (true)
+        {
+            if (SceneFadeTransition.IsRunning) readyAt = -1f;
+            else if (readyAt < 0f) readyAt = Time.realtimeSinceStartup + 1f;
+            else if (Time.realtimeSinceStartup >= readyAt) yield break;
+            yield return null;
+        }
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetState() => active = null;
 
@@ -29,8 +42,9 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         var actor = PlayerTargetRegistry.Current;
         var bridge = actor != null ? actor.GetComponent<HideOutPlayerBridge>() : null;
         if (bridge == null || !bridge.Initialized) yield break;
-        // Start when the black transition clears, even while the map entrance is still playing.
-        while (SceneFadeTransition.IsRunning) yield return null;
+        yield return WaitForArrivalDialogue();
+        if (bridge == null || !bridge.Initialized || !isActiveAndEnabled
+            || UnityEngine.SceneManagement.SceneManager.GetActiveScene() != gameObject.scene) yield break;
         if (bridge.State.baseTutorialComplete)
         {
             TryShowAfterTreatment(this, bridge, transform);

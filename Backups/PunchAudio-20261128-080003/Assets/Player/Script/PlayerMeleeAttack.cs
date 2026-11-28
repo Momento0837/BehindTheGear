@@ -1,0 +1,198 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public interface IMeleeDamageModifier { int MeleeDamageBonus { get; } }
+public interface IMeleeDamageReceiver { void ReceiveMeleeDamage(int damage); }
+
+[RequireComponent(typeof(PlayerInputReader), typeof(BoxCollider2D))]
+public sealed class PlayerMeleeAttack : MonoBehaviour
+{
+    [SerializeField, Min(1)] private int attackDamage = 10;
+    [SerializeField, Min(.01f)] private float attackCooldown = 1f;
+    [SerializeField, Min(.01f)] private float attackRange = 1.3f;
+    [SerializeField] private LayerMask monsterLayers;
+    [SerializeField] private RuntimeAnimatorController attackEffectController;
+    [SerializeField] private Sprite attackEffectReferenceSprite;
+    [SerializeField] private int attackEffectSortingOrder = 2;
+    [SerializeField, Min(0f)] private float attackEffectBackwardOffset = .2f;
+
+    private BoxCollider2D playerCollider;
+    private readonly Collider2D[] hitBuffer = new Collider2D[16];
+    private readonly HashSet<MonsterFollowController> hitMonsters = new();
+    private readonly HashSet<IMeleeDamageReceiver> hitReceivers = new();
+    private ContactFilter2D monsterFilter;
+    private float facingDirection = 1f;
+    private float nextAttackTime;
+    private bool comboHitPending;
+    private int swingStealthBonus;
+    private PlayerMovement2D movement;
+    private static readonly int[] AttackEffectStateHashes =
+    {
+        Animator.StringToHash("Base Layer.Attack01"),
+        Animator.StringToHash("Base Layer.Attack02"),
+        Animator.StringToHash("Base Layer.Attack03")
+    };
+    private static readonly float[] AttackEffectDurations = { .5f, .5f, .62f };
+    public int ResolvedDamage
+    {
+        get
+        {
+            int result = attackDamage;
+            foreach (MonoBehaviour component in GetComponents<MonoBehaviour>())
+                if (component is IMeleeDamageModifier modifier) result += modifier.MeleeDamageBonus;
+            return Mathf.Max(1, result);
+        }
+    }
+
+    // Targeted training uses exactly the same damage and cooldown as normal melee attacks.
+    public bool TryAttackTarget(IMeleeDamageReceiver target)
+    {
+        if (target == null || Time.time < nextAttackTime) return false;
+        nextAttackTime = Time.time + attackCooldown;
+        target.ReceiveMeleeDamage(ResolveSwingDamage());
+        return true;
+    }
+
+    private void Awake()
+    {
+        playerCollider = GetComponent<BoxCollider2D>();
+        movement = GetComponent<PlayerMovement2D>();
+        monsterFilter.SetLayerMask(monsterLayers);
+        monsterFilter.useTriggers = false;
+        PlayerInputReader input = GetComponent<PlayerInputReader>();
+        input.MoveChanged += UpdateFacing;
+        // Animated players resolve damage from their actual combo state, not the button press.
+        if (movement == null || GetComponent<Animator>() == null) input.BasicAttackPressed += Attack;
+    }
+
+    public void Attack()
+    {
+        if (Time.time < nextAttackTime) return;
+        nextAttackTime = Time.time + attackCooldown;
+
+        AimSwingAtMouse();
+        ResolveHit(facingDirection);
+    }
+
+    public void BeginComboSwing()
+    {
+        AimSwingAtMouse();
+        comboHitPending = true;
+        swingStealthBonus = GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0;
+    }
+
+    public void CancelComboSwing() { comboHitPending = false; swingStealthBonus = 0; }
+
+    public void ResolveComboHit(int attackIndex)
+    {
+        if (!comboHitPending) return;
+        comboHitPending = false;
+        PlayComboEffect(attackIndex);
+        ResolveHit(facingDirection);
+    }
+
+    private void ResolveHit(float direction)
+    {
+        int damage = ResolveSwingDamage();
+        Vector2 size = new(attackRange, playerCollider.bounds.size.y);
+        Vector2 center = playerCollider.bounds.center + Vector3.right * direction
+            * (playerCollider.bounds.extents.x + attackRange * .5f);
+        int hitCount = Physics2D.OverlapBox(center, size, 0f, monsterFilter, hitBuffer);
+        hitMonsters.Clear();
+        hitReceivers.Clear();
+        for (int i = 0; i < hitCount; i++)
+        {
+            MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
+            if (monster != null && monster.CurrentHealth > 0 && hitMonsters.Add(monster))
+            {
+                monster.TakeMeleeDamage(damage, direction);
+                movement?.ApplyHitStop(.05f);
+            }
+            else if (monster == null)
+            {
+                foreach (MonoBehaviour component in hitBuffer[i].GetComponentsInParent<MonoBehaviour>())
+                    if (component is IMeleeDamageReceiver receiver)
+                    {
+                        if (hitReceivers.Add(receiver))
+                        {
+                            // This resolver currently has no critical roll. Preserve that combat policy.
+                            if (receiver is ICombatHitReceiver detailed) detailed.ReceiveHit(new CombatHit(damage));
+                            else receiver.ReceiveMeleeDamage(damage);
+                        }
+                        break;
+                    }
+            }
+        }
+    }
+
+    private int ResolveSwingDamage()
+    {
+        int bonus = swingStealthBonus + (GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0);
+        swingStealthBonus = 0;
+        return ResolvedDamage + bonus;
+    }
+
+    public void PlayComboEffect(int attackIndex)
+    {
+        int index = attackIndex - 1;
+        if (index < 0 || index >= AttackEffectStateHashes.Length
+            || attackEffectController == null || attackEffectReferenceSprite == null)
+            return;
+
+        GameObject effect = new("Player Attack Effect", typeof(SpriteRenderer), typeof(Animator));
+        effect.transform.SetParent(transform, true);
+        effect.transform.position = GetAttackCenter()
+            - Vector2.right * facingDirection * attackEffectBackwardOffset;
+        float scale = attackRange / Mathf.Max(.01f, attackEffectReferenceSprite.bounds.size.x);
+        effect.transform.localScale = new Vector3(scale, scale, 1f);
+
+        SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
+        renderer.sprite = attackEffectReferenceSprite;
+        renderer.sortingLayerName = "ForeGround";
+        renderer.sortingOrder = Mathf.Max(1000, attackEffectSortingOrder);
+        renderer.color = new Color(1, 1, 1, .9f);
+        renderer.flipX = facingDirection < 0f;
+
+        Animator effectAnimator = effect.GetComponent<Animator>();
+        effectAnimator.runtimeAnimatorController = attackEffectController;
+        effectAnimator.Play(AttackEffectStateHashes[index], 0, 0f);
+        Destroy(effect, AttackEffectDurations[index]);
+    }
+
+    private void UpdateFacing(float direction)
+    {
+        if (comboHitPending || movement != null && movement.IsAttacking) return;
+        if (direction != 0f) facingDirection = Mathf.Sign(direction);
+    }
+
+    private void AimSwingAtMouse()
+    {
+        var camera = Camera.main;
+        if (Mouse.current != null && camera != null)
+        {
+            float offset = Mouse.current.position.ReadValue().x - camera.WorldToScreenPoint(transform.position).x;
+            if (Mathf.Abs(offset) > .01f) facingDirection = Mathf.Sign(offset);
+        }
+        GetComponent<PlayerSpriteFacing>()?.FaceAttack(facingDirection);
+    }
+
+    private Vector2 GetAttackCenter()
+    {
+        Bounds bounds = playerCollider.bounds;
+        return bounds.center + Vector3.right * facingDirection * (bounds.extents.x + attackRange * .5f);
+    }
+
+    private void OnDrawGizmos()
+    {
+        BoxCollider2D box = GetComponent<BoxCollider2D>();
+        if (box == null) return;
+
+        Bounds bounds = box.bounds;
+        Vector2 size = new(attackRange, bounds.size.y);
+        Vector2 center = bounds.center + Vector3.right * facingDirection * (bounds.extents.x + attackRange * .5f);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(center, size);
+    }
+}

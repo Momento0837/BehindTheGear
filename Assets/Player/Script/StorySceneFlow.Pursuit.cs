@@ -3,6 +3,8 @@ using UnityEngine;
 
 public sealed partial class StorySceneFlow
 {
+    private const float GarbagePursuitPanSeconds = .5f;
+    private const float MarketPursuitPanSeconds = .8f;
     private bool pursuitPlayed;
 
     private IEnumerator ShowPursuitBubble(string resourcePath, bool leftSide = false, float opacity = 1f)
@@ -38,16 +40,16 @@ public sealed partial class StorySceneFlow
         }
     }
 
-    private IEnumerator PanToRightPursuitShout(string resourcePath, PlayerCameraFollow2D camera, float opacity = 1f, bool gentleZoom = false)
+    private IEnumerator PanToRightPursuitShout(string resourcePath, PlayerCameraFollow2D camera, float opacity = 1f, float panDuration = MarketPursuitPanSeconds)
     {
         if (camera != null)
         {
             camera.StoryLookOffset = 0f;
-            camera.BeginPursuitFocus(zoomSmoothTime: gentleZoom ? .8f : .12f);
-            camera.AimPursuitView(true, duration: .5f);
+            camera.BeginPursuitFocus();
+            camera.AimPursuitView(true, duration: panDuration);
         }
         // Both maps must reach the source of the shout before showing its world-anchored bubble.
-        yield return WaitForPursuitView(camera, waitForZoom: !gentleZoom);
+        yield return WaitForPursuitView(camera);
         yield return ShowPursuitBubble(resourcePath, opacity: opacity);
     }
 
@@ -57,9 +59,9 @@ public sealed partial class StorySceneFlow
         float previousOffset = camera != null ? camera.StoryLookOffset : 0f;
         try
         {
-            yield return PanToRightPursuitShout(resourcePath, camera, gentleZoom: true);
-            if (camera != null) camera.AimPursuitView(false, duration: .5f);
-            yield return WaitForPursuitView(camera, waitForZoom: false);
+            yield return PanToRightPursuitShout(resourcePath, camera, panDuration: GarbagePursuitPanSeconds);
+            if (camera != null) camera.AimPursuitView(false, duration: GarbagePursuitPanSeconds, returnToNormalZoom: true);
+            yield return WaitForPursuitView(camera);
         }
         finally
         {
@@ -90,7 +92,7 @@ public sealed partial class StorySceneFlow
         try
         {
             yield return PanToRightPursuitShout("Dialogue/Market/market_pursuit_shout", camera, opacity: .5f);
-            if (camera != null) camera.AimPursuitView(false, duration: .5f, motionBlur: true);
+            if (camera != null) camera.AimPursuitView(false, duration: MarketPursuitPanSeconds, motionBlur: true);
             yield return WaitForPursuitView(camera);
             yield return ShowPursuitBubble("Dialogue/Market/market_pursuit_shout_left", leftSide: true);
             if (camera != null)

@@ -51,8 +51,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float? pursuitWorldX;
     private bool pursuitTimedPan, pursuitPanBlur;
     private float pursuitPanDuration, pursuitPanElapsed, pursuitPanStartX;
+    private float pursuitPanStartLens, pursuitZoomRatio = .9f;
     private float pursuitBlurVelocity;
-    private float pursuitLensSmoothTime = .12f;
     private bool mysteryDialogue;
     private float dialogueLowerOffset;
     private float dialogueLowerVelocity;
@@ -144,19 +144,20 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         dialoguePlayer = null;
     }
 
-    public void BeginPursuitFocus(float zoomSmoothTime = .12f)
+    public void BeginPursuitFocus()
     {
         if (attachedCamera == null || !isActiveAndEnabled) return;
         BeginDialogueFocusForDeath();
         pursuitFocus = true;
-        pursuitLensSmoothTime = Mathf.Max(.01f, zoomSmoothTime);
+        pursuitZoomRatio = .9f;
+        pursuitPanDuration = 0f;
         pursuitWorldX = null;
         pursuitTimedPan = pursuitPanBlur = false;
         PrototypeScreenEffects.StoryPanBlurPixels = 0f;
         pursuitBlurVelocity = 0f;
     }
 
-    public void AimPursuitView(bool rightSide, float duration = 0f, bool motionBlur = false)
+    public void AimPursuitView(bool rightSide, float duration = 0f, bool motionBlur = false, bool returnToNormalZoom = false)
     {
         if (!pursuitFocus) return;
         float playerX = target != null ? target.position.x + followOffset.x : transform.position.x;
@@ -165,6 +166,8 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         pursuitPanDuration = Mathf.Max(0f, duration);
         pursuitPanElapsed = 0f;
         pursuitPanStartX = transform.position.x;
+        pursuitPanStartLens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
+        pursuitZoomRatio = returnToNormalZoom ? 1f : .9f;
         pursuitTimedPan = pursuitPanDuration > 0f;
         pursuitPanBlur = pursuitTimedPan && motionBlur;
         PrototypeScreenEffects.StoryPanBlurPixels = 0f;
@@ -175,8 +178,19 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     {
         pursuitPanElapsed = Mathf.Min(pursuitPanDuration, pursuitPanElapsed + Mathf.Max(0f, deltaTime));
         float progress = pursuitPanDuration > 0f ? pursuitPanElapsed / pursuitPanDuration : 1f;
+        // Absorb floating-point accumulation at the end of an exact-duration pan.
+        if (progress >= 1f - .00001f) progress = 1f;
         if (progress >= 1f) pursuitTimedPan = false;
-        return Mathf.Lerp(pursuitPanStartX, destinationX, Mathf.SmoothStep(0f, 1f, progress));
+        // Quintic easing starts and ends with zero velocity AND zero acceleration.
+        // Pan and lens use the same clock, including the Garbage return zoom-out.
+        float eased = progress * progress * progress * (progress * (progress * 6f - 15f) + 10f);
+        float normalLens = attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView;
+        float lens = Mathf.Lerp(pursuitPanStartLens, normalLens * pursuitZoomRatio, eased);
+        if (attachedCamera.orthographic) attachedCamera.orthographicSize = lens;
+        else attachedCamera.fieldOfView = lens;
+        lensVelocity = 0f;
+        // Zoom changes the visible map bounds; clamp after applying this frame's lens.
+        return Mathf.Lerp(pursuitPanStartX, ClampHorizontalPosition(destinationX), eased);
     }
 
     private void UpdatePursuitBlur(float displacementX, float deltaTime)
@@ -218,7 +232,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             if (!pursuitFocus || !pursuitWorldX.HasValue || attachedCamera == null) return true;
             if (!PursuitPositionSettled) return false;
             float lens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
-            float desiredLens = (attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView) * .9f;
+            float desiredLens = (attachedCamera.orthographic ? normalOrthographicSize : normalFieldOfView) * pursuitZoomRatio;
             return Mathf.Abs(lens - desiredLens) < .03f;
         }
     }
@@ -228,6 +242,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
         pursuitFocus = false;
         pursuitWorldX = null;
         pursuitTimedPan = pursuitPanBlur = false;
+        pursuitPanDuration = 0f;
         pursuitBlurVelocity = 0f;
         PrototypeScreenEffects.StoryPanBlurPixels = 0f;
     }
@@ -301,7 +316,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
             return;
         }
         float targetLowerOffset = 0f;
-        if (pursuitFocus) desiredLens *= .9f;
+        if (pursuitFocus) desiredLens *= pursuitZoomRatio;
         if (dialogueOwner != null && player != null)
         {
             Bounds subjects = dialogueSubjects;
@@ -330,8 +345,9 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
     private float UpdateFocusLens(float desiredLens, float deltaTime)
     {
         float currentLens = attachedCamera.orthographic ? attachedCamera.orthographicSize : attachedCamera.fieldOfView;
-        // The first shout keeps the original gentle zoom while its bubble only waits for the pan.
-        float lensSmoothTime = pursuitFocus ? pursuitLensSmoothTime : dialogueSmoothTime;
+        // A timed pursuit owns its lens through StepPursuitPan; do not add a second smoothing tail.
+        if (pursuitFocus && pursuitPanDuration > 0f) return currentLens;
+        float lensSmoothTime = pursuitFocus ? .12f : dialogueSmoothTime;
         float lens = Mathf.SmoothDamp(currentLens, desiredLens, ref lensVelocity,
             lensSmoothTime, Mathf.Infinity, deltaTime);
         if (attachedCamera.orthographic) attachedCamera.orthographicSize = lens;
@@ -460,7 +476,7 @@ public sealed class PlayerCameraFollow2D : MonoBehaviour
 
         if (pursuitFocus && pursuitTimedPan && pursuitWorldX.HasValue)
         {
-            smoothedPosition.x = StepPursuitPan(ClampHorizontalPosition(pursuitWorldX.Value), Time.unscaledDeltaTime);
+            smoothedPosition.x = StepPursuitPan(pursuitWorldX.Value, Time.unscaledDeltaTime);
             followVelocity.x = 0f;
         }
         float clampedX = ClampHorizontalPosition(smoothedPosition.x);

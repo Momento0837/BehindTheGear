@@ -55,6 +55,8 @@ public sealed partial class StorySceneFlow
                 foreach (var monster in monsters) monster.gameObject.SetActive(false);
                 dialogue.transform.position = new Vector3(65f, -2.5f, 0f);
                 PrepareMarket();
+                // A saved Market visit has already passed its arrival monologue.
+                GameSoundService.StartMarketMusic();
                 if (state.greetingCompleted)
                 {
                     marketBubble.RestoreCompletedGreeting();

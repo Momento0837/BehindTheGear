@@ -252,6 +252,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         rect.anchoredPosition = new Vector2(x, 34); rect.sizeDelta = new Vector2(240, 58);
         var label = Label(go.transform, text, 0, 24); label.rectTransform.sizeDelta = new Vector2(220, 40);
         var button = go.GetComponent<Button>(); button.onClick.AddListener(action);
+        MenuButtonSound.Attach(button);
         style = go.AddComponent<SaveConfirmButtonStyle>(); style.Configure(label, isConfirm);
         return button;
     }
@@ -264,6 +265,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         go.GetComponent<Image>().color = new Color(.34f, .17f, .12f);
         var label = Label(go.transform, text, 14, 26); label.rectTransform.sizeDelta = new Vector2(400, 40);
         var button = go.GetComponent<Button>(); button.onClick.AddListener(action);
+        MenuButtonSound.Attach(button);
         if (metalPlate) go.AddComponent<SaveSlotButtonStyle>().Configure(label, buttonPlateSprite,
             buttonGear != null ? buttonGear.Icon : null, destructive);
         return button;
