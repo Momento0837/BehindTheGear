@@ -51,6 +51,8 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         pass.separation = separation;
         pass.healthTint = new Vector3(healthEffect.y, healthEffect.z, healthEffect.w);
         pass.damageFlash = Application.isPlaying ? PrototypeScreenEffects.DamageFlashOpacity : 0f;
+        pass.storyPanBlurPixels = Application.isPlaying && camera == Camera.main
+            ? Mathf.Clamp(PrototypeScreenEffects.StoryPanBlurPixels, 0f, 64f) : 0f;
         bool gameplay = Application.isPlaying && player != null && camera == Camera.main
             && (camera.gameObject.scene.name == "Forest" || camera.gameObject.scene.name == "Market");
         pass.haze = new Vector4(hazeThreshold, gameplay ? hazeOpacity : 0f, hazeBlurPixels, hazeSpreadPixels);
@@ -94,6 +96,7 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
         public float separation;
         public Vector3 healthTint;
         public float damageFlash;
+        public float storyPanBlurPixels;
         public Vector4 haze;
         public Vector4 rippleBar, rippleParameters;
         public MotionPass()
@@ -108,6 +111,19 @@ public sealed class WorldMotionEffectsFeature : ScriptableRendererFeature
             if (resources.isActiveTargetBackBuffer) return;
             var source = resources.activeColorTexture;
             var description = graph.GetTextureDesc(source);
+            if (storyPanBlurPixels > .01f)
+            {
+                var blurDescription = description;
+                blurDescription.name = "Story Pan Blur Color";
+                blurDescription.clearBuffer = false;
+                var blurred = graph.CreateTexture(blurDescription);
+                var blurProperties = new MaterialPropertyBlock();
+                blurProperties.SetVector("_OutputPixelSize", new Vector4(pixelSize.x, pixelSize.y, 0, 0));
+                blurProperties.SetFloat("_StoryPanBlurPixels", storyPanBlurPixels);
+                graph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, blurred, material, 1)
+                    { propertyBlock = blurProperties }, passName: "Story Pan Horizontal Blur");
+                source = blurred;
+            }
             description.name = "World Chromatic Motion Color";
             description.clearBuffer = false;
             var destination = graph.CreateTexture(description);

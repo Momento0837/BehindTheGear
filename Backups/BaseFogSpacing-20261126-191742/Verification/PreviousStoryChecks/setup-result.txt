@@ -1,0 +1,1 @@
+PASS connected all 3 Bigfog and 4 Fog sprites to Base_Test; no texture importer changes.

@@ -118,9 +118,32 @@ public static class ClinicTutorialChecks
     private static IEnumerator AdvanceStory()
     {
         int frame = 0; float deadline = Time.realtimeSinceStartup + 35;
+        bool captured = false;
         while (BaseArrivalTutorial.IsShowing && Time.realtimeSinceStartup < deadline)
         {
             var dialogue = Object.FindObjectsByType<ConversationDialogue>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(d => d.IsPlaying);
+            if (dialogue != null && !captured)
+            {
+                var body = dialogue.BodyText;
+                Check(body != null && body.GetComponentInParent<DialogueCanvasView>() != null,
+                    "story dialogue uses the shared Canvas prefab");
+                Call(dialogue, "RequestAdvance");
+                yield return null;
+                yield return new WaitForEndOfFrame();
+                Canvas.ForceUpdateCanvases();
+                var storyCanvas = body.GetComponentInParent<Canvas>();
+                Check(body.isActiveAndEnabled && storyCanvas != null, "story dialogue body is active");
+                var camera = storyCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : storyCanvas.worldCamera;
+                var corners = new Vector3[4];
+                body.rectTransform.GetWorldCorners(corners);
+                var points = corners.Select(c => RectTransformUtility.WorldToScreenPoint(camera, c)).ToArray();
+                var size = new Vector2(points.Max(p => p.x) - points.Min(p => p.x), points.Max(p => p.y) - points.Min(p => p.y));
+                Check(size.x > 1f && size.y > 1f, "story dialogue has visible screen dimensions " + size);
+                var screenshot = ScreenCapture.CaptureScreenshotAsTexture();
+                File.WriteAllBytes(Folder + "00-story-dialogue.png", screenshot.EncodeToPNG());
+                Object.Destroy(screenshot);
+                captured = true;
+            }
             if (dialogue != null && frame++ % 4 == 0) Call(dialogue, "RequestAdvance");
             yield return null;
         }
@@ -144,6 +167,7 @@ public static class ClinicTutorialChecks
         var camera = parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : parentCanvas.worldCamera;
         var points = corners.Select(c => RectTransformUtility.WorldToScreenPoint(camera, c)).ToArray();
         var size = new Vector2(points.Max(p => p.x) - points.Min(p => p.x), points.Max(p => p.y) - points.Min(p => p.y));
+        Check(size.x > 1f && size.y > 1f, name + " target has visible screen dimensions " + size);
         Check(Vector2.Distance(border.rectTransform.sizeDelta, size) < .5f, name + " border fits actual button size " + size);
         Check(button.GetComponent<Canvas>() == null, name + " does not modify the target Canvas hierarchy");
         var tex = ScreenCapture.CaptureScreenshotAsTexture();

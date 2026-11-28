@@ -40,6 +40,7 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     private float facingDirection = 1f;
     private float nextAttackTime;
     private bool comboHitPending;
+    private bool comboSoundPending;
     private int swingStealthBonus;
     private PlayerMovement2D movement;
     private static readonly int[] AttackEffectStateHashes =
@@ -99,17 +100,27 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
     {
         AimSwingAtMouse();
         comboHitPending = true;
+        comboSoundPending = true;
         swingStealthBonus = GetComponent<PlayerSkills>()?.ConsumeStealthAttackBonus() ?? 0;
     }
 
-    public void CancelComboSwing() { comboHitPending = false; swingStealthBonus = 0; }
+    public void CancelComboSwing() { comboHitPending = false; comboSoundPending = false; swingStealthBonus = 0; }
+
+    // Body Attack / Run_Attack clips call this at frame 14, independently of damage resolution.
+    public void OnAttackSound(int attackIndex)
+    {
+        if (!isActiveAndEnabled || !comboSoundPending || movement == null || !movement.IsAttacking
+            || attackIndex < 1 || attackIndex > 3) return;
+        comboSoundPending = false;
+        GameSoundService.PlayPlayerAttack(attackIndex);
+    }
 
     public void ResolveComboHit(int attackIndex)
     {
         if (!comboHitPending) return;
         comboHitPending = false;
         PlayComboEffect(attackIndex);
-        PlaySwingSound(attackIndex);
+        // Animated swings already sound at frame 14 through OnAttackSound.
         ResolveHit(facingDirection);
     }
 
@@ -122,12 +133,15 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
         int hitCount = Physics2D.OverlapBox(center, size, 0f, monsterFilter, hitBuffer);
         hitMonsters.Clear();
         hitReceivers.Clear();
+        bool damagedMonster = false;
         for (int i = 0; i < hitCount; i++)
         {
             MonsterFollowController monster = hitBuffer[i].GetComponentInParent<MonsterFollowController>();
             if (monster != null && monster.CurrentHealth > 0 && hitMonsters.Add(monster))
             {
+                int healthBefore = monster.CurrentHealth;
                 monster.TakeMeleeDamage(damage, direction);
+                damagedMonster |= monster.CurrentHealth < healthBefore;
                 movement?.ApplyHitStop(.05f);
             }
             else if (monster == null)
@@ -145,8 +159,9 @@ public sealed class PlayerMeleeAttack : MonoBehaviour
                     }
             }
         }
-        // One hit sound per swing, no matter how many targets were damaged.
-        if (hitMonsters.Count + hitReceivers.Count > 0) PlaySfx(monsterHitClip, hitVolume);
+        // Keep one impact cue per swing: the shared combat sound wins over legacy clips.
+        if (damagedMonster) GameSoundService.PlayPunchHit();
+        else if (hitReceivers.Count > 0) PlaySfx(monsterHitClip, hitVolume);
     }
 
     private void SetupSound()

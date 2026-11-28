@@ -102,5 +102,36 @@ Shader "BehindTheGear/World Chromatic Motion"
             }
             ENDHLSL
         }
+
+        // Transient camera-pan blur is performed before chromatic separation and health/haze grading.
+        Pass
+        {
+            Name "Story Pan Blur"
+            ZWrite Off ZTest Always Cull Off Blend Off
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment PanBlur
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            float4 _OutputPixelSize;
+            float _StoryPanBlurPixels;
+
+            half4 PanBlur(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float2 stepUV = float2(_OutputPixelSize.x * _StoryPanBlurPixels / 8.0, 0);
+                half4 sum = 0;
+                // Symmetric triangular weights keep the sweep smooth without a sharp original overlay.
+                [unroll]
+                for (int sampleIndex = -8; sampleIndex <= 8; sampleIndex++)
+                {
+                    float weight = 9.0 - abs(sampleIndex);
+                    sum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp,
+                        input.texcoord + stepUV * sampleIndex) * weight;
+                }
+                return sum / 81.0;
+            }
+            ENDHLSL
+        }
     }
 }

@@ -262,6 +262,7 @@ public sealed class CloudAccountPanel : MonoBehaviour
         go.GetComponent<Image>().color = new Color(.34f, .17f, .12f);
         cornerLabel = Label(go.transform, "계정 연동하기", 21, TextAlignmentOptions.Center);
         cornerButton = go.GetComponent<Button>();
+        MenuButtonSound.Attach(cornerButton);
         cornerButton.onClick.AddListener(Open);
         go.AddComponent<SaveSlotButtonStyle>().Configure(cornerLabel, plateSprite, gearSprite, false);
     }
@@ -395,6 +396,7 @@ public sealed class CloudAccountPanel : MonoBehaviour
         rect.anchoredPosition = new Vector2(x, 34); rect.sizeDelta = new Vector2(230, 58);
         var label = Label(go.transform, text, 22, TextAlignmentOptions.Center);
         var button = go.GetComponent<Button>();
+        MenuButtonSound.Attach(button);
         button.onClick.AddListener(action);
         go.AddComponent<SaveConfirmButtonStyle>().Configure(label, confirm);
         return button;

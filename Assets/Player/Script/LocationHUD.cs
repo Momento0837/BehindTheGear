@@ -4,11 +4,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Queued location and acquisition notices using the authored Info image.</summary>
+/// <summary>Location notices and the owner of the separate item-acquisition stack.</summary>
 public sealed class LocationHUD : MonoBehaviour
 {
     public string CurrentLocation { get; private set; } = string.Empty;
     public GameObject CanvasRoot => panel != null ? panel.gameObject : gameObject;
+    private ItemAcquisitionHUD acquisitions;
     private TMP_Text label;
     private RectTransform panel;
     private CanvasGroup visibility;
@@ -21,6 +22,7 @@ public sealed class LocationHUD : MonoBehaviour
     public void Dismiss()
     {
         notices.Clear(); presenting = false; elapsed = 0;
+        if (acquisitions != null) acquisitions.Clear();
         if (visibility != null) visibility.alpha = 0;
     }
     private void OnDisable() => Dismiss();
@@ -105,13 +107,14 @@ public sealed class LocationHUD : MonoBehaviour
         textRect.anchorMin = textRect.anchorMax = textRect.pivot = new Vector2(.5f, .5f);
         textRect.anchoredPosition = Vector2.zero;
         if (panel.GetComponent<RectMask2D>() == null) panel.gameObject.AddComponent<RectMask2D>();
+        acquisitions = ItemAcquisitionHUD.Create(transform, background, label, horizontalPadding);
     }
 
     public static void ShowAcquired(InventoryItemDefinition item, int amount)
     {
         if (item == null || amount <= 0) return;
         var hud = FindFirstObjectByType<LocationHUD>();
-        if (hud != null) hud.Enqueue(amount > 1 ? $"{item.DisplayName} ×{amount} 획득" : $"{item.DisplayName} 획득");
+        if (hud != null && hud.acquisitions != null) hud.acquisitions.Show(item, amount);
     }
 
     public void SetLocation(string locationName)

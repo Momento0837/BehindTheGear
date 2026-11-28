@@ -31,6 +31,10 @@ public static class ProjectStartupScene
 
     private static bool SetStartupScene()
     {
+        // The opt-in entrance check preserves the editing scene and temporarily chooses this sandbox.
+        if (SessionState.GetBool("BaseEntranceChecks.OwnPlay", false)
+            && AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene) == SpriteBaseTestPath)
+            return true;
         // The inventory sandbox must start from the open scene. All production
         // scenes enter Play mode through the control selection screen.
         string activeScenePath = EditorSceneManager.GetActiveScene().path;

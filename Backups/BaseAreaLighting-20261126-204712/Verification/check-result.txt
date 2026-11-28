@@ -1,0 +1,51 @@
+PASS all eight named area lights bind to distinct facilities
+PASS all area lights start at zero before their entrance
+PASS entry starts on initial base creation
+PASS captures objects, eight icons, locked fog and exactly three temporary sweeps
+PASS world elements sorted nearest screen center first
+PASS icons sorted by screen X, left to right
+PASS world elements sorted nearest screen center first
+PASS icon ordering uses positioned icons rather than prefab origin
+PASS camera input and focus are blocked during entry
+PASS facility clicks cannot interrupt entry
+PASS base UI input stays locked during entry
+PASS temporary fog shader compiles
+PASS temporary fog tint is #1f1f1f
+PASS render hierarchy keeps UI icons above fog above the map
+Sweep center rendered color=RGBA(0.086, 0.086, 0.086, 0.973)
+Sweep visible=True, alpha=0.65, center=(-3.78, 0.32, 0.00), size=(6.00, 3.89, 0.20), order=113
+PASS radial fog first, then icons, then overlapping map entrance
+Fog expansion when first icon appears=0.825
+PASS icons arrive once the final radial cloud has expanded about 80 percent
+PASS map visibly grows while the last icons are still finishing
+Measured sweep directions: -1,1,-1
+PASS radial lanes alternate left/right/left or right/left/right
+PASS all three clouds enlarge toward the viewer while leaving the center
+PASS initially unlocked lights fade gradually with their area entrance
+PASS map placement and authored scales are exactly restored
+PASS camera and UI input restored
+PASS temporary fog is removed after its entrance
+PASS entry preserves locked-region story progression
+PASS real facility click uses 80 percent of the previous magnification
+PASS measured camera magnification ratio is 0.8
+PASS returning from a facility does not replay entry
+PASS used shader variant remains error-free
+PASS Bed respects initial story lock and authored intensity
+PASS Clinic respects initial story lock and authored intensity
+PASS Dummy respects initial story lock and authored intensity
+PASS Workshop respects initial story lock and authored intensity
+PASS Storage respects initial story lock and authored intensity
+PASS Potions respects initial story lock and authored intensity
+PASS Dining respects initial story lock and authored intensity
+PASS Gym respects initial story lock and authored intensity
+PASS unlock starts from zero without a flash
+PASS story unlock fades to authored intensity despite repeated UI refresh
+PASS all facilities restore their individual authored intensities when unlocked
+PASS Storage preserves its authored intensity 1.14
+PASS relocked areas immediately return to exact zero
+PASS leaving the base turns off separately rooted area lights
+PASS returning to the base restores unlocked lights
+PASS global lighting is unchanged throughout
+PASS gray sweep visibly renders over the black background
+Runtime errors: 0
+PASS entrance checks

@@ -111,6 +111,7 @@ namespace BehindTheGear.HideOut
         private Vector2 portraitBase, chartBase;
         private CanvasGroup chartGroup, portraitGroup, dialogueGroup, systemGroup;
         private Image gaugeFillImage, gaugeReadyImage, healButtonImage, healCross, healFlashImage, continueMark;
+        private Color continueMarkBaseColor;
         private TMP_Text clockLabel, stateLabel, healButtonLabel, systemLabel;
         private TMP_Text bodyLabel;
         private Button tutorialHealButton, tutorialBackButton, tutorialAdvanceButton;
@@ -215,12 +216,14 @@ namespace BehindTheGear.HideOut
 
         private IEnumerator GreetAfterFade()
         {
-            // Bind runs while the screen is black; once the fade has revealed the room the chart slides in,
-            // then Selena speaks (the one orchestrated entrance of this screen).
+            int greetingTicket = talkTicket;
+            // The chart still starts at reveal; its animation length does not control dialogue timing.
             while (SceneFadeTransition.IsRunning) yield return null;
             introTime = 0f;
-            yield return new WaitForSecondsRealtime(introSeconds * .6f);
+            yield return BaseArrivalTutorial.WaitForArrivalDialogue();
             enterRoutine = null;
+            if (!bound || leaving || !isActiveAndEnabled || greetingTicket != talkTicket
+                || BaseArrivalTutorial.IsShowing) yield break;
             if (BaseArrivalTutorial.TryShowAfterTreatment(this, Player, transform)) yield break;
             Say(TreatmentTalkEvent.Enter, null);
         }
@@ -746,7 +749,7 @@ namespace BehindTheGear.HideOut
             TurnGear(healCard, dt);
             TurnGear(speedCard, dt);
             if (continueMark != null && continueMark.gameObject.activeSelf)
-                continueMark.color = WithAlpha(brassColor, .35f + .65f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f)));
+                continueMark.color = WithAlpha(continueMarkBaseColor, continueMarkBaseColor.a * (.35f + .65f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f))));
             if (systemGroup != null && systemRemaining > 0f)
             {
                 systemRemaining -= dt;
@@ -800,6 +803,7 @@ namespace BehindTheGear.HideOut
             BuildChart(t);
             BuildResourceHud(t);
             BuildDialogue(t);
+            continueMarkBaseColor = continueMark != null ? continueMark.color : brassColor;
 
             healFlashImage = Box(t, "Heal flash", 0, 0, 0, 0, Color.clear);
             healFlash = healFlashImage.rectTransform;
@@ -992,6 +996,31 @@ namespace BehindTheGear.HideOut
 
         private void BuildDialogue(Transform t)
         {
+            var prefab = Resources.Load<DialogueCanvasPrefabs>("Dialogue/CanvasPrefabs")?.treatmentCanvas;
+            var template = prefab != null ? prefab.GetComponent<TreatmentDialogueView>() : null;
+            if (template != null && template.IsValid)
+            {
+                var root = Instantiate(prefab, t, false);
+                root.name = "TreatmentDialogueCanvas";
+                // Root Canvas values are driven by Unity when the prefab is authored. As a nested
+                // Canvas, fill the existing treatment screen instead of retaining a driven zero scale.
+                var canvasRect = (RectTransform)root.transform;
+                canvasRect.localScale = Vector3.one;
+                canvasRect.localRotation = Quaternion.identity;
+                Stretch(canvasRect);
+                var view = root.GetComponent<TreatmentDialogueView>();
+                dialogueGroup = view.group;
+                bodyLabel = view.body;
+                continueMark = view.continueMark;
+                tutorialAdvanceButton = view.advance;
+                view.speaker.text = speakerName;
+                dialogueGroup.alpha = 0f;
+                dialogueGroup.blocksRaycasts = false;
+                continueMark.gameObject.SetActive(false);
+                tutorialAdvanceButton.onClick.AddListener(AdvanceDialogue);
+                return;
+            }
+
             // Name tab above a dark glass box along the bottom; click / Space / Enter advances.
             var dialogueRoot = new GameObject("Selena dialogue", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
             dialogueRoot.SetParent(t, false); Stretch(dialogueRoot);

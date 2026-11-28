@@ -1,0 +1,10 @@
+PASS gravity / landing / visual collider: red_cloth, size=(0.58, 0.58)
+PASS gravity / landing / visual collider: tutorial_recovery_potion, size=(2.91, 2.91)
+PASS gravity / landing / visual collider: Tattered_Cloak, size=(2.91, 2.91)
+PASS overlapping drops do not form floating piles
+PASS multiple player colliders do not interrupt attraction
+PASS magnet acceleration: 7 -> 8.400014 units/s, capped at 1.2x
+PASS released magnet restores gravity and solid collider
+PASS full inventory keeps gravity active
+PASS quest interaction pickup stays fixed
+RESULT: PASS

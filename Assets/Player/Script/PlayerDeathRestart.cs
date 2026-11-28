@@ -9,6 +9,7 @@ public sealed class PlayerDeathRestart : MonoBehaviour
     [SerializeField, Min(.01f)] private float fadeDuration = 1.5f;
 
     private PlayerHealth playerHealth;
+    private int deathLandingMask;
 
     private void Awake() => playerHealth = GetComponent<PlayerHealth>();
 
@@ -19,7 +20,21 @@ public sealed class PlayerDeathRestart : MonoBehaviour
         if (playerHealth != null) playerHealth.Died -= RestartScene;
     }
 
-    private void RestartScene() => DeathFadeTransition.Restart(fadeDuration, playerHealth);
+    // Dead.anim supplies contact ID (0/1) and its independent volume (0.5/1).
+    public void OnDeathLanding(AnimationEvent contact)
+    {
+        if (playerHealth == null || !playerHealth.IsDead || contact.intParameter < 0 || contact.intParameter > 1) return;
+        int bit = 1 << contact.intParameter;
+        if ((deathLandingMask & bit) != 0) return;
+        deathLandingMask |= bit;
+        GameSoundService.PlayDeathLanding(contact.floatParameter);
+    }
+
+    private void RestartScene()
+    {
+        deathLandingMask = 0;
+        DeathFadeTransition.Restart(fadeDuration, playerHealth);
+    }
 }
 
 internal sealed class DeathFadeTransition : MonoBehaviour
@@ -27,6 +42,7 @@ internal sealed class DeathFadeTransition : MonoBehaviour
     private static DeathFadeTransition instance;
     private Image fadeImage;
     private bool running;
+    private BackgroundMusicTrack.ScreenFadeLease musicFade;
 
     public static void RevealCheckpoint()
     {
@@ -80,24 +96,38 @@ internal sealed class DeathFadeTransition : MonoBehaviour
                 && animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f) yield return null;
         }
         yield return new WaitForSecondsRealtime(.5f);
-        yield return Fade(0f, 1f, fadeDuration);
-        RoomDropCache.Clear();
-        StorySceneFlow.RestartAtCombat = true;
-        yield return SceneManager.LoadSceneAsync("Forest");
-        // The opening quest presentation takes over the black screen before revealing combat.
-        while (running) yield return null;
+        musicFade = BackgroundMusicTrack.BeginScreenFade();
+        try
+        {
+            yield return Fade(0f, 1f, fadeDuration, progress => musicFade?.SetProgress(progress));
+            RoomDropCache.Clear();
+            StorySceneFlow.RestartAtCombat = true;
+            yield return SceneManager.LoadSceneAsync("Forest");
+            // The opening quest presentation takes over the black screen before revealing combat.
+            while (running) yield return null;
+        }
+        finally
+        {
+            musicFade?.Dispose();
+            musicFade = null;
+        }
     }
 
-    private IEnumerator Fade(float from, float to, float duration)
+    private IEnumerator Fade(float from, float to, float duration, System.Action<float> onProgress = null)
     {
         float elapsed = 0f;
-        while (elapsed < duration)
+        float safeDuration = Mathf.Max(.01f, duration);
+        onProgress?.Invoke(0f);
+        while (elapsed < safeDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            SetAlpha(Mathf.Lerp(from, to, elapsed / duration));
+            float progress = Mathf.Clamp01(elapsed / safeDuration);
+            SetAlpha(Mathf.Lerp(from, to, progress));
+            onProgress?.Invoke(progress);
             yield return null;
         }
         SetAlpha(to);
+        onProgress?.Invoke(1f);
     }
 
     private void SetAlpha(float alpha)
@@ -105,5 +135,12 @@ internal sealed class DeathFadeTransition : MonoBehaviour
         Color color = fadeImage.color;
         color.a = alpha;
         fadeImage.color = color;
+    }
+
+    private void OnDestroy()
+    {
+        musicFade?.Dispose();
+        musicFade = null;
+        if (instance == this) instance = null;
     }
 }

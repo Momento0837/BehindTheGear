@@ -11,6 +11,7 @@ namespace BehindTheGear.HideOut
         private sealed class IconCanvasState
         {
             public Canvas canvas;
+            public GraphicRaycaster addedRaycaster;
             public bool added, enabled, overrideSorting;
             public int order, layer;
         }
@@ -48,6 +49,9 @@ namespace BehindTheGear.HideOut
                 iconCanvases.Add(state);
                 canvas.enabled = true; canvas.overrideSorting = true;
                 canvas.sortingLayerID = root.sortingLayerID; canvas.sortingOrder = root.sortingOrder - 2;
+                // Graphics register with this temporary child canvas, not the root canvas.
+                if (canvas.GetComponent<GraphicRaycaster>() == null)
+                    state.addedRaycaster = canvas.gameObject.AddComponent<GraphicRaycaster>();
             }
             var fogObject = new GameObject("Entrance Fog Above Icons", typeof(RectTransform), typeof(Canvas));
             fogCanvasRect = fogObject.GetComponent<RectTransform>();
@@ -147,6 +151,7 @@ namespace BehindTheGear.HideOut
             foreach (var state in iconCanvases)
             {
                 if (state.canvas == null) continue;
+                if (state.addedRaycaster != null) Destroy(state.addedRaycaster);
                 state.canvas.overrideSorting = state.overrideSorting;
                 state.canvas.sortingLayerID = state.layer; state.canvas.sortingOrder = state.order;
                 state.canvas.enabled = state.enabled;

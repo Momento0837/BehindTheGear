@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>Displays JSON dialogue using UI objects assigned in the Inspector.</summary>
+[DefaultExecutionOrder(-100)]
 public sealed class ConversationDialogue : MonoBehaviour
 {
     [Serializable] private class DialogueFile { public DialogueLine[] lines = Array.Empty<DialogueLine>(); }
@@ -40,24 +41,62 @@ public sealed class ConversationDialogue : MonoBehaviour
     [Tooltip("Existing dialogue UI objects to enable only while dialogue is playing.")]
     [SerializeField] private GameObject[] dialogueUiObjects;
 
+    private DialogueCanvasView canvasView;
+    private GameObject ownedCanvas;
+
+    private void BindCanvas(DialogueCanvasView view)
+    {
+        canvasView = view;
+        dialogueCanvasRoot = view.gameObject;
+        dialogueGroup = view.group;
+        portraitImage = view.portrait;
+        speakerText = view.speaker;
+        bodyText = view.body;
+        continueIndicator = view.continueIndicator;
+        dialogueUiObjects = view.visibleObjects ?? Array.Empty<GameObject>();
+        TalkingImage = view.talking;
+        if (view.choiceTemplate != null) view.choiceTemplate.gameObject.SetActive(false);
+    }
+
+    private void UseSharedCanvas()
+    {
+        if (canvasView != null) return;
+        var prefabs = Resources.Load<DialogueCanvasPrefabs>("Dialogue/CanvasPrefabs");
+        if (prefabs == null || prefabs.storyCanvas == null) return;
+        var view = prefabs.storyCanvas.GetComponent<DialogueCanvasView>();
+        if (view == null || view.body == null || view.speaker == null) return;
+        var previousRoot = dialogueCanvasRoot;
+        ownedCanvas = Instantiate(prefabs.storyCanvas, previousRoot != null ? previousRoot.transform.parent : null);
+        BindCanvas(ownedCanvas.GetComponent<DialogueCanvasView>());
+        if (previousRoot != null) previousRoot.SetActive(false);
+    }
+
     public void BindPlayer(PlayerControlLock value) => playerControlLock = value;
     public ConversationDialogue CreateTutorialPresentation(Transform parent)
     {
         var host = new GameObject("Base Tutorial Dialogue"); host.SetActive(false); host.transform.SetParent(parent, false);
-        var ui = Instantiate(dialogueCanvasRoot, host.transform);
-        T Map<T>(T original) where T : Component
-        {
-            if (original == null) return null;
-            int index = Array.IndexOf(dialogueCanvasRoot.GetComponentsInChildren<T>(true), original);
-            return index < 0 ? null : ui.GetComponentsInChildren<T>(true)[index];
-        }
+        var prefabs = Resources.Load<DialogueCanvasPrefabs>("Dialogue/CanvasPrefabs");
+        var source = prefabs != null && prefabs.storyCanvas != null ? prefabs.storyCanvas : dialogueCanvasRoot;
+        var ui = Instantiate(source, host.transform);
         var copy = host.AddComponent<ConversationDialogue>();
-        copy.dialogueCanvasRoot = ui; copy.dialogueGroup = Map(dialogueGroup); copy.portraitImage = Map(portraitImage);
-        copy.bodyText = Map(bodyText); copy.speakerText = Map(speakerText); copy.continueIndicator = null;
-        copy.dialogueUiObjects = new GameObject[dialogueUiObjects.Length];
-        for (int i = 0; i < dialogueUiObjects.Length; i++) copy.dialogueUiObjects[i] = dialogueUiObjects[i] != null ? Map(dialogueUiObjects[i].transform)?.gameObject : null;
-        foreach (var canvas in ui.GetComponentsInChildren<Canvas>(true))
-        { canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 32050; }
+        copy.characterInterval = characterInterval;
+        var view = ui.GetComponent<DialogueCanvasView>();
+        if (view != null)
+            copy.BindCanvas(view);
+        else
+        {
+            T Map<T>(T original) where T : Component
+            {
+                if (original == null) return null;
+                int index = Array.IndexOf(dialogueCanvasRoot.GetComponentsInChildren<T>(true), original);
+                return index < 0 ? null : ui.GetComponentsInChildren<T>(true)[index];
+            }
+            copy.dialogueCanvasRoot = ui; copy.dialogueGroup = Map(dialogueGroup); copy.portraitImage = Map(portraitImage);
+            copy.bodyText = Map(bodyText); copy.speakerText = Map(speakerText); copy.continueIndicator = null;
+            copy.dialogueUiObjects = new GameObject[dialogueUiObjects.Length];
+            for (int i = 0; i < dialogueUiObjects.Length; i++) copy.dialogueUiObjects[i] = dialogueUiObjects[i] != null ? Map(dialogueUiObjects[i].transform)?.gameObject : null;
+        }
+        copy.ConfigureCanvasSorting();
         host.SetActive(true); copy.BindPlayer(null);
         return copy;
     }
@@ -82,6 +121,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     private string finalFirstChoice;
     private string finalSecondChoice;
     private RectTransform nextTriangle;
+    private Vector2 nextTrianglePosition;
     private int selectedChoice;
     public bool IsChoosing => choiceRoot != null;
     private bool advanceRequested;
@@ -184,6 +224,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     }
     private void OnDestroy()
     {
+        if (ownedCanvas != null) Destroy(ownedCanvas);
         if (selenaBodyMaterial != null) Destroy(selenaBodyMaterial);
         if (selenaSpeakerMaterial != null) Destroy(selenaSpeakerMaterial);
     }
@@ -218,7 +259,7 @@ public sealed class ConversationDialogue : MonoBehaviour
     {
         UpdatePortraitFrame();
         if (nextTriangle != null && nextTriangle.gameObject.activeSelf)
-            nextTriangle.anchoredPosition = new Vector2(520f, 75f + Mathf.Sin(Time.unscaledTime * 3f) * 5f);
+            nextTriangle.anchoredPosition = nextTrianglePosition + Vector2.up * (Mathf.Sin(Time.unscaledTime * (canvasView != null ? canvasView.continueBobSpeed : 3f)) * (canvasView != null ? canvasView.continueBobHeight : 5f));
     }
 
     private void UpdatePortraitFrame()
@@ -250,13 +291,16 @@ public sealed class ConversationDialogue : MonoBehaviour
         !string.Equals(speaker.Trim(), "Ethan", StringComparison.OrdinalIgnoreCase) &&
         speaker.Trim() != "안내";
 
-    private void BeginCameraFocus(bool hasNpcSpeaker)
+    private static bool IsMysterySpeaker(string speaker) => speaker?.Trim() == "???"
+        || string.Equals(speaker?.Trim(), "BlackMarker", StringComparison.OrdinalIgnoreCase);
+
+    private void BeginCameraFocus(bool hasNpcSpeaker, bool isMysteryConversation)
     {
         if (!hasNpcSpeaker) return;
         Camera mainCamera = Camera.main;
         dialogueCamera = mainCamera != null ? mainCamera.GetComponent<PlayerCameraFollow2D>() : null;
         if (dialogueCamera != null)
-            dialogueCamera.BeginDialogueFocus(this, playerControlLock != null ? playerControlLock.transform : null);
+            dialogueCamera.BeginDialogueFocus(this, playerControlLock != null ? playerControlLock.transform : null, isMysteryConversation);
     }
 
     private void EndCameraFocus()
@@ -267,9 +311,10 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private void Awake()
     {
+        UseSharedCanvas();
         if (dialogueCanvasRoot != null)
         {
-            TalkingImage = Array.Find(dialogueCanvasRoot.GetComponentsInChildren<Image>(true), image => image.name == "Talking");
+            if (TalkingImage == null) TalkingImage = Array.Find(dialogueCanvasRoot.GetComponentsInChildren<Image>(true), image => image.name == "Talking");
             if (TalkingImage != null) TalkingImage.gameObject.SetActive(false);
         }
         if (bodyText != null) { originalBodyFont = bodyText.font; originalBodyMaterial = bodyText.fontSharedMaterial; }
@@ -331,6 +376,19 @@ public sealed class ConversationDialogue : MonoBehaviour
     private void CreateContinueIndicator()
     {
         if (dialogueCanvasRoot == null || bodyText == null) return;
+        if (canvasView != null && canvasView.continueIndicator != null)
+        {
+            continueIndicator = canvasView.continueIndicator;
+            nextTriangle = continueIndicator.GetComponent<RectTransform>();
+            if (canvasView.continueGlowShader != null)
+            {
+                var glow = continueIndicator.GetComponent<MenuImageSoftEffect>() ?? continueIndicator.AddComponent<MenuImageSoftEffect>();
+                glow.Configure(canvasView.continueGlowShader, 0f, canvasView.continueGlowRadius, canvasView.continueGlowOpacity);
+            }
+            nextTrianglePosition = nextTriangle.anchoredPosition;
+            continueIndicator.SetActive(false);
+            return;
+        }
         if (continueIndicator != null) continueIndicator.SetActive(false);
         var style = Resources.Load<DialogueVisualStyle>("Dialogue/VisualStyle");
         var marker = new GameObject("Dialogue Next Triangle", typeof(RectTransform), typeof(Image));
@@ -339,6 +397,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         nextTriangle.anchorMin = nextTriangle.anchorMax = new Vector2(.5f, 0f);
         nextTriangle.pivot = new Vector2(.5f, .5f);
         nextTriangle.anchoredPosition = new Vector2(520f, 75f);
+        nextTrianglePosition = nextTriangle.anchoredPosition;
         nextTriangle.sizeDelta = new Vector2(28f, 28f);
         var image = marker.GetComponent<Image>();
         image.sprite = style != null ? style.triangle : null;
@@ -404,7 +463,8 @@ public sealed class ConversationDialogue : MonoBehaviour
         choiceCallback = onChoice;
         finalFirstChoice = firstChoice;
         finalSecondChoice = secondChoice;
-        BeginCameraFocus(Array.Exists(lines, line => IsNpcSpeaker(line.speaker)));
+        BeginCameraFocus(Array.Exists(lines, line => IsNpcSpeaker(line.speaker)),
+            Array.Exists(lines, line => IsMysterySpeaker(line.speaker)));
         routine = StartCoroutine(PlayRoutine());
     }
 
@@ -431,7 +491,7 @@ public sealed class ConversationDialogue : MonoBehaviour
         advanceRequested = false;
         playerControlLock?.Acquire();
         SetSpeaker(speaker);
-        BeginCameraFocus(IsNpcSpeaker(speaker));
+        BeginCameraFocus(IsNpcSpeaker(speaker), IsMysterySpeaker(speaker));
         if (speakerText != null) speakerText.text = speaker ?? string.Empty;
         bodyText.text = string.Empty;
         if (continueIndicator != null) continueIndicator.SetActive(false);
@@ -455,6 +515,21 @@ public sealed class ConversationDialogue : MonoBehaviour
 
     private void CreateChoiceButtons(string firstChoice, string secondChoice)
     {
+        if (canvasView != null && canvasView.choiceTemplate != null)
+        {
+            var choices = Instantiate(canvasView.choiceTemplate, dialogueCanvasRoot.transform);
+            choiceRoot = (RectTransform)choices.transform;
+            acceptRect = (RectTransform)choices.accept.transform;
+            acceptFill = choices.holdProgress;
+            acceptHeld = 0; holdSource = 0; selectedChoice = 0;
+            choices.acceptLabel.text = firstChoice ?? string.Empty;
+            choices.rejectLabel.text = secondChoice ?? string.Empty;
+            choices.accept.onClick.AddListener(() => SelectChoice(true));
+            choices.reject.onClick.AddListener(() => SelectChoice(false));
+            if (acceptFill != null) acceptFill.anchorMax = new Vector2(0, 1);
+            choices.gameObject.SetActive(true);
+            return;
+        }
         GameObject panel = new GameObject("Quest Choices", typeof(RectTransform));
         choiceRoot = panel.GetComponent<RectTransform>();
         choiceRoot.SetParent(dialogueCanvasRoot.transform, false);
@@ -672,11 +747,28 @@ public sealed class ConversationDialogue : MonoBehaviour
         FinishDialogue();
     }
 
+    private void ConfigureCanvasSorting()
+    {
+        if (dialogueCanvasRoot == null) return;
+        // Shared story prefabs also need the established dialogue layer: above the HUD,
+        // inventory and base UI, but below scene fades (32767).
+        foreach (var canvas in dialogueCanvasRoot.GetComponentsInChildren<Canvas>(true))
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = true;
+            canvas.sortingLayerID = 0;
+            canvas.sortingOrder = 32050;
+        }
+    }
+
     private void SetVisible(bool visible)
     {
         // Children cannot become visible while their Canvas parent is inactive.
         if (visible && dialogueCanvasRoot != null)
+        {
+            ConfigureCanvasSorting();
             dialogueCanvasRoot.SetActive(true);
+        }
 
         if (dialogueGroup != null)
         {

@@ -429,6 +429,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void OnDisable()
     {
+        GameSoundService.CancelPendingInventoryOpen();
         tutorialEquipmentItem = null;
         openingHint?.Dismiss();
         if (equipmentTutorial != null) equipmentTutorial.enabled = false;
@@ -554,6 +555,7 @@ public sealed class InventoryUI : MonoBehaviour
             return;
         }
 
+        GameSoundService.PlayInventoryOpen();
         Refresh();
         window.SetActive(true);
         openingHint?.Dismiss();
@@ -595,6 +597,8 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void RequestCloseInventory()
     {
+        if (window != null && window.activeSelf && window.GetComponent<InventoryEntranceAnimation>()?.IsClosing != true)
+            GameSoundService.PlayInventoryClose();
         if (usesDesignedCanvas && window != null && window.activeInHierarchy)
         {
             var entrance = window.GetComponent<InventoryEntranceAnimation>();
@@ -613,6 +617,7 @@ public sealed class InventoryUI : MonoBehaviour
 
     private void CloseInventory()
     {
+        GameSoundService.CancelPendingInventoryOpen();
         SetInventoryModal(false);
         hoveredDisplaySlot = -1;
         CancelDrag();

@@ -202,7 +202,7 @@ public sealed class InGameQuestHUD : MonoBehaviour
 
     public bool CanPresentOpening => questText != null && questRoot != null;
 
-    public IEnumerator PresentOpeningQuest(Action revealGameplay)
+    public IEnumerator PresentOpeningQuest(Action revealGameplay, bool playQuestSound = false)
     {
         if (!CanPresentOpening) { revealGameplay(); yield break; }
         var overlay = new GameObject("Opening Quest Black Screen", typeof(Canvas), typeof(CanvasScaler));
@@ -273,9 +273,15 @@ public sealed class InGameQuestHUD : MonoBehaviour
             rect.position += screenCenter - glyphCenter;
             Vector3 centerPosition = rect.localPosition;
             BeginAppearance();
+            double firstGlyphAt = playQuestSound ? GameSoundService.ScheduleOpeningQuest() : 0d;
             while (transition != Transition.Idle)
             {
-                Tick(Time.unscaledDeltaTime);
+                // The quiet WAV intro plays while the glyphs remain hidden at elapsed=0.
+                // Use realtime for presentation so a suspended audio device cannot stall the story.
+                float delta = firstGlyphAt > 0d
+                    ? Mathf.Max(0f, (float)(Time.realtimeSinceStartupAsDouble - firstGlyphAt) - elapsed)
+                    : Time.unscaledDeltaTime;
+                Tick(delta);
                 yield return null;
             }
             time = 0f;

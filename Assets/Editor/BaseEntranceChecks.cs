@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using BehindTheGear.HideOut;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering.Universal;
@@ -17,22 +18,90 @@ using Object = UnityEngine.Object;
 public static class BaseEntranceChecks
 {
     private const string Folder = "Temp/BaseEntrance/";
+    private const string OwnPlayKey = "BaseEntranceChecks.OwnPlay";
+    private const string PreviousSceneKey = "BaseEntranceChecks.PreviousStartScene";
+    private const string PlayDeadlineKey = "BaseEntranceChecks.PlayDeadline";
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
     private static readonly StringBuilder Report = new();
     private static bool running;
     private static int errors;
-    static BaseEntranceChecks() => EditorApplication.update += Poll;
+    static BaseEntranceChecks()
+    {
+        EditorApplication.update += Poll;
+        EditorApplication.playModeStateChanged += state =>
+        {
+            if (state != PlayModeStateChange.EnteredEditMode || !SessionState.GetBool(OwnPlayKey, false)) return;
+            if (File.Exists(Folder + "check.request"))
+            {
+                File.Delete(Folder + "check.request");
+                File.WriteAllText(Folder + "check-result.txt", "FAIL entry click: requested Play ended before the sandbox check started.");
+            }
+            RestorePlayStartScene();
+        };
+    }
+    private static void RestorePlayStartScene()
+    {
+        string previous = SessionState.GetString(PreviousSceneKey, "");
+        EditorSceneManager.playModeStartScene = string.IsNullOrEmpty(previous) ? null : AssetDatabase.LoadAssetAtPath<SceneAsset>(previous);
+        SessionState.SetBool(OwnPlayKey, false);
+        SessionState.SetString(PreviousSceneKey, "");
+        SessionState.SetFloat(PlayDeadlineKey, 0);
+    }
+    private static void FailRequest(string message)
+    {
+        if (File.Exists(Folder + "check.request")) File.Delete(Folder + "check.request");
+        File.WriteAllText(Folder + "check-result.txt", "FAIL entry click: " + message);
+        if (!SessionState.GetBool(OwnPlayKey, false)) return;
+        SessionState.SetFloat(PlayDeadlineKey, 0);
+        if (EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) EditorApplication.isPlaying = false;
+        else RestorePlayStartScene();
+    }
     private static void Poll()
     {
-        if (!File.Exists(Folder + "check.request") || !EditorApplication.isPlaying || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+        bool ownsPlay = SessionState.GetBool(OwnPlayKey, false);
+        float deadline = SessionState.GetFloat(PlayDeadlineKey, 0);
+        if (ownsPlay && deadline > 0 && EditorApplication.timeSinceStartup >= deadline)
+        {
+            FailRequest("Base_Test sandbox did not become ready within 30 seconds; only the check's own Play was stopped.");
+            return;
+        }
+        if (!File.Exists(Folder + "check.request") || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+        string mode = File.ReadAllText(Folder + "check.request").Trim();
+        if (!EditorApplication.isPlaying)
+        {
+            if (ownsPlay || EditorApplication.isPlayingOrWillChangePlaymode || !mode.Equals("click", StringComparison.OrdinalIgnoreCase)) return;
+            var startScene = AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/!UI/Base/Base_Test.unity");
+            if (Application.unityVersion != "6000.3.23f1" || startScene == null)
+            {
+                FailRequest("automatic Play requires Unity 6000.3.23f1 and the existing Base_Test scene asset. No editing scene was opened or saved.");
+                return;
+            }
+            SessionState.SetString(PreviousSceneKey, AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene));
+            SessionState.SetBool(OwnPlayKey, true);
+            SessionState.SetFloat(PlayDeadlineKey, (float)EditorApplication.timeSinceStartup + 30f);
+            EditorSceneManager.playModeStartScene = startScene;
+            EditorApplication.isPlaying = true;
+            return;
+        }
+        if (!EditorApplication.isPlayingOrWillChangePlaymode) return;
         var view = Object.FindFirstObjectByType<HideOutScene>();
-        if (view?.TrainingPlayer?.Initialized != true) return;
+        if (view?.TrainingPlayer?.Initialized != true)
+        {
+            if (!ownsPlay) FailRequest("existing user Play is not a ready base sandbox; it was left running without loading any scene.");
+            return;
+        }
+        if (running) { File.Delete(Folder + "check.request"); return; }
+        if (Application.unityVersion != "6000.3.23f1" || !view.TrainingPlayer.Sandbox || view.gameObject.scene.name != "Base_Test")
+        {
+            FailRequest("run entrance checks in Unity 6000.3.23f1 direct Base_Test sandbox only; user-owned Play is never stopped.");
+            return;
+        }
         File.Delete(Folder + "check.request");
-        if (running || Application.unityVersion != "6000.3.23f1" || !view.TrainingPlayer.Sandbox)
-            throw new InvalidOperationException("Run entrance checks in Unity 6000.3.23f1 direct Base_Test sandbox only.");
+        SessionState.SetFloat(PlayDeadlineKey, 0);
         running = true; errors = 0; Report.Clear();
+        Report.AppendLine("Mode: " + (mode.Equals("click", StringComparison.OrdinalIgnoreCase) ? "entry click" : "full entrance"));
         Application.logMessageReceived += Observe;
-        view.TrainingPlayer.StartCoroutine(Run(view));
+        view.TrainingPlayer.StartCoroutine(Run(view, mode));
     }
     private static object Read(object item, string name) => item.GetType().GetField(name, Fields).GetValue(item);
     private static void Invoke(HideOutScene view, string method, params object[] args)
@@ -46,9 +115,10 @@ public static class BaseEntranceChecks
         if (!condition) throw new InvalidOperationException(message);
         Report.AppendLine("PASS " + message);
     }
-    private static IEnumerator Run(HideOutScene view)
+    private static IEnumerator Run(HideOutScene view, string mode)
     {
-        var steps = Verify(view); bool success = true;
+        var steps = mode.Equals("click", StringComparison.OrdinalIgnoreCase) ? VerifyEntryClick(view) : Verify(view);
+        bool success = true;
         while (true)
         {
             object step;
@@ -61,7 +131,7 @@ public static class BaseEntranceChecks
         Report.AppendLine(success && errors == 0 ? "PASS entrance checks" : "FAIL entrance checks");
         File.WriteAllText(Folder + "check-result.txt", Report.ToString());
         running = false;
-        EditorApplication.isPlaying = false;
+        if (SessionState.GetBool(OwnPlayKey, false)) EditorApplication.isPlaying = false;
     }
     private static Color Capture(string name, Vector3? sample = null)
     {
@@ -73,6 +143,79 @@ public static class BaseEntranceChecks
     }
     private static float Expansion(object visual, float startingScale)
         => Mathf.Clamp01((((Transform)Read(visual, "target")).localScale.x / ((Vector3)Read(visual, "scale")).x - startingScale) / (1 - startingScale));
+    private static bool RaycastButton(Button button, out PointerEventData pointer)
+    {
+        pointer = null;
+        if (button == null || EventSystem.current == null || !button.gameObject.activeInHierarchy) return false;
+        var rect = (RectTransform)button.transform;
+        var rootCanvas = button.GetComponentInParent<Canvas>()?.rootCanvas;
+        Camera eventCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? rootCanvas.worldCamera : null;
+        Vector2 position = RectTransformUtility.WorldToScreenPoint(eventCamera, rect.TransformPoint(rect.rect.center));
+        if (position.x < 0 || position.y < 0 || position.x >= Screen.width || position.y >= Screen.height) return false;
+        pointer = new PointerEventData(EventSystem.current) { position = position, button = PointerEventData.InputButton.Left };
+        var hits = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointer, hits);
+        if (hits.Count == 0 || hits[0].gameObject.GetComponentInParent<Button>() != button) return false;
+        pointer.pointerCurrentRaycast = pointer.pointerPressRaycast = hits[0];
+        pointer.pressPosition = position;
+        return true;
+    }
+
+    // Separate from visual timing checks: actual camera focus would invalidate their fixed-view measurements.
+    // Write "click" to the existing check.request in a fresh direct Base_Test sandbox run.
+    private static IEnumerator VerifyEntryClick(HideOutScene view)
+    {
+        var entry = view.GetComponent<BaseEntrancePresentation>();
+        var canvas = view.GetComponentInChildren<HideOutCanvasView>(true);
+        var controller = Object.FindFirstObjectByType<HideOutCameraController>();
+        Require(entry != null && entry.IsPlaying && canvas != null && controller != null, "click check starts during the base entrance");
+        var dining = canvas.facilities.Single(f => f.facility == Facility.Dining);
+        var clinic = canvas.facilities.Single(f => f.facility == Facility.Clinic).button;
+        var hud = ((IList)Read(entry, "hudElements")).Cast<object>().ToArray();
+        var hudButtons = hud.SelectMany(h => ((RectTransform)Read(h, "rect")).GetComponentsInChildren<Button>()).Distinct().ToArray();
+        Require(!view.TrainingPlayer.State.baseTutorialComplete && !clinic.interactable, "clinic remains story-locked before the entry click");
+        PointerEventData pointer = null;
+        bool ready = false;
+        float started = Time.unscaledTime;
+        while (entry.IsPlaying && Time.unscaledTime - started < 15f)
+        {
+            var group = dining.worldRoot.GetComponent<CanvasGroup>();
+            if (!SceneFadeTransition.IsRunning && !BaseArrivalTutorial.IsShowing && !SelenaBaseDialogue.IsShowing
+                && dining.button.IsInteractable() && group != null && group.alpha > .05f
+                && hud.Any(h => Vector2.Distance(((RectTransform)Read(h, "rect")).anchoredPosition, (Vector2)Read(h, "position")) > 1f)
+                && hudButtons.Any(button => button.IsInteractable() && RaycastButton(button, out _))
+                && RaycastButton(dining.button, out pointer))
+            { ready = true; break; }
+            yield return null;
+        }
+        Require(ready && entry.IsPlaying, "HUD buttons and Dining receive top UI raycasts while HUD elements are still sliding into place");
+        Require(controller.PresentationLocked, "manual camera input remains locked before the explicit facility click");
+        ExecuteEvents.Execute(dining.button.gameObject, pointer, ExecuteEvents.pointerDownHandler);
+        ExecuteEvents.Execute(dining.button.gameObject, pointer, ExecuteEvents.pointerUpHandler);
+        ExecuteEvents.Execute(dining.button.gameObject, pointer, ExecuteEvents.pointerClickHandler);
+        Require((bool)Read(view, "hasSelection") && (Facility)Read(view, "selected") == Facility.Dining,
+            "pointer down/up/click on the moving icon selects its real facility");
+        Require(!controller.PresentationLocked && controller.IsMoving && entry.IsPlaying,
+            "facility click releases the camera for focus while the entrance continues");
+        ExecuteEvents.Execute(clinic.gameObject, pointer, ExecuteEvents.pointerClickHandler);
+        Require(!clinic.interactable && (Facility)Read(view, "selected") == Facility.Dining,
+            "clicking the locked Clinic cannot replace the active facility selection");
+        yield return null;
+        Require(entry.IsPlaying && !controller.PresentationLocked, "entry animation does not stop or re-lock the camera on the next frame");
+        float focusStarted = Time.unscaledTime;
+        while (controller.IsMoving && Time.unscaledTime - focusStarted < 5f) yield return null;
+        Require(!controller.IsMoving, "focus started by the entry click finishes normally");
+        Require(!view.TrainingPlayer.State.baseTutorialComplete && !clinic.interactable, "entry clicks preserve tutorial progression and Clinic lock");
+        Require(!SceneFadeTransition.IsRunning, "arrival-delay measurement starts with the black fade fully cleared");
+        double delayStarted = Time.realtimeSinceStartupAsDouble;
+        var arrivalDelay = BaseArrivalTutorial.WaitForArrivalDialogue();
+        while (arrivalDelay.MoveNext()) yield return arrivalDelay.Current;
+        double delayElapsed = Time.realtimeSinceStartupAsDouble - delayStarted;
+        double frameTolerance = Math.Max(.002, Time.unscaledDeltaTime) + .002;
+        Require(!SceneFadeTransition.IsRunning && delayElapsed >= .998 && delayElapsed <= 1.0 + frameTolerance,
+            $"shared arrival dialogue wait lasts 1 real second after fade completion ({delayElapsed:F4}s, one-frame tolerance {frameTolerance:F4}s)");
+    }
+
     private static IEnumerator Verify(HideOutScene view)
     {
         var entry = view.GetComponent<BaseEntrancePresentation>();
@@ -130,10 +273,14 @@ public static class BaseEntranceChecks
             Require(distances.SequenceEqual(distances.OrderBy(d => d)), group == icons ? "icons sorted by screen X, left to right" : "world elements sorted nearest screen center first");
         }
         Require((float)Read(icons[^1], "distance") - (float)Read(icons[0], "distance") > 50, "icon ordering uses positioned icons rather than prefab origin");
-        Require(controller.PresentationLocked && !controller.TryFocus(environment.areas[0].focusAnchor, 2, null), "camera input and focus are blocked during entry");
-        Invoke(view, "SelectFacility", Facility.Dining);
-        Require(!(bool)Read(view, "hasSelection"), "facility clicks cannot interrupt entry");
-        Require(view.GetComponentsInChildren<GraphicRaycaster>(true).All(r => !r.enabled), "base UI input stays locked during entry");
+        Require(controller.PresentationLocked && !controller.TryFocus(environment.areas[0].focusAnchor, 2, null), "manual camera input stays locked until a facility interaction releases it");
+        Invoke(view, "SelectFacility", Facility.Clinic);
+        Require(!(bool)Read(view, "hasSelection") && !canvas.facilities.Single(f => f.facility == Facility.Clinic).button.interactable,
+            "story-locked Clinic remains unavailable during entry");
+        Require(view.GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.gameObject.activeInHierarchy).All(r => r.enabled),
+            "active base UI raycasters remain enabled during entry");
+        Require(icons.All(icon => ((Transform)Read(icon, "target")).GetComponent<GraphicRaycaster>()?.enabled == true),
+            "each temporary icon canvas has an enabled raycaster during entry");
         var shader = Resources.Load<Shader>("Effects/BaseEntranceFog");
         Require(shader != null && shader.isSupported && !ShaderUtil.ShaderHasError(shader), "temporary fog shader compiles");
         Vector4 tint = sweeps[0].sharedMaterial.GetVector("_Tint");
@@ -158,6 +305,8 @@ public static class BaseEntranceChecks
         var sizeFirst = new float?[3]; var sizeLast = new float?[3];
         var pictured = new HashSet<string>();
         bool visibleSweep = false, iconFogOverlap = false, fogMapOverlap = false, fogLayersStaggered = false, mapContinuesAfterFog = false;
+        bool entryIconRaycast = false;
+        var diningDuringEntry = canvas.facilities.Single(f => f.facility == Facility.Dining);
         var lightStartOrder = new List<Facility>();
         float maximumLightIconDifference = 0;
         float iconArrivalExpansion = -1;
@@ -185,6 +334,14 @@ public static class BaseEntranceChecks
             if (stage is "Sweeps" or "Icons" && fog.Any(m => ((SpriteRenderer[])Read(m, "sprites")).Any(r => r.color.a != 0)))
                 throw new InvalidOperationException("Locked fog reveals before its stage.");
             if (BaseArrivalTutorial.IsShowing) throw new InvalidOperationException("Story dialogue interrupted entry.");
+            var diningGroup = diningDuringEntry.worldRoot.GetComponent<CanvasGroup>();
+            if (!entryIconRaycast && !SceneFadeTransition.IsRunning && diningGroup != null
+                && diningGroup.alpha > .05f && diningGroup.alpha < .99f && diningDuringEntry.button.IsInteractable()
+                && RaycastButton(diningDuringEntry.button, out _))
+            {
+                entryIconRaycast = true;
+                Require(true, "partially revealed facility icon receives the top UI raycast while entry is still playing");
+            }
             if (stage is "Icons" or "IconsAndWorld")
             {
                 if (iconArrivalExpansion < 0 && ((CanvasGroup)Read(icons[0], "group")).alpha > 0)
@@ -278,6 +435,7 @@ public static class BaseEntranceChecks
         Report.AppendLine("Observed stages: " + string.Join(",", states) + "; finished=" + !entry.IsPlaying
             + "; elapsed=" + (Time.unscaledTime - started).ToString("F3"));
         Require(!entry.IsPlaying && states.Where(s => s != "WaitingForFade").SequenceEqual(new[] { "Sweeps", "IconsAndWorld", "FogAndMap", "Map" }), "radial fog leads into the overlapping icon/world reveal and a shared final settling phase");
+        Require(entryIconRaycast, "UI raycast reaches an unlocked icon before its entrance fade completes");
         Report.AppendLine("Fog expansion when first icon appears=" + iconArrivalExpansion.ToString("F3"));
         Require(iconArrivalExpansion >= 0 && iconArrivalExpansion < .08f && environment.entrance.sweepSequenceDuration == 3f,
             "delayed icons still appear early in the three-second foreground fly-through");
@@ -314,8 +472,9 @@ public static class BaseEntranceChecks
         Require(!controller.PresentationLocked && view.GetComponentsInChildren<GraphicRaycaster>(true).All(r => r.enabled), "camera and UI input restored");
         Require(sweeps.All(s => s == null), "temporary fog is removed after its entrance");
         Require(centerFog.All(s => s == null), "both additional BigFog sprites are removed after their entrance");
-        Require(fogCanvas == null && icons.All(icon => ((Transform)Read(icon, "target")).GetComponent<Canvas>() == null),
-            "temporary icon and fog canvases are removed after the entrance");
+        Require(fogCanvas == null && icons.All(icon => ((Transform)Read(icon, "target")).GetComponent<Canvas>() == null
+            && ((Transform)Read(icon, "target")).GetComponent<GraphicRaycaster>() == null),
+            "temporary icon canvases, their raycasters and the fog canvas are removed after the entrance");
         foreach (var element in hud)
         {
             var rect = (RectTransform)Read(element, "rect");

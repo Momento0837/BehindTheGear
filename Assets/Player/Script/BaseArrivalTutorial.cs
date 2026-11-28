@@ -9,6 +9,20 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
     private static ConversationDialogue active;
     public static bool IsShowing => active != null;
     public const string TreatmentDialoguePath = "Dialogue/Hideout/base_treatment_tutorial";
+    public const string PotionDialoguePath = "Dialogue/Hideout/base_potion_tutorial";
+
+    // All arrival lines use the fully revealed screen as their clock, not the decorative UI animation.
+    public static IEnumerator WaitForArrivalDialogue()
+    {
+        float readyAt = -1f;
+        while (true)
+        {
+            if (SceneFadeTransition.IsRunning) readyAt = -1f;
+            else if (readyAt < 0f) readyAt = Time.realtimeSinceStartup + 1f;
+            else if (Time.realtimeSinceStartup >= readyAt) yield break;
+            yield return null;
+        }
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetState() => active = null;
@@ -28,8 +42,9 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         var actor = PlayerTargetRegistry.Current;
         var bridge = actor != null ? actor.GetComponent<HideOutPlayerBridge>() : null;
         if (bridge == null || !bridge.Initialized) yield break;
-        var baseScene = GetComponent<HideOutScene>();
-        while (SceneFadeTransition.IsRunning || baseScene != null && baseScene.EntryAnimationPlaying) yield return null;
+        yield return WaitForArrivalDialogue();
+        if (bridge == null || !bridge.Initialized || !isActiveAndEnabled
+            || UnityEngine.SceneManagement.SceneManager.GetActiveScene() != gameObject.scene) yield break;
         if (bridge.State.baseTutorialComplete)
         {
             TryShowAfterTreatment(this, bridge, transform);
@@ -58,15 +73,20 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
             Debug.LogError($"[Base tutorial] Missing dialogue JSON or presentation: {path}");
             return false;
         }
-        host.StartCoroutine(Play(host.transform, bridge, inputRoot, template, content, afterTreatment));
+        var potionContent = afterTreatment ? Resources.Load<TextAsset>(PotionDialoguePath) : null;
+        if (afterTreatment && potionContent == null)
+        {
+            Debug.LogError($"[Base tutorial] Missing dialogue JSON: {PotionDialoguePath}");
+            return false;
+        }
+        host.StartCoroutine(Play(host.transform, bridge, inputRoot, template, content, potionContent, afterTreatment));
         return true;
     }
 
     private static IEnumerator Play(Transform parent, HideOutPlayerBridge bridge, Transform inputRoot,
-        ConversationDialogue template, TextAsset content, bool afterTreatment)
+        ConversationDialogue template, TextAsset content, TextAsset potionContent, bool afterTreatment)
     {
-        var raycasters = inputRoot.GetComponentsInChildren<GraphicRaycaster>(true).Where(r => r.enabled).ToArray();
-        foreach (var r in raycasters) r.enabled = false;
+        var inputLock = BasePresentationInputLock.Acquire(inputRoot);
         ConversationDialogue presentation = null;
         try
         {
@@ -76,6 +96,14 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
             if (!presentation.IsPlaying) yield break;
             while (presentation != null && presentation.IsPlaying) yield return null;
             if (presentation == null || bridge == null) yield break;
+            if (afterTreatment)
+            {
+                // Keep base input locked until the separate potion introduction also finishes.
+                presentation.Play(potionContent);
+                if (!presentation.IsPlaying) yield break;
+                while (presentation != null && presentation.IsPlaying) yield return null;
+                if (presentation == null || bridge == null) yield break;
+            }
             // Separate completion from any heal/button transaction on this frame.
             yield return null;
             bool completed = bridge.Change(state =>
@@ -96,7 +124,7 @@ public sealed class BaseArrivalTutorial : MonoBehaviour
         }
         finally
         {
-            foreach (var r in raycasters) if (r != null) r.enabled = true;
+            inputLock.Dispose();
             if (presentation != null) Destroy(presentation.gameObject);
             active = null;
         }

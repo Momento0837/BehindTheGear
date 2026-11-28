@@ -1,0 +1,30 @@
+PASS portrait library loads through the runtime Resources path
+PASS all eight Ethan expressions resolve to distinct sprites
+PASS 이든_두상 is referenced for player builds
+PASS 이든_곤란_0 is referenced for player builds
+PASS 이든_의아_0 is referenced for player builds
+PASS 이든_짜증_0 is referenced for player builds
+PASS 이든_눈 돌림_0 is referenced for player builds
+PASS 이든_눈 반 감음_0 is referenced for player builds
+PASS 이든_눈 감음_0 is referenced for player builds
+PASS 이든_엥_0 is referenced for player builds
+PASS missing expression retains the default portrait
+PASS JSON line renders Ethan / 기본 표정
+PASS NPC animation does not cover Ethan / 기본 표정
+PASS JSON line renders Ethan / 곤란
+PASS NPC animation does not cover Ethan / 곤란
+PASS JSON line renders Ethan / 의아
+PASS NPC animation does not cover Ethan / 의아
+PASS JSON line renders Ethan / 짜증
+PASS NPC animation does not cover Ethan / 짜증
+PASS JSON line renders Ethan / 눈 돌림
+PASS NPC animation does not cover Ethan / 눈 돌림
+PASS JSON line renders Ethan / 눈 반 감음
+PASS NPC animation does not cover Ethan / 눈 반 감음
+PASS JSON line renders Ethan / 눈 감음
+PASS NPC animation does not cover Ethan / 눈 감음
+PASS JSON line renders Ethan / 엥
+PASS NPC animation does not cover Ethan / 엥
+PASS eight-line dialogue finishes normally
+Runtime errors: 0
+PASS dialogue expression rendering

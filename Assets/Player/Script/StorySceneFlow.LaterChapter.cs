@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using BehindTheGear.HideOut;
 
 public sealed partial class StorySceneFlow
 {
@@ -57,19 +58,37 @@ public sealed partial class StorySceneFlow
         // Intersect the large parallax layers so neither the camera nor player exposes their edges.
         Vector2 bounds = new(artwork.Max(r => r.bounds.min.x), artwork.Min(r => r.bounds.max.x));
         EnsureChapterFloor(map, bounds);
+        if (!forest)
+        {
+            var entrance = InScene<HideOutEntrance>().FirstOrDefault();
+            if (entrance != null)
+            {
+                // Keep the same destination and omit the first half of the former route.
+                float oldStartX = bounds.x + 2f;
+                float stopX = entrance.transform.position.x - NeighborhoodStopDistance;
+                bounds.x += Mathf.Max(0f, (stopX - oldStartX) * .5f);
+            }
+        }
         var movementBounds = player.GetComponent<PlayerMapBounds2D>();
         if (movementBounds == null) movementBounds = player.gameObject.AddComponent<PlayerMapBounds2D>();
         movementBounds.ClearHorizontalBounds();
         Vector3 spawn = new(bounds.x + 2f, map.position.y + 2f, 0f);
         player.transform.position = spawn;
         var body = player.GetComponent<Rigidbody2D>();
+        // A portal may have disabled simulation before loading this chapter.
+        // The new chapter owns physical walking from this point onward.
+        body.simulated = true;
         body.position = spawn; body.linearVelocity = Vector2.zero;
         player.SetCinematicWalking(false);
         player.SettleOnGround(20f);
         movementBounds.SetHorizontalBounds(bounds);
-        foreach (var camera in InScene<PlayerCameraFollow2D>()) camera.SetStoryBounds(bounds);
+        foreach (var camera in InScene<PlayerCameraFollow2D>())
+        {
+            camera.SetStoryBounds(bounds);
+            // Show the shortened route from its new entrance instead of spending it off screen.
+            if (!forest) camera.CenterStoryEntrance(spawn.x);
+        }
         RoomDropCache.SetCurrent(gameObject.scene.path + "#" + mapName);
-        QuestTracker.Complete(this);
         if (forest)
         {
             ConfigureSelena();
@@ -105,27 +124,37 @@ public sealed partial class StorySceneFlow
             player.SetCinematicWalking(true);
             var npcAnimator = selena.GetComponent<Animator>();
             npcAnimator?.SetBool("IsMoving", true);
+            if (npcAnimator != null) npcAnimator.speed = 1f;
+            var walkingCamera = Camera.main != null ? Camera.main.GetComponent<PlayerCameraFollow2D>() : null;
+            walkingCamera?.BeginWalkingFocus(selena);
+            walkingCamera?.SetWalkingFocusWeight(1f);
+            var entrance = InScene<HideOutEntrance>().FirstOrDefault();
+            float stopX = entrance != null ? NeighborhoodWalkStopX(entrance.transform.position.x - NeighborhoodStopDistance) : body.position.x;
             player.GetComponent<PlayerSpriteFacing>()?.FaceAttack(1);
             try
             {
                 while (SceneFadeTransition.IsRunning)
                 {
-                    float speed = player.RunningSpeed * .5f;
-                    var walkAnimator = player.GetComponent<Animator>();
-                    if (walkAnimator != null) walkAnimator.speed = .3f;
-                    if (npcAnimator != null) npcAnimator.speed = .3f;
+                    float remaining = Mathf.Max(0f, stopX - body.position.x);
+                    float speed = Mathf.Min(player.RunningSpeed,
+                        remaining / Mathf.Max(Time.fixedDeltaTime, Time.deltaTime));
                     body.linearVelocity = new Vector2(speed, body.linearVelocity.y);
                     selena.position = Vector3.MoveTowards(selena.position,
                         new Vector3(player.transform.position.x - SelenaFollowDistance, selena.position.y, selena.position.z), speed * Time.deltaTime);
                     var camera = Camera.main;
-                    if (camera != null && camera.WorldToViewportPoint(player.transform.position).x >= .45f)
+                    if (remaining <= .01f || camera == null || camera.WorldToViewportPoint(player.transform.position).x >= .45f)
                         neighborhoodRevealReady = true;
                     yield return null;
                 }
             }
             finally { ReleaseTutorialControls(); }
         }
-        else while (!restoring && SceneFadeTransition.IsRunning) yield return null;
+        else
+        {
+            if (!forest) neighborhoodRevealReady = true;
+            while (!restoring && SceneFadeTransition.IsRunning) yield return null;
+        }
+        if (!restoring) ShowGuide(forest ? SelenaTalkGuide : SelenaShelterGuide);
         locationHud?.SetLocation(forest ? "포레스트" : "거주구역");
         if (!forest && !restoring) yield return WalkToHideout();
     }
@@ -205,7 +234,7 @@ public sealed partial class StorySceneFlow
         {
             // Reuse the scene's authored dialogue canvas, fonts and text effects.
             dialogue.transform.position = selena.position;
-            yield return Say("Forest_4/selena");
+            yield return SelenaConversation();
             if (events != null) events.enabled = false;
             if (inventoryUi != null) inventoryUi.enabled = false;
             player.SetCinematicWalking(true);

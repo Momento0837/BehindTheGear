@@ -1,0 +1,1 @@
+PASS: off-screen entry, smooth movement, different-item stacking, same-ID merging, quantity text, newest-bottom reorder, independent three-second lifetime, fade-out, cleanup.

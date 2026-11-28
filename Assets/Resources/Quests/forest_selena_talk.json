@@ -1,0 +1,9 @@
+{
+  "questName": "셀레나와 대화하기",
+  "objective": "셀레나에게 다가가 F 키로 대화하세요.",
+  "showObjective": false,
+  "questId": "forest_selena_talk",
+  "objectives": [],
+  "rewardCoins": 0,
+  "rewardActionPoints": 0
+}
