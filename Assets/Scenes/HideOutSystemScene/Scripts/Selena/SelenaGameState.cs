@@ -33,6 +33,16 @@ namespace BehindTheGear.HideOut
             LastMap = Array.IndexOf(KnownMaps, locationName) >= 0 ? locationName : string.Empty;
         }
 
+        // Called instead of MarkReturnedFromField when Eden walks into the base together with Selena for the first
+        // time (the story's move-in). That is a first meeting, not a trip back: no "returned" line ("거주구역에
+        // 다녀오셨군요"), so the first booth visit is about the clinic itself.
+        public static void MarkArrivedWithSelena(HideOutPlayerBridge bridge)
+        {
+            if (!gearBaseline) RememberGear(bridge);
+            ReturnPending = false;
+            LastMap = string.Empty;
+        }
+
         public static void ConsumeReturn() => ReturnPending = false;
 
         // Called by SaveGameSession only after a Continue load succeeded (the save always opens in the base).

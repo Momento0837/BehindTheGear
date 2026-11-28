@@ -240,20 +240,26 @@ namespace BehindTheGear.HideOut
             Scene hideout = SceneManager.GetSceneByPath(bridge.Settings.scenePath);
             SceneManager.SetActiveScene(hideout);
             yield return null;
+            bool arrivedWithSelena = false;
             foreach (var root in origin.GetRootGameObjects())
             {
                 var flow = root.GetComponent<StorySceneFlow>();
                 // Complete the entrance objective only after the destination has loaded successfully.
                 if (flow != null) flow.CompleteHideoutEntranceQuest(bridge.State.fieldReturn);
-                if (flow != null && flow.MoveSelenaIntoBase() && bridge.State.fieldReturn?.story != null)
-                    bridge.State.fieldReturn.story.hasSelena = false;
+                if (flow != null && flow.MoveSelenaIntoBase())
+                {
+                    arrivedWithSelena = true;
+                    if (bridge.State.fieldReturn?.story != null) bridge.State.fieldReturn.story.hasSelena = false;
+                }
             }
             foreach (var root in suspended) if (root != null) root.SetActive(false);
             travelLock?.Release();
             var baseView = UnityEngine.Object.FindFirstObjectByType<HideOutScene>();
             if (baseView != null) { baseView.ReleasePlayer(); baseView.SuspendPlayer(); }
             RoomDropCache.Clear();
-            SelenaGameState.MarkReturnedFromField(bridge, selenaLastMap);
+            // Coming in with Selena for the first time is not a return trip (see MarkArrivedWithSelena).
+            if (arrivedWithSelena) SelenaGameState.MarkArrivedWithSelena(bridge);
+            else SelenaGameState.MarkReturnedFromField(bridge, selenaLastMap);
             travelling = false; finished();
         }
         public static IEnumerator Exit(HideOutPlayerBridge bridge, Scene hideout)
