@@ -25,7 +25,6 @@ public sealed class ManualSaveMenu : MonoBehaviour
     private Action confirmed, cancelled;
     private bool visible = true;
     private bool departing;
-    private bool autoSaveOffered;
     public void SetVisible(bool value)
     {
         visible = value;
@@ -34,7 +33,6 @@ public sealed class ManualSaveMenu : MonoBehaviour
         {
             if (confirmation != null && confirmation.activeSelf) SelectButton(cancelButton);
             else SelectPreferredButton();
-            OfferQuitAutoSave();
         }
     }
     public bool ChoosingControls { get; private set; }
@@ -48,9 +46,9 @@ public sealed class ManualSaveMenu : MonoBehaviour
         var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1600, 900);
         panel = new GameObject("Slot 1", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(root.transform, false);
-        SaveMenuBackdrop.Build(panel.transform); // clock-tower interior behind the title and buttons
         var rect = (RectTransform)panel.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
         panel.GetComponent<Image>().color = new Color(.09f, .045f, .035f, 1);
+        SaveMenuBackdrop.Build(panel.transform); // clock-tower interior behind the title and buttons
         CreateTitle(panel.transform);
         status = Label(panel.transform, "", 230, 24);
         continueButton = Button(panel.transform, "이어하기", 446, Continue, true);
@@ -74,47 +72,14 @@ public sealed class ManualSaveMenu : MonoBehaviour
         confirmation.SetActive(false); Refresh();
         panel.SetActive(visible);
         if (visible) SelectPreferredButton();
-        StartCoroutine(OfferAfterStartup());
+        DiscardLeftoverQuitAutoSave();
     }
-    private IEnumerator OfferAfterStartup()
+    // The quit auto-save was removed (disk saves only at the bed). A file left by an older build is never offered or
+    // loaded; it is simply deleted so it cannot bring back unsaved progress.
+    private static void DiscardLeftoverQuitAutoSave()
     {
-        yield return null; // let the startup scene decide whether the slot menu is shown yet
-        OfferQuitAutoSave();
-    }
-
-    // ---------- Auto-save written when the game was closed without saving (QuitAutoSave) ----------
-    private void OfferQuitAutoSave()
-    {
-        if (autoSaveOffered || departing || !visible || panel == null || !panel.activeInHierarchy || confirmation.activeSelf) return;
-        if (!QuitAutoSave.Exists) return;
-        autoSaveOffered = true;
-        string when = "";
-        try { when = $" ({QuitAutoSave.SavedAt:M월 d일 HH:mm})"; } catch (Exception) { }
-        Ask("마지막으로 플레이한 시점이 자동 저장되어 있습니다" + when + ".\n이 진행 상황을 불러오시겠습니까?",
-            LoadQuitAutoSave, "예", false, "아니요", DiscardQuitAutoSave);
-    }
-    private void LoadQuitAutoSave()
-    {
-        if (departing || SceneFadeTransition.IsRunning) return;
-        try
-        {
-            var save = ManualSaveStore.Read(QuitAutoSave.FilePath);
-            HideOutPlayerBridge.ValidateSnapshot(save, settings);
-            if (continuePlayerPrefab == null) throw new InvalidOperationException("이어하기 플레이어 프리팹이 연결되지 않았습니다.");
-            QuitAutoSave.Delete(); // Used once: the loaded run auto-saves again if it is closed without saving.
-            StartCoroutine(Depart(() => SaveGameSession.Continue(save, settings, continuePlayerPrefab)));
-        }
-        catch (Exception error)
-        {
-            DiscardQuitAutoSave();
-            if (status != null) status.text = "자동 저장 불러오기 실패: " + error.Message;
-        }
-    }
-    private void DiscardQuitAutoSave()
-    {
-        try { QuitAutoSave.Delete(); }
-        catch (Exception error) { Debug.LogWarning("[Save Menu] 자동 저장 삭제 실패: " + error.Message); }
-        Refresh();
+        try { if (QuitAutoSave.Exists) QuitAutoSave.Delete(); }
+        catch (Exception error) { Debug.LogWarning("[Save Menu] 남은 자동 저장 삭제 실패: " + error.Message); }
     }
     private void CreateTitle(Transform parent)
     {

@@ -209,7 +209,7 @@ namespace BehindTheGear.HideOut
             if (!HideOutModel.ReceivePotions(s, Settings.rules, Settings, Now, out string message)) throw new InvalidOperationException(message);
             return message;
         });
-        /// <summary>Validated snapshot of the current game, exactly what Save() writes (also used by the quit auto-save).</summary>
+        /// <summary>Validated snapshot of the current game, exactly what Save() writes.</summary>
         public HideOutSave CaptureSnapshot()
         {
             var snapshot = CopyState();
