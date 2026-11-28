@@ -1,0 +1,11 @@
+{
+  "name": "com.behindthegear.map-point-tool",
+  "displayName": "BehindTheGear Map Point Tool",
+  "version": "1.0.0",
+  "unity": "6000.3",
+  "description": "2D 맵 프리팹 위에 플레이어/몬스터 스폰, 포탈, 미니보스 위치를 찍고 Empty Object 프리팹(…_Points_vN)으로 내보내는 에디터 툴.",
+  "keywords": ["2d", "level-design", "spawn", "editor-tool"],
+  "author": {
+    "name": "BehindTheGear Team"
+  }
+}
