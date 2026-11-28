@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 /// <summary>
 /// The Forest boss encounter from start to finish. StorySceneFlow.FinishForestCombat runs it once the story monsters
@@ -19,7 +22,26 @@ public static class ForestBossEncounter
         fenced = null;
         Engaged = Defeated = false;
         retryUntil = 0f;
+        skipRequested = false;
     }
+
+    private static bool skipRequested;
+
+    /// <summary>
+    /// Testing (editor key 0): ends the encounter that is running now, at any point: while it waits for the field,
+    /// during the entrance or in the fight. The boss is removed without rewards and the story carries on as if it had
+    /// been beaten. Does nothing when no encounter is running.
+    /// </summary>
+    public static bool RequestSkip()
+    {
+        bool running = BossGoliath.Active != null || Object.FindAnyObjectByType<BossEncounterRunner>() != null || storyRunActive;
+        if (!running) return false;
+        skipRequested = true;
+        if (BossGoliath.Active != null) Object.Destroy(BossGoliath.Active.gameObject); // its OnDestroy hands back time, arena and camera
+        return true;
+    }
+
+    private static bool storyRunActive;
 
     /// <summary>The boss has shown itself in this Forest run (its full entrance is not replayed).</summary>
     public static bool Engaged { get; private set; }
@@ -76,6 +98,22 @@ public static class ForestBossEncounter
 
     /// <summary>The whole encounter, for the story flow. Ends at once when the boss cannot be created.</summary>
     public static IEnumerator Run()
+    {
+        skipRequested = false; // a press from before this encounter does not count
+        storyRunActive = true;
+        try { yield return Interruptible(RunEncounter()); }
+        finally { storyRunActive = false; }
+        if (skipRequested)
+        {
+            skipRequested = false;
+            if (BossGoliath.Active != null) Object.Destroy(BossGoliath.Active.gameObject);
+            RestoreArena();
+            Engaged = Defeated = true; // skipped = treated as beaten: the monologue and the portal follow
+            Debug.Log("[Boss] Encounter skipped (testing key).");
+        }
+    }
+
+    private static IEnumerator RunEncounter()
     {
         if (Defeated) yield break; // already beaten in this run (restored save): straight to the monologue
         if (Engaged)
@@ -235,8 +273,33 @@ public static class ForestBossEncounter
         if (!Application.isPlaying) return;
         if (BossGoliath.Active != null) Object.Destroy(BossGoliath.Active.gameObject);
         foreach (var old in Object.FindObjectsByType<BossEncounterRunner>(FindObjectsSortMode.None)) Object.Destroy(old.gameObject);
+        skipRequested = false;
         var runner = new GameObject("Boss Encounter Runner").AddComponent<BossEncounterRunner>();
-        runner.StartCoroutine(runner.RunThenRemove(Play(entrance)));
+        runner.StartCoroutine(runner.RunThenRemove(Interruptible(Play(entrance))));
+    }
+
+    // Runs `root` and every coroutine nested in it (yield return IEnumerator) one step at a time, so a skip can stop
+    // it between any two steps, even in the middle of the entrance. Stopping disposes the iterators, which runs their
+    // finally blocks (the player's control lock is given back).
+    private static IEnumerator Interruptible(IEnumerator root)
+    {
+        var stack = new Stack<IEnumerator>();
+        stack.Push(root);
+        try
+        {
+            while (stack.Count > 0)
+            {
+                if (skipRequested) yield break;
+                var top = stack.Peek();
+                if (!top.MoveNext()) { stack.Pop(); continue; }
+                if (top.Current is IEnumerator nested) { stack.Push(nested); continue; }
+                yield return top.Current;
+            }
+        }
+        finally
+        {
+            while (stack.Count > 0) (stack.Pop() as IDisposable)?.Dispose();
+        }
     }
 
     private static Transform PlayerRoot()

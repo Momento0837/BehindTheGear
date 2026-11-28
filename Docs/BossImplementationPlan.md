@@ -385,3 +385,10 @@ Assets/!Animation/Boss/...                         생성된 스프라이트 + .
   - 플레이어를 `rageRollOvershoot`(3.5유닛) 지나쳤다가 되돌아오기를 계속 반복한다 (`rageRollSpeed` 3유닛/초). 패턴 중에도 움직이고, 주먹이 땅에 박힌 동안·삼연 지진·과열 중에만 멈춘다.
   - 이전의 "패턴 전에 걸어서 접근"(Chase)과 2페이즈 걷기 프레임은 없앴다.
 - **2페이즈 카메라**: 시야를 `rageZoom`(1.25배)으로 넓히고, 탱크와 플레이어의 중간을 비춘다. 플레이어 이동 범위는 그 화면 범위다. Pixel Perfect Camera가 렌즈를 고정하므로 넓힌 동안에는 끄고, 끝나면 되돌린다. 배경 그림보다 넓어진 위아래는 검은 띠로 보인다(카메라 배경색을 잠시 검정으로).
+
+### 에디터 단축키 수정 + 보스 스킵 (2026-11-28)
+- **F4~F12 단축키가 안 먹던 원인**: Input System은 플레이어용·에디터용 키보드 상태를 따로 둔다. Game 뷰에 포커스가 있으면 키 입력은 플레이어 쪽에만 들어가는데, `BossDevShortcut`은 `EditorApplication.update`에서 키를 읽어 에디터 쪽(항상 안 눌린 상태)을 보고 있었다. Tools/Boss 메뉴는 함수를 직접 부르므로 동작했다.
+- **수정**: 키는 `InputSystem.onAfterUpdate`에서 플레이어 업데이트(Dynamic/Fixed/Manual)일 때만 읽는다. F7 무적 유지는 계속 `EditorApplication.update`에서 처리한다.
+- **보스 스킵 (`0` / 숫자패드 `0`, Tools/Boss/Skip boss)**: `ForestBossEncounter.RequestSkip()`. 진행 중인 보스전(필드 정리 대기·등장 연출·전투 어디서든)을 즉시 끝낸다. 보상 없이 보스를 지우고, 스토리 흐름에서는 처치한 것으로 처리해(`Engaged = Defeated = true`) 독백과 포털로 넘어간다. 진행 중인 보스전이 없으면 아무것도 하지 않는다.
+  - 중간에 끊을 수 있게 `Run()`/`PlayStandalone()`의 코루틴을 `Interruptible()`로 한 단계씩 돌린다. 끊으면 iterator를 Dispose해서 `finally`(조작 잠금 해제)가 실행된다. 시간 배속·아레나·카메라는 `BossGoliath.OnDestroy`가 되돌린다.
+  - 확인: Play Mode에서 키 이벤트를 넣어 F7 ON/OFF, `0`(보스 없음) 반응을 확인했다. Forest에서 F4로 등장 연출을 시작한 뒤 `0`을 누르면 보스·HP바·타이틀이 사라지고 러너가 정리되며 조작 잠금이 원래대로(1, Forest 컷신 몫) 돌아왔다. 스토리 흐름(몬스터 전멸 → `0` → 독백)은 직접 확인하지 않았다.

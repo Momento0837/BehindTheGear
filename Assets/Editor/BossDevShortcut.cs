@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 /// <summary>
 /// Editor-only keys for working on the Forest boss while in Play Mode (never part of a build):
@@ -11,13 +12,17 @@ using UnityEngine.InputSystem;
 ///   F12  next pattern: overheat (bucket down, weak point reachable from the ground)
 ///   F5  next pattern: triple quake (the phase-2 pattern; works in phase 1 too, for testing)
 ///   F7  player invincibility on/off (testing only; PlayerHealth itself is not changed)
+///   0   skip the boss: ends the running encounter at once, the story carries on as if it had been beaten
 /// Plain function keys: Ctrl+Shift+B and friends are taken by the Unity editor itself.
-/// Also available under Tools/Boss. Lives in the editor loop, so it needs no object in the scene.
+/// Also available under Tools/Boss. Needs no object in the scene.
+/// The keys are read right after the game's own input update: while the Game view has focus the Input System keeps
+/// keyboard state in the player buffers, and reading it from EditorApplication.update sees the editor buffers instead
+/// (keys never looked pressed there, only the menu items worked).
 /// </summary>
 [InitializeOnLoad]
 public static class BossDevShortcut
 {
-    private static readonly Key[] Keys = { Key.F6, Key.F7, Key.F8, Key.F9, Key.F10, Key.F11, Key.F12, Key.F5, Key.F4 };
+    private static readonly Key[] Keys = { Key.F6, Key.F7, Key.F8, Key.F9, Key.F10, Key.F11, Key.F12, Key.F5, Key.F4, Key.Digit0, Key.Numpad0 };
     private static int held;
     private static bool invincible;
     private static readonly System.Reflection.FieldInfo InvincibleUntil = typeof(PlayerHealth).GetField("invincibilityEndTime",
@@ -25,18 +30,25 @@ public static class BossDevShortcut
 
     static BossDevShortcut()
     {
-        EditorApplication.update -= Tick;
-        EditorApplication.update += Tick;
+        EditorApplication.update -= KeepInvincible;
+        EditorApplication.update += KeepInvincible;
+        InputSystem.onAfterUpdate -= ReadKeys;
+        InputSystem.onAfterUpdate += ReadKeys;
     }
 
-    private static void Tick()
+    private static void KeepInvincible()
+    {
+        if (invincible && EditorApplication.isPlaying) HoldInvincibility(float.MaxValue);
+    }
+
+    private static void ReadKeys()
     {
         if (!EditorApplication.isPlaying || EditorApplication.isPaused) { held = 0; return; }
-        if (invincible) HoldInvincibility(float.MaxValue);
+        var update = InputState.currentUpdateType;
+        if (update != InputUpdateType.Dynamic && update != InputUpdateType.Fixed && update != InputUpdateType.Manual) return;
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
-        // Own edge detection on isPressed: the editor loop does not tick in step with the input system's frames, so
-        // wasPressedThisFrame can be missed (or seen twice) from here.
+        // Own edge detection on isPressed, so a key held across several input updates fires once.
         int now = 0;
         for (int i = 0; i < Keys.Length; i++) if (keyboard[Keys[i]].isPressed) now |= 1 << i;
         int pressed = now & ~held;
@@ -51,6 +63,14 @@ public static class BossDevShortcut
         if ((pressed & 64) != 0) Force(BossGoliath.Pattern.Overheat);
         if ((pressed & 128) != 0) Force(BossGoliath.Pattern.Quake);
         if ((pressed & 256) != 0) SpawnWithEntrance();
+        if ((pressed & (512 | 1024)) != 0) SkipBoss();
+    }
+
+    [MenuItem("Tools/Boss/Skip boss (0)")]
+    private static void SkipBoss()
+    {
+        if (!Application.isPlaying) { Debug.LogWarning("[Boss] Enter Play Mode first."); return; }
+        Notify(ForestBossEncounter.RequestSkip() ? "Boss skipped" : "No boss encounter running");
     }
 
     // What just happened, shown on the Game view itself (the Console is often not visible while testing).
