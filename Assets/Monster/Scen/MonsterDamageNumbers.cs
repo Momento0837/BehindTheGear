@@ -35,15 +35,6 @@ public sealed class MonsterDamageNumbers : MonoBehaviour
         instance.Spawn(monster, damage, damageOverTime);
     }
 
-    /// <summary>Damage number at a world position (targets that are not a MonsterFollowController, e.g. the boss's
-    /// weak point). `position` is the top-centre of the target; colour and size use the same DamageNumberStyle.</summary>
-    public static void Show(Vector3 position, int damage, bool damageOverTime)
-    {
-        if (damage <= 0) return;
-        EnsureInstance();
-        instance.SpawnAt(position, 0, damage, damageOverTime);
-    }
-
     /// <summary>Small floating label (e.g. "+2" when a coin is picked up), same pop/rise/fade as the damage numbers.</summary>
     public static void ShowLabel(Vector3 position, string label, Color color, float scale = .9f)
     {
@@ -132,18 +123,12 @@ public sealed class MonsterDamageNumbers : MonoBehaviour
 
     private void Spawn(MonsterFollowController monster, int damage, bool damageOverTime)
     {
+        Popup popup = pool.Find(p => !p.text.gameObject.activeSelf) ?? CreatePopup();
         var body = monster.GetComponent<SpriteRenderer>();
         float top = body != null && body.sprite != null ? body.bounds.max.y : monster.transform.position.y + 1f;
-        SpawnAt(new Vector3(monster.transform.position.x, top, 0f), body != null ? body.sortingLayerID : 0, damage, damageOverTime);
-    }
-
-    // `topCentre`: horizontal centre and top edge of whatever was hit.
-    private void SpawnAt(Vector3 topCentre, int sortingLayer, int damage, bool damageOverTime)
-    {
-        Popup popup = pool.Find(p => !p.text.gameObject.activeSelf) ?? CreatePopup();
-        // Quick successive hits stack in three small rows so they stay readable.
+        // Horizontal centre of the monster; quick successive hits stack in three small rows so they stay readable.
         int lane = sequence++ % 3;
-        popup.origin = new Vector3(topCentre.x, topCentre.y + style.startAboveSprite + lane * .16f, 0f);
+        popup.origin = new Vector3(monster.transform.position.x, top + style.startAboveSprite + lane * .16f, 0f);
         popup.age = 0f;
 
         float strength = style.Strength(damage);
@@ -168,6 +153,7 @@ public sealed class MonsterDamageNumbers : MonoBehaviour
         }
 
         string label = damage.ToString();
+        int sortingLayer = body != null ? body.sortingLayerID : 0;
         // Later (and heavier) numbers draw on top of earlier ones.
         int order = TopSortingOrder + (sequence % 50) * 2 + (strength >= .5f ? 100 : 0);
         UnitScale(popup.text); // measure before the label is written (it uses a temporary "0")

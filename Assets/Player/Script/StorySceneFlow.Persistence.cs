@@ -12,7 +12,6 @@ public sealed partial class StorySceneFlow
     {
         chapter = (int)currentChapter, guide = currentGuide, marketMap = marketMap,
         ready = ready, marketNpcSpoken = marketNpcSpoken,
-        bossEngaged = ForestBossEncounter.Engaged, bossDefeated = ForestBossEncounter.Defeated,
         greetingCompleted = marketBubble != null && marketBubble.HasPresented,
         garbageCollected = garbageCollected,
         hasSelena = selena != null,
@@ -90,7 +89,6 @@ public sealed partial class StorySceneFlow
     {
         portal.GetComponent<ScenePortal2D>().SetArea(-26.5f, -20.5f);
         portal.SetActive(state.ready);
-        ForestBossEncounter.RestoreProgress(state.bossEngaged, state.bossDefeated);
         var remaining = state.monsters ?? System.Array.Empty<FieldMonsterState>();
         var template = monsters.FirstOrDefault();
         var restored = new System.Collections.Generic.List<MonsterFollowController>();

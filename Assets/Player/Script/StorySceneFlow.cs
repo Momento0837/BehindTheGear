@@ -215,9 +215,6 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             foreach (var monster in monsters) monster.BindPlayer(player.transform);
         }
         foreach (var monster in monsters) monster.enabled = false;
-        // Died to the boss: the monsters stay beaten. Hidden here, before the screen is revealed (and before the
-        // wildcat spawner looks for them), so they never flash on screen.
-        if (ForestBossEncounter.RetryPending) foreach (var monster in monsters) monster.gameObject.SetActive(false);
         var questHud = FindObjectsByType<InGameQuestHUD>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             .FirstOrDefault(hud => hud.CanPresentOpening);
         if (cutscene != null && questHud != null)
@@ -245,14 +242,6 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield return SceneFadeTransition.FadeThrough(ControlHintAnimation.PreloadTutorials());
         controlTutorial = gameObject.AddComponent<ControlTutorialUI>();
         controlTutorial.Begin(player);
-        if (ForestBossEncounter.ConsumeRetry())
-        {
-            // Died to the boss: the monsters stay beaten, the fight resumes with the short entrance.
-            foreach (var monster in monsters) if (monster != null) monster.gameObject.SetActive(false);
-            yield return FinishForestCombat();
-            yield break;
-        }
-        ForestBossEncounter.ResetProgress(); // a fresh Forest run meets the boss again
         foreach (var monster in monsters) if (monster != null) monster.enabled = true;
         if (monsters.Length == 0)
         {
