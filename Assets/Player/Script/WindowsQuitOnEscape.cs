@@ -25,6 +25,13 @@ public sealed class WindowsQuitOnEscape : MonoBehaviour
             waitForEscapeRelease = escapeHeld;
             return;
         }
+        // In gameplay Escape opens the pause menu, whose 게임 종료 warns about unsaved progress first.
+        if (GamePauseMenu.InGameplay)
+        {
+            held = 0f;
+            waitForEscapeRelease = escapeHeld;
+            return;
+        }
         if (waitForEscapeRelease)
         {
             held = 0f;
