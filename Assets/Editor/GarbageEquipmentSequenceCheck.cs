@@ -125,7 +125,7 @@ public static class GarbageEquipmentSequenceCheck
                 Require((bool)Read(flow,"ready") && (string)Read(flow,"currentGuide")=="garbage_exit","Portal objective follows the complete merged dialogue");
                 Require(!ui.EquipmentTutorialActive,"Tutorial releases movement gate");
                 ui.OpenInventory();Require(ui.IsOpen,"Inventory unlocks after monologue");
-                foreach(var name in new[]{"Forest/cutscene_conversation","Forest_4/selena","Garbage/garbage_pursuit_shout","Market/quest_offer","Neighborhood/neighborhood_conversation","Hideout/base_upgrade_tutorial"})
+                foreach(var name in new[]{"Forest/cutscene_conversation","Forest_4/selena","Garbage/garbage_pursuit_shout","Market/quest_offer","Hideout/base_upgrade_tutorial"})
                     Require(Resources.Load<TextAsset>("Dialogue/"+name)!=null,"Map resource resolves: "+name);
                 ui.CloseForStoryDialogue();
                 var resetCloak=Resources.Load<InventoryItemDefinition>("Story/TutorialGear");

@@ -3,6 +3,8 @@ using UnityEngine;
 public static class PrototypeScreenEffects
 {
     public static float OverridePixels = -1f;
+    // Output-pixel blur radius owned only by a scripted camera pan; zero outside that pan.
+    public static float StoryPanBlurPixels { get; set; }
     public const float DamageFlashDuration = .35f;
     private static float damageFlashStarted = float.NegativeInfinity;
     public static void TriggerDamageFlash() => damageFlashStarted = Time.unscaledTime;
@@ -12,6 +14,7 @@ public static class PrototypeScreenEffects
     static void Reset()
     {
         OverridePixels = -1;
+        StoryPanBlurPixels = 0f;
         damageFlashStarted = float.NegativeInfinity;
     }
     // Separation offset, red overlay, black opacity, monochrome blend.

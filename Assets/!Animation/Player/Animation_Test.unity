@@ -1261,6 +1261,7 @@ GameObject:
   - component: {fileID: 80670425}
   - component: {fileID: 80670424}
   - component: {fileID: 80670423}
+  - component: {fileID: 80670428}
   m_Layer: 0
   m_Name: Pickup - CopperGear
   m_TagString: Untagged
@@ -1285,6 +1286,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!212 &80670424
@@ -1399,6 +1401,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!4 &80670427
@@ -1416,6 +1419,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 31257944}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!50 &80670428
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 80670422}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &91174822
 GameObject:
   m_ObjectHideFlags: 0
@@ -3830,6 +3860,7 @@ GameObject:
   - component: {fileID: 382244512}
   - component: {fileID: 382244511}
   - component: {fileID: 382244510}
+  - component: {fileID: 382244515}
   m_Layer: 0
   m_Name: Pickup - SkyCrystal
   m_TagString: Untagged
@@ -3854,6 +3885,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!212 &382244511
@@ -3968,6 +4000,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!4 &382244514
@@ -3985,6 +4018,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 31257944}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!50 &382244515
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 382244509}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &393868596
 GameObject:
   m_ObjectHideFlags: 0
@@ -5523,6 +5583,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0930260d461ad842b75384421cae14b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttackController
+  selectedThrowSkill: 0
+  selectedPrimarySkill: 0
   onBasicAttack:
     m_PersistentCalls:
       m_Calls: []
@@ -5573,8 +5635,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement2D
   moveSpeed: 7
   walkSpeed: 5.25
+  dashDistance: 3
+  dashCooldown: 1
   dashDuration: 0.25
   dashAfterimages: 0
+  afterimageInterval: 0.025
+  afterimageLifetime: 0.22
+  afterimageTint: {r: 0.3, g: 0.85, b: 1, a: 0.45}
   jumpVelocity: 15
   crouchSpeedMultiplier: 0.7
   groundLayers:
@@ -5585,6 +5652,7 @@ MonoBehaviour:
     m_Bits: 0
   groundCheckDistance: 0.08
   dropThroughDuration: 0.25
+  meleeImpactNormalizedTime: 0.48
 --- !u!61 &546280978
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -5826,184 +5894,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 44.16, y: 44.16}
   m_Pivot: {x: 0.5, y: 0.63}
---- !u!43 &570632376
-Mesh:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 0
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 0
-    localAABB:
-      m_Center: {x: 0, y: 0, z: 0}
-      m_Extent: {x: 0, y: 0, z: 0}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 0
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 0
-    _typelessdata: 
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
 --- !u!1 &589701809
 GameObject:
   m_ObjectHideFlags: 0
@@ -12390,6 +12280,8 @@ MonoBehaviour:
   playerControlLock: {fileID: 546280982}
   dialogueAfterVideo: {fileID: 0}
   skipHoldSeconds: 3
+  spaceTextColor: {r: 1, g: 1, b: 1, a: 1}
+  countdownTextColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!328 &1275370405
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -16469,6 +16361,184 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1658730339}
   m_CullTransparentMesh: 1
+--- !u!43 &1666738534
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 0
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 0
+    localAABB:
+      m_Center: {x: 0, y: 0, z: 0}
+      m_Extent: {x: 0, y: 0, z: 0}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata: 
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!1 &1677412037
 GameObject:
   m_ObjectHideFlags: 0
@@ -20517,7 +20587,6 @@ MonoBehaviour:
   stats: {fileID: 0}
   font: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
   detailFont: {fileID: 11400000, guid: 6bcdaa0177a57504ca5d833cdde4ae43, type: 2}
-  displayTextJson: {fileID: 0}
   canvas: {fileID: 1840591465}
   window: {fileID: 1291296816}
   shortcutButton: {fileID: 2041701421}
@@ -20646,6 +20715,7 @@ GameObject:
   - component: {fileID: 2200000103}
   - component: {fileID: 2200000104}
   - component: {fileID: 2200000105}
+  - component: {fileID: 2200000106}
   m_Layer: 0
   m_Name: Pickup - HealthPotion
   m_TagString: Untagged
@@ -20685,6 +20755,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!58 &2200000103
@@ -20799,8 +20870,36 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
+--- !u!50 &2200000106
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000100}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &2200000110
 GameObject:
   m_ObjectHideFlags: 0
@@ -20814,6 +20913,7 @@ GameObject:
   - component: {fileID: 2200000113}
   - component: {fileID: 2200000114}
   - component: {fileID: 2200000115}
+  - component: {fileID: 2200000116}
   m_Layer: 0
   m_Name: Pickup - ManaPotion
   m_TagString: Untagged
@@ -20853,6 +20953,7 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
 --- !u!58 &2200000113
@@ -20967,8 +21068,36 @@ MonoBehaviour:
   magnetRadius: 3
   collectDistance: 0.35
   magnetMoveSpeed: 7
+  magnetAccelerationSeconds: 0.5
   questInteractRadius: 1.25
   questHighlightPrefab: {fileID: 0}
+--- !u!50 &2200000116
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200000110}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

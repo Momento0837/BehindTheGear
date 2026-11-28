@@ -14,6 +14,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        foreach (var button in GetComponentsInChildren<Button>(true)) MenuButtonSound.Attach(button);
         startButton.onClick.AddListener(StartGame);
         quitButton.onClick.AddListener(QuitGame);
     }
@@ -32,7 +33,7 @@ public sealed class MainMenuController : MonoBehaviour
         if (starting) return;
         QuitRequested?.Invoke();
 #if !UNITY_EDITOR
-        Application.Quit();
+        GameSoundService.QuitAfterMenuSound();
 #endif
     }
 

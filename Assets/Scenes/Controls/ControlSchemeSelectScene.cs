@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>Entry menu and direct new-game transition; controls are fixed to WASD/mouse.</summary>
@@ -15,15 +16,17 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
     [SerializeField] private GameObject teamLogoPrefab;
     [SerializeField] private AudioClip mainBgm;
     private static bool introShown;
+    public static bool IsWarningVisible { get; private set; }
     private GameObject introRoot;
     private Coroutine startupRoutine;
     private AudioSource music;
+    private BackgroundMusicTrack.ScreenFadeLease menuMusicFade;
     private MainMenuController mainMenu;
     private bool showingMainMenu;
     private bool selecting;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetIntro() => introShown = false;
+    private static void ResetIntro() { introShown = false; IsWarningVisible = false; }
 
     private void Awake()
     {
@@ -45,6 +48,7 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
         music.loop = true;
         music.spatialBlend = 0;
         music.clip = mainBgm;
+        BackgroundMusicTrack.Attach(music);
         bool playIntro = !introShown;
         introShown = true;
         startupRoutine = StartCoroutine(PlayStartup(playIntro));
@@ -98,9 +102,9 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
                 var group = (groupRoot != null ? groupRoot.gameObject : warning).AddComponent<CanvasGroup>();
                 group.alpha = 0;
                 group.interactable = group.blocksRaycasts = false;
-                yield return FadeGroup(group, 0, 1, 2.5f);
-                yield return new WaitForSecondsRealtime(2);
-                yield return FadeGroup(group, 1, 0, 2.5f);
+                IsWarningVisible = true;
+                try { yield return PresentWarning(group); }
+                finally { IsWarningVisible = false; }
                 warning.SetActive(false);
                 Destroy(warning);
             }
@@ -110,7 +114,7 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
                 var logo = Instantiate(teamLogoPrefab, introRoot.transform, false);
                 var rect = logo.GetComponent<RectTransform>();
                 rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
-                rect.anchoredPosition = Vector2.zero;
+                rect.anchoredPosition = new Vector2(5f, 0f);
                 var group = logo.AddComponent<CanvasGroup>();
                 group.interactable = group.blocksRaycasts = false;
                 yield return FadeGroup(group, 1, 0, 1);
@@ -129,6 +133,38 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
         yield return FadeGroup(cover, 1, 0, 10f);
         RemoveIntroCover();
         startupRoutine = null;
+    }
+
+    private static bool WarningSkipPressed()
+    {
+        var keyboard = Keyboard.current;
+        return Mouse.current?.leftButton.wasPressedThisFrame == true
+            || (keyboard != null && (keyboard.spaceKey.wasPressedThisFrame
+                || keyboard.fKey.wasPressedThisFrame || keyboard.escapeKey.wasPressedThisFrame));
+    }
+
+    private static IEnumerator PresentWarning(CanvasGroup group)
+    {
+        const float fadeSeconds = 2.5f;
+        bool skipped = false;
+        for (float elapsed = 0f; elapsed < fadeSeconds; elapsed += Time.unscaledDeltaTime)
+        {
+            if (WarningSkipPressed()) { skipped = true; break; }
+            group.alpha = Mathf.Clamp01(elapsed / fadeSeconds);
+            yield return null;
+        }
+        if (!skipped)
+        {
+            group.alpha = 1f;
+            for (float elapsed = 0f; elapsed < 2f; elapsed += Time.unscaledDeltaTime)
+            {
+                if (WarningSkipPressed()) break;
+                yield return null;
+            }
+        }
+        // Fade from the visible opacity without flashing to full white first.
+        float currentAlpha = group.alpha;
+        yield return FadeGroup(group, currentAlpha, 0f, fadeSeconds * currentAlpha);
     }
 
     private void RemoveIntroCover()
@@ -168,20 +204,28 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
         black.color = new Color(0, 0, 0, 0);
         black.raycastTarget = true;
 
-        bool fadeMusic = music != null && music.isPlaying;
-        float initialVolume = fadeMusic ? music.volume : 0f;
         float screenDuration = Mathf.Max(.01f, fadeDuration);
-        const float musicFadeDuration = 3f;
-        float duration = Mathf.Max(screenDuration, fadeMusic ? musicFadeDuration : 0f);
-        for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
+        menuMusicFade = BackgroundMusicTrack.BeginScreenFade();
+        try
         {
-            black.color = new Color(0, 0, 0, Mathf.Clamp01(elapsed / screenDuration));
-            if (fadeMusic && music != null)
-                music.volume = initialVolume * (1f - Mathf.Clamp01(elapsed / musicFadeDuration));
+            menuMusicFade.SetProgress(0f);
+            for (float elapsed = 0; elapsed < screenDuration; elapsed += Time.unscaledDeltaTime)
+            {
+                float progress = Mathf.Clamp01(elapsed / screenDuration);
+                black.color = new Color(0, 0, 0, progress);
+                menuMusicFade.SetProgress(progress);
+                yield return null;
+            }
+            black.color = Color.black;
+            menuMusicFade.SetProgress(1f);
+            // Present an opaque frame before handing off to the actual scene transition.
             yield return null;
         }
-        black.color = Color.black;
-        if (music != null) { music.volume = 0; music.Stop(); }
+        finally
+        {
+            menuMusicFade?.Dispose();
+            menuMusicFade = null;
+        }
         // Keep this cover opaque until the scene transition takes over and unloads the menu.
     }
 
@@ -208,7 +252,7 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
             mainMenu.gameObject.SetActive(false);
             var saveMenu = GetComponent<ManualSaveMenu>();
             if (saveMenu != null) saveMenu.SetVisible(true);
-        }, fadeDuration);
+        }, fadeDuration, fadeMusic: false);
         showingMainMenu = false;
         Destroy(mainMenu.gameObject);
         if (GetComponent<ManualSaveMenu>() == null) StartNewGame();
@@ -231,5 +275,12 @@ public sealed class ControlSchemeSelectScene : MonoBehaviour
         {
             if (!success) selecting = false;
         });
+    }
+
+    private void OnDestroy()
+    {
+        IsWarningVisible = false;
+        menuMusicFade?.Dispose();
+        menuMusicFade = null;
     }
 }

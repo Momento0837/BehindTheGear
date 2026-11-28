@@ -1,0 +1,9 @@
+{
+  "questName": "개구멍 안으로 몸을 밀어넣기",
+  "objective": "개구멍 앞에서 F 키로 들어가세요.",
+  "showObjective": false,
+  "questId": "neighborhood_hideout",
+  "objectives": [],
+  "rewardCoins": 0,
+  "rewardActionPoints": 0
+}

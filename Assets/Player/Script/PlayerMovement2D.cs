@@ -36,6 +36,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     private bool attackAnimationPlaying;
     public bool IsGroundedForStory => IsGrounded();
     public bool IsAttacking => attackAnimationPlaying;
+    public event System.Action JumpStarted;
     private bool attackStateObserved;
     private bool bufferedNextAttack;
     private int comboAttackIndex;
@@ -155,6 +156,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
         playerInput.JumpPressed += () => jumpRequested = true;
         playerInput.BasicAttackPressed += HandleAttackPressed;
         playerInput.DashPressed += HandleDashPressed;
+        if (GetComponent<PlayerMovementSounds>() == null) gameObject.AddComponent<PlayerMovementSounds>();
     }
 
     private void HandleDashPressed() => TryStartDash();
@@ -251,6 +253,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
                     if (hasAttackTriggerParameter) animator.ResetTrigger(AttackTriggerHash);
                     body.linearVelocity = new Vector2(body.linearVelocity.x, jumpVelocity);
                     grounded = false;
+                    JumpStarted?.Invoke();
                     if (hasJumpTriggerParameter)
                     {
                         animator.ResetTrigger(JumpTriggerHash);
@@ -473,6 +476,7 @@ public sealed class PlayerMovement2D : MonoBehaviour
     }
 
     private bool cinematicWalking;
+    public bool IsCinematicWalking => cinematicWalking;
     public float RunningSpeed => moveSpeed * (GetComponent<RecoveryPotionPenalty>()?.Multiplier ?? 1f);
     public void SetCinematicWalking(bool value)
     {

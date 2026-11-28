@@ -14,9 +14,24 @@ public sealed class WindowsQuitOnEscape : MonoBehaviour
     }
 
     private float held;
+    private bool waitForEscapeRelease;
     private void Update()
     {
-        held = Keyboard.current?.escapeKey.isPressed == true ? held + Time.unscaledDeltaTime : 0;
+        bool escapeHeld = Keyboard.current?.escapeKey.isPressed == true;
+        // Escape dismisses the warning, and that same held press must not quit the build.
+        if (ControlSchemeSelectScene.IsWarningVisible)
+        {
+            held = 0f;
+            waitForEscapeRelease = escapeHeld;
+            return;
+        }
+        if (waitForEscapeRelease)
+        {
+            held = 0f;
+            if (!escapeHeld) waitForEscapeRelease = false;
+            return;
+        }
+        held = escapeHeld ? held + Time.unscaledDeltaTime : 0;
         if (held >= 2f) Application.Quit(0);
     }
     private void OnApplicationFocus(bool focused) { if (!focused) held = 0; }

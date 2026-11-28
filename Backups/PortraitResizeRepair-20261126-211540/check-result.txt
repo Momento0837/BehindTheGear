@@ -1,0 +1,20 @@
+PASS all eight Ethan expressions resolve to their own sprites after the repair
+PASS 이든_두상 stays inside the imported image
+PASS 이든_곤란_0 stays inside the imported image
+PASS 이든_의아_0 stays inside the imported image
+PASS 이든_짜증_0 stays inside the imported image
+PASS 이든_눈 돌림_0 stays inside the imported image
+PASS 이든_눈 반 감음_0 stays inside the imported image
+PASS 이든_눈 감음_0 stays inside the imported image
+PASS 이든_엥_0 stays inside the imported image
+PASS test directory is new and isolated
+PASS resizing PNG preserves GUID and sprite local file ID
+PASS out-of-bounds crop is repaired to the resized source image
+PASS an already serialized portrait reference survives PNG replacement
+PASS sprite mode, PPU, filter, compression, pivot, borders and name remain unchanged
+PASS a second resize still preserves the same expression connection
+PASS valid custom crop survives ordinary content edits
+PASS repair is idempotent for valid portrait imports
+PASS multiple-sprite sheets are never automatically resized
+PASS the real portrait library is unchanged by fixture tests
+PASS portrait resize regression

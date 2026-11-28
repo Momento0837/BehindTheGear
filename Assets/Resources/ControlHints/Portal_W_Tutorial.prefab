@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   animationResource: W
-  displayWidth: 59.4
+  displayWidth: 77.22
   replacementFrames: []
   secondsPerFrame: 0.08
 --- !u!222 &1003

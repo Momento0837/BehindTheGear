@@ -1,0 +1,7 @@
+PASS visible depth-dependent parallax: far=0.138, near=0.817 world units
+FAIL System.InvalidOperationException: replacement keeps population bounded to one extra cloud
+  at BaseFogAnimationChecks.Require (System.Boolean value, System.String message) [0x00009] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseFogAnimationChecks.cs:55 
+  at BaseFogAnimationChecks+<Verify>d__17.MoveNext () [0x004d4] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseFogAnimationChecks.cs:119 
+  at BaseFogAnimationChecks+<Run>d__16.MoveNext () [0x000b5] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseFogAnimationChecks.cs:71 
+Runtime errors: 0
+FAIL fog animation checks

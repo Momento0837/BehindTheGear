@@ -1,0 +1,19 @@
+PASS entry starts on initial base creation
+PASS captures objects, eight icons, locked fog and exactly three temporary sweeps
+PASS elements sorted nearest screen center first
+PASS elements sorted nearest screen center first
+PASS elements sorted nearest screen center first
+PASS icon ordering uses positioned icons rather than prefab origin
+PASS camera input and focus are blocked during entry
+PASS facility clicks cannot interrupt entry
+PASS base UI input stays locked during entry
+PASS temporary fog shader compiles
+PASS temporary fog tint is #1f1f1f
+PASS render hierarchy keeps UI icons above fog above the map
+PASS plays icons -> lateral sweeps -> fog -> map in order
+FAIL System.InvalidOperationException: three sweeps alternate left/right/left or right/left/right
+  at BaseEntranceChecks.Require (System.Boolean condition, System.String message) [0x00009] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseEntranceChecks.cs:44 
+  at BaseEntranceChecks+<Verify>d__13.MoveNext () [0x0098b] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseEntranceChecks.cs:132 
+  at BaseEntranceChecks+<Run>d__11.MoveNext () [0x00042] in F:\명지전문대학\MBC게임아카데미\프로젝트\유니티 프로젝트\BehindTheGear\Assets\Editor\BaseEntranceChecks.cs:53 
+Runtime errors: 0
+FAIL entrance checks

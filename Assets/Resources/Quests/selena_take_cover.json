@@ -1,0 +1,9 @@
+{
+  "questName": "몸을 피하기",
+  "objective": "셀레나와 함께 몸을 숨길 곳으로 이동하세요.",
+  "showObjective": false,
+  "questId": "selena_take_cover",
+  "objectives": [],
+  "rewardCoins": 0,
+  "rewardActionPoints": 0
+}

@@ -148,6 +148,8 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         marketMap = gameObject.scene.name == "Market";
         PlacePlayer(marketMap ? new Vector3(49f, -2.5f, 0) : new Vector3(-4.44f, -.36f, 0));
         RoomDropCache.SetCurrent(gameObject.scene.path + (marketMap ? "#market" : ""));
+        // Expeditions revisit the map without replaying its first-arrival dialogue.
+        if (marketMap) GameSoundService.StartMarketMusic();
         locationHud = LocationHUD.Create();
         SceneManager.MoveGameObjectToScene(locationHud.gameObject, gameObject.scene);
         dialogue = InScene<ConversationDialogue>().FirstOrDefault(d => d.GetComponent<BlackMarkerNpc>() != null);
@@ -216,7 +218,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
         var questHud = FindObjectsByType<InGameQuestHUD>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             .FirstOrDefault(hud => hud.CanPresentOpening);
         if (cutscene != null && questHud != null)
-            cutscene.EndingTransition = reveal => questHud.PresentOpeningQuest(reveal);
+            cutscene.EndingTransition = reveal => questHud.PresentOpeningQuest(reveal, playQuestSound: true);
         foreach (var monster in monsters)
         {
             monster.ConfigureLoot(sceneLoot);
@@ -247,14 +249,12 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield break;
         }
         while (BehindTheGear.HideOut.HideOutTravel.IsVisiting || monsters.Any(m => m != null && m.CurrentHealth > 0)) yield return null;
-        ready = true;
-        portal.SetActive(true);
-        AdvanceGuide("forest_exit");
-        controlTutorial.ArmPortal(portal);
+        yield return FinishForestCombat();
     }
 
     private IEnumerator Garbage(bool resumeCollected = false, bool restoring = false)
     {
+        RoomDropCache.SetCurrent(gameObject.scene.path + "#garbage");
         foreach (var monster in monsters) monster.gameObject.SetActive(false);
         PlacePlayer(new Vector3(23f, -2.5f, 0));
         portal.GetComponent<ScenePortal2D>().SetArea(GarbagePortalLeft, -2f);
@@ -379,11 +379,13 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield return SceneFadeTransition.FadeThrough(() =>
             {
                 PrepareMarket();
+                PortalDeparture.ResumeCameraForArrival(player);
                 arrival = PortalArrival.Prepare(player);
             });
             if (arrival != null) yield return arrival.Enter();
             // Show the arrival objective once the character has entered the map.
             ShowGuide("market_arrival");
+            yield return MarketPursuit();
         }
         finally
         {
@@ -504,6 +506,8 @@ public sealed partial class StorySceneFlow : MonoBehaviour
     {
         if (cutscene == null) yield break;
         cutscene.PlayFromInteraction();
+        // Arm before video reveal: its visible surface disappears before IsPlaying becomes false.
+        if (cutscene.IsPlaying) GameSoundService.PrepareOpeningForestAmbience();
         while (cutscene.IsPlaying) yield return null;
         ShowLocation();
     }
@@ -517,6 +521,7 @@ public sealed partial class StorySceneFlow : MonoBehaviour
             yield break;
         }
         dialogue.Play(content);
+        if (resource == "Market/market_pursuit_monologue") GameSoundService.StartMarketMusic();
         while (dialogue.IsPlaying) yield return null;
     }
 

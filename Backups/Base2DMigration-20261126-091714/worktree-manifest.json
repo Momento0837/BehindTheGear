@@ -1,0 +1,338 @@
+[
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Anvil.png.meta",
+    "sha256": "6E40E3DC10FEBB4E48BC8E61DE5751827ADD6790B2F6442CCD204B8AA2F9DBCC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Back Chair.png.meta",
+    "sha256": "509A4CF2BD8159115995076DBA110A6C4D9282B37392D3A2A0098BD7C2DE8C2E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bed.png.meta",
+    "sha256": "E85608554D65D5DE8F5F93FC106EFF9BCB68AD52A6F6F059E5C7E22EEA354B08"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding (2).png.meta",
+    "sha256": "5A1224142C7193348C79FFE70927BF09193305E2AB3719AA890D78BF2A9C10F1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Bedding.png.meta",
+    "sha256": "7675180B4DA7BF395D87DD2F36A65D5A9A03754316B14F847A74647B3C649649"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Box.png.meta",
+    "sha256": "8934992C44CFBB79C3DBF09ABD63BB8CE4128C9A9D85D7C094F3A76A2AF4440A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Cart.png.meta",
+    "sha256": "DA3F3896C1E04D556565B1370FDE82368EEB79BFD3C18C96F7FA8B733BB90C32"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair (2).png.meta",
+    "sha256": "7605AB6BF7D11E465D47BAE606A8BCD0226B5BCAC82753BF5D6669F799AAA7A0"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Chair.png.meta",
+    "sha256": "BB88388DABDEC57535E2B886ADC590C14E010A4FA440FFCB569D4E2976B03645"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (10).png.meta",
+    "sha256": "5709B3D2DC9AA1A95B8FA3AC70401A5EB6E1F1CE838C0C094F32289226B15FB2"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (11).png.meta",
+    "sha256": "8194CD5569FAE238FB1853DA381CF8608B8E07182296390A53923D8F6EF7C722"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (12).png.meta",
+    "sha256": "9542CF8A9A931FD693B556BC9B16462673662AFA95FF9A13C6D8E16350A99819"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (13).png.meta",
+    "sha256": "38AF9DA470C9E6943A526F56E769D2DD38F41A491ABC8B5EB2287EFBFB87F2DE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (14).png.meta",
+    "sha256": "73D3C29A588B1696E12E499A3D6BEFA1FFC01F2A85D6A07F86EF665CBDE15F25"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (15).png.meta",
+    "sha256": "4C40537154AABD38546DA06D012C0851ABF6A9A10BB8D7BF3EC70C4E922BB111"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (16).png.meta",
+    "sha256": "A052D6B994724D48822C49ADD9D053DFACB7B5626EA3A4B3A21CB39622F32512"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (17).png.meta",
+    "sha256": "2E2240E9446219BEA1848772D6DEE13195FAB300D5745B7559235E3F157C0742"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (2).png.meta",
+    "sha256": "6B3F5B4CD674140D538E17AF31F3C863BE4E5B5D95DDF847E7E4C8D63D290A60"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (3).png.meta",
+    "sha256": "8591E9A2D3C089C38BB2125DBDC1D8B1C1353826BE0084C3F5F1117EDE15F53B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (4).png.meta",
+    "sha256": "2538D6F187B58AA41715DB46646116764CFC3D8CF23342C318E64DCD0ED5E956"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (5).png.meta",
+    "sha256": "301866488ED43199B413EC6DBEF5ED2CC840A8DA2CFE6D0CB7F0A824ED9B26C0"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (6).png.meta",
+    "sha256": "5999089C1EA2E40F3D7ABA97C8BE3B53CADFDC8A7438DDCB7AB619B54EC64B42"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (7).png.meta",
+    "sha256": "FEBDF4CBE5C0A83FDE6387C9FC3F9F44F725D05C578315643D5DB95055A6A09A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (8).png.meta",
+    "sha256": "B54D283CD2822CAB5E354C5A5A03CE0521B161D9BF11792EF4C59B8EDDB3E285"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color (9).png.meta",
+    "sha256": "7A254063EE41E97BE612A074E7E93395583EBF84597D72E9B719893BDAED577E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Color.png.meta",
+    "sha256": "47F2A2962A53B0ECE59DA27061BEDA359BF979B66A42B4A6C8A8786E66B5C241"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Covered Object.png.meta",
+    "sha256": "F657AC23980CD0B291FD4939571BB14C8CD494FFF453F1DEC14DBDFD73C32D3C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk (2).png.meta",
+    "sha256": "8F29408C53709FF10AA155431FF0861DBB22730CC3D6610F2AF62DEEB008CE6D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk and Trash Can.png.meta",
+    "sha256": "A7B03EEF9CD886F6E76DDFF4BC7B18B665746290D2CC52D2DC08CF1EFA64A13A"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Desk.png.meta",
+    "sha256": "95DEC704E4EE2B743541F11036EBFCFCF4CCA256FD85355023C3C10651FD6A22"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Dining Table.png.meta",
+    "sha256": "21CC89BC3A4E22EF517EBFBBBB0F504B09EF56AAEE8F9ADD5A9F8F94EFF18C0C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Floor.png.meta",
+    "sha256": "DC5710C7979C04488FD43970AFA0BBCAE84B3F02ADD21FBB19469EA4A3876F15"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Front Chair.png.meta",
+    "sha256": "9E3BA6C2C709A3B2363F2653E7E030190EF1C877444413EEAFE0B222C8AE551D"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Furniture.png.meta",
+    "sha256": "43DD5411A559633E2C01D58246505D3AD0BF8EF5F763B1B8B6BBC14321823CFB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Handset.png.meta",
+    "sha256": "289A49AB065DFC2E8CF121A45608DE299C2DD000EC4A77ED934E64E9C0D5F413"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Heating.png.meta",
+    "sha256": "E2293AC44B3586B2B8696AD3D266D55D14F2ADBBA87D6ADF152FE819A8DEED39"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Instrument Panel.png.meta",
+    "sha256": "44073621ECFDEDC5F1E340860F4A5ECA2C1009485122A8F9480DC040D4654DFE"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Kitchen.png.meta",
+    "sha256": "DDA3CB646BFF16231F47A23FB391389DDD3573A850F8B90E072936B70F234F5F"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 3.png.meta",
+    "sha256": "858D8B5512A4D3A3A8DD6C245760F5AE92FB3627D59200E3C722CCCB86D5A8C4"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Layer 4.png.meta",
+    "sha256": "5C4AEBDFC2035A011079770F8CA0BB0A11E1132CCBBD995ED6494821087EF7CB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Living Room.png.meta",
+    "sha256": "DCDB4526B9B2CF0FBBDA24FAEB74FC932F1543F248E7EE421C037D987A726573"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Merged.png.meta",
+    "sha256": "0F530A45572F34499C63EA2F1B0F9CA0C4B75E642A88135033CC351A42FEB075"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Path.png.meta",
+    "sha256": "1562400B9ECBE8E9EE6293007159345C64823BF7410074532047C7DD3FFAE546"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Potions.png.meta",
+    "sha256": "EA211E3D98DCDD53E1396855D511EE4929B70B6DD2FD8C2A4609894B1EB27854"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Punching Bag.png.meta",
+    "sha256": "40379D15C1CC5DEFB62572FC073BF223B999A1E7E0B442A0C9A03FA73364E2B1"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (2).png.meta",
+    "sha256": "0E22315BFBE593B562017319DE2B496E3224E27DCBD0862B9F620D16C2F9BCDB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (3).png.meta",
+    "sha256": "A766F022C5CD89D5C5C5488CECCC3397B65B461B37CCA58C13CDCB2B66A7FB16"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (4).png.meta",
+    "sha256": "545854141612DED1739F510071F385CB2D052EDCBBA5F70ED74C8AA9F6C24550"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (5).png.meta",
+    "sha256": "3C24EC3F0357529DDB5D424D1207D5B689049E7724B5296A78FC065CE3EFFF87"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (6).png.meta",
+    "sha256": "51B9A333E6D305702D4DDA9580B0370885FFF52E75A95E10F1BA78D2622CB937"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (7).png.meta",
+    "sha256": "2D8900179D83AE7AA06C7B7440403B63DC8C4A4B0463E95E13F0E682127A53DB"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room (8).png.meta",
+    "sha256": "ED9B4349F72DDC1C1F92762C882E71639F0B2CAF907B0E8FE45648AAC3381F99"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Room.png.meta",
+    "sha256": "1104FBE9CA568B38C71821A685E59464C95CA564AF98C12409282F409BF59380"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (10).png.meta",
+    "sha256": "95F67430E8FDEAFD7BCF01F3AED76CDC0FB7554722D53403C496F6F1C2D60BAF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (11).png.meta",
+    "sha256": "BAB0C049EB92EABD789D66C0A7538CE1AD78F98D9DFEC4D444E2489982E756A6"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (12).png.meta",
+    "sha256": "D2C0011D81C87C7FC283CFBFBBA9B535B70F680402AFDBBA27BA6163D5F8DFCF"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (2).png.meta",
+    "sha256": "E7E319E55F5546EACD56B22F7AF06699A2A21188D5D7C2E00F8DB0EE1E9A625C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (3).png.meta",
+    "sha256": "EE4313889E6C334CF05392D6D545D8A988DC11C6624C387CB82E27FAFE345B1C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (4).png.meta",
+    "sha256": "3D5AD132D43534F594A0586462BF0CF2F4EF072EE30B995F78DF57355D433170"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (5).png.meta",
+    "sha256": "9C34EF7A10F1AD877C5D9040317ECA0C97E9F56E35FA622F6D883DAEF376BACC"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (6).png.meta",
+    "sha256": "516EA795FFB0C3097D9BFC20BC85EE52E1C1F33F68890925414F0E2A4C828711"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (7).png.meta",
+    "sha256": "D8464516BB6D5B687512E4BA7432146854EC912129DA1A2B424CCFF48DF9781B"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (8).png.meta",
+    "sha256": "1862D1CC057D54F4482DB8909CC8FC5C16F0208C98ED9061379771242CA2A020"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow (9).png.meta",
+    "sha256": "36712980BAE415452DCEC2C7D97A10513E818DFA2444DA47FC1BB9FE55CE59CD"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shadow.png.meta",
+    "sha256": "9505DEED9D306BBCC338E12029F5A4DB92FAD4D08CFCB816D35F36F26769450C"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf (2).png.meta",
+    "sha256": "9567F6CDF667780C4FBE63A36F0A87EC0E1619A7F13F0103FED9B4334CA68318"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Shelf.png.meta",
+    "sha256": "9FE4B0D07CAD0764C279B3FAD549692BE81D817A1748C7C461C5DDD57D43E161"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Training Dummy.png.meta",
+    "sha256": "4381EFC7A58350E8763B454A06F2390220992475014D64744AB3E1E197E0EF0E"
+  },
+  {
+    "path": "Assets/!UI/Base/아이소메트릭.aseprite.sprites/Workbench.png.meta",
+    "sha256": "FF9C7C272DBBE895D604899AC29EDF7584764D5B1EFC8FE6EAADDEEF7CCBCAB5"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons.meta",
+    "sha256": "0EDB9A4C97B6A420C660C4D7A6959FB99A569B65D95B657FA53067C31EF16955"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Bed.png",
+    "sha256": "12715BBF79D89D57F3BDC4C230F95952E6DB904A080E6731B55388BD8E7ECCEC"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Bed.png.meta",
+    "sha256": "658B93D778461CCF773035B0CAD75A84C61AEC590B9ACFA630BFC96011AE8A86"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Heal.png",
+    "sha256": "6A39213DBFBEDDF3086363AAA95E2575264270B86FD176A0BE6E4557B6521BF1"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Heal.png.meta",
+    "sha256": "CFA17EC2C75B4C3974B6A5BD10559D4D7FF641D16C5FFFD1897FB6EC244E575B"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Meal.png",
+    "sha256": "B6C87004929B8D34FBA78A6658E8A642373F988620D99D6D4E45998A7E6495F2"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Meal.png.meta",
+    "sha256": "1362199CA49D6C3E32398143C233A956601EEB01880E82DC8405A20AE381BCC9"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Potion.png",
+    "sha256": "8F760E75077411A9AAB25A7C211A0E1312F476F6CA13BE1E5F7E9C07A9A5BB51"
+  },
+  {
+    "path": "Assets/!UI/Base/Icons/Potion.png.meta",
+    "sha256": "DD50ED63EC34D965B28CE2AEBBA8B01556A877931B7DD3A7A3B3E46DC8666BE8"
+  },
+  {
+    "path": "Assets/!UI/Main/MainCanvas.prefab",
+    "sha256": "B9DD7FBAF8E7F0356302B5923D28056B780B32A2FF5E4EB7B5DB42A1D785959F"
+  },
+  {
+    "path": "Assets/!UI/Other/Button_9-Slice.png",
+    "sha256": "55CE30CC7C86A8B95F88710697BFFB71E54702497ACB2A0DFB164841FAD80603"
+  },
+  {
+    "path": "Assets/!UI/Other/Button_9-Slice.png.meta",
+    "sha256": "37E546A337666CF8D0346F8EFB4BD29043FE5AD7175FE32B36F4F3541CBE30FE"
+  },
+  {
+    "path": "Assets/Resources/UI/Fonts/PFStardustExtraBold.asset",
+    "sha256": "86C4AF30FA85E0148871BDCD56531DD9EBA62BF93349485E4DF5081F9F3AA590"
+  },
+  {
+    "path": "Assets/Resources/UI/Fonts/PFStardustNormal.asset",
+    "sha256": "AB8EB7533ED57058DCA27826C4F8A766742903C6D75DD4E9CBE90F24286524E5"
+  },
+  {
+    "path": "Assets/vHierarchy/vHierarchy Data.asset",
+    "sha256": "DD84DA4B9A0AA7E350895B53E77387251F2EBC8B1287215397D899059F33A096"
+  }
+]

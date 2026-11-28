@@ -30,6 +30,7 @@ public sealed class TutorialButtonHighlight : MonoBehaviour
             for (int i = 0; i < dim.Length; i++) dim[i] = MakeImage("Tutorial Dim " + i);
             border = MakeImage("White Border Pulse");
             border.sprite = style.border;
+            border.type = Image.Type.Sliced;
             border.enabled = false;
         }
         target = button; elapsed = 0; dismissing = false;

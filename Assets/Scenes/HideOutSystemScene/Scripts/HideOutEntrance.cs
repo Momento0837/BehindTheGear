@@ -97,7 +97,8 @@ namespace BehindTheGear.HideOut
             try
             {
                 yield return SceneFadeTransition.FadeThrough(
-                    EnterRoomWhileBlack<T>(view, scenePath, sceneLabel, missingController, () => entered = true), view.trainingFadeDuration);
+                    EnterRoomWhileBlack<T>(view, scenePath, sceneLabel, missingController, () => entered = true),
+                    view.trainingFadeDuration, fadeMusic: false);
             }
             finally
             {
@@ -157,7 +158,7 @@ namespace BehindTheGear.HideOut
                 // Direct room-scene Play still uses the existing persistent player on return (LoadScene fades itself).
                 travelling = true;
                 room.PrepareToLeave();
-                if (bridge != null) SceneFadeTransition.LoadScene(bridge.Settings.scenePath, .4f);
+                if (bridge != null) SceneFadeTransition.LoadScene(bridge.Settings.scenePath, .4f, fadeMusic: false);
                 travelling = false; yield break;
             }
             travelling = true;
@@ -165,7 +166,8 @@ namespace BehindTheGear.HideOut
             {
                 // Fade out over the room, swap back to the retained base while opaque, then fade the base in.
                 // (Previously the room was unloaded with no fade, so returning cut straight to the base.)
-                yield return SceneFadeTransition.FadeThrough(ExitRoomWhileBlack(room, view, bridge), view.trainingFadeDuration);
+                yield return SceneFadeTransition.FadeThrough(ExitRoomWhileBlack(room, view, bridge),
+                    view.trainingFadeDuration, fadeMusic: false);
             }
             finally { travelling = false; }
         }
@@ -241,6 +243,8 @@ namespace BehindTheGear.HideOut
             foreach (var root in origin.GetRootGameObjects())
             {
                 var flow = root.GetComponent<StorySceneFlow>();
+                // Complete the entrance objective only after the destination has loaded successfully.
+                if (flow != null) flow.CompleteHideoutEntranceQuest(bridge.State.fieldReturn);
                 if (flow != null && flow.MoveSelenaIntoBase() && bridge.State.fieldReturn?.story != null)
                     bridge.State.fieldReturn.story.hasSelena = false;
             }

@@ -1,0 +1,366 @@
+[
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.meta",
+    "Hash": "E2479D81E16EA6CD8ACD89CC45C33E87E508866D0ADF2626F27FB0774BCF6C1E"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.pblayers.meta",
+    "Hash": "59C1D2E81B763E0E8CDEF5035D0ACE4BD64E3193699D540B833D2B9928704B5B"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites.meta",
+    "Hash": "62ADFE0E3115F3F8F9F2FE0D86BAF65711C286B607682028B5FD1A9ED712E13E"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Base_Canvas_Artwork.asset.meta",
+    "Hash": "2D0EF5680301FF7517FE7268ED366951496FE033E6C71E23F97CA55CB1EC9451"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Base_Canvas.prefab.meta",
+    "Hash": "9534A38CF7F6CC31EC98C4D0A81EA9AAA24AD45A25286CDB2C9896856CB9F277"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Base_Test.unity.meta",
+    "Hash": "8DC252F49BC8694AB540DDB599BA8318C49C70C76B04982446D0E6F9F2BB6104"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs.meta",
+    "Hash": "852DDC251F16384E42A0DBA09B80E183C6CB534AB4E5CA02F1E395820BC1CC1A"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons.meta",
+    "Hash": "0EDB9A4C97B6A420C660C4D7A6959FB99A569B65D95B657FA53067C31EF16955"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Bigfog1.png.meta",
+    "Hash": "A06D0BA001E0913FE3F49EE2B60D6B6B3B3894CF56E15343CA8C618A4C497470"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Bigfog2.png.meta",
+    "Hash": "66DF448DDAF059F3D16E1999E462E6AA1467172982A999674FB9F2E6AD363D50"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Bigfog3.png.meta",
+    "Hash": "3BDB172E11A6147707F9506DB4A33FEE5161BDBCE67BC2AC113A66983273E5F7"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Fog1.png.meta",
+    "Hash": "DDDCCA7CB263707036DAA749A8A48B7D223CAD151D7E64BA5E7901408B897183"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Fog2.png.meta",
+    "Hash": "7F49CBF2D67D42508F7A4C00240194B69130B5A8C6B3D29B1DEAFA641279608A"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Fog3.png.meta",
+    "Hash": "83198C211FEE99111668B1518134F5E0CF259792912F8E17595A8E142C12F665"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Fogs\\Fog4.png.meta",
+    "Hash": "E6C568A7F39168EC3E09F414A5A0F4294F659211B38105DF3610C3B39F137100"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Bed.png.meta",
+    "Hash": "658B93D778461CCF773035B0CAD75A84C61AEC590B9ACFA630BFC96011AE8A86"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Circle_Black.png.meta",
+    "Hash": "D10D538F78A0D4AB475538E9F2D1FF5FB17DD7848CA1FDFD339CFBA886239014"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Circle_White.png.meta",
+    "Hash": "B74C71A0826E6BA085477633B7A8DE1FF67D7A4BE7B472CEA6D11B160D9A7FD4"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Heal.png.meta",
+    "Hash": "CFA17EC2C75B4C3974B6A5BD10559D4D7FF641D16C5FFFD1897FB6EC244E575B"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Meal.png.meta",
+    "Hash": "1362199CA49D6C3E32398143C233A956601EEB01880E82DC8405A20AE381BCC9"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Potion.png.meta",
+    "Hash": "DD50ED63EC34D965B28CE2AEBBA8B01556A877931B7DD3A7A3B3E46DC8666BE8"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\Icons\\Traning.png.meta",
+    "Hash": "420D44A409987EE6840073338171A5FEE6E8FE9B1826FE3D0DD77A4C0395E160"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Anvil.png.meta",
+    "Hash": "6E40E3DC10FEBB4E48BC8E61DE5751827ADD6790B2F6442CCD204B8AA2F9DBCC"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Back Chair.png.meta",
+    "Hash": "509A4CF2BD8159115995076DBA110A6C4D9282B37392D3A2A0098BD7C2DE8C2E"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Bed.png.meta",
+    "Hash": "E85608554D65D5DE8F5F93FC106EFF9BCB68AD52A6F6F059E5C7E22EEA354B08"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Bedding (2).png.meta",
+    "Hash": "5A1224142C7193348C79FFE70927BF09193305E2AB3719AA890D78BF2A9C10F1"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Bedding.png.meta",
+    "Hash": "7675180B4DA7BF395D87DD2F36A65D5A9A03754316B14F847A74647B3C649649"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Box.png.meta",
+    "Hash": "8934992C44CFBB79C3DBF09ABD63BB8CE4128C9A9D85D7C094F3A76A2AF4440A"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Cart.png.meta",
+    "Hash": "DA3F3896C1E04D556565B1370FDE82368EEB79BFD3C18C96F7FA8B733BB90C32"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Chair (2).png.meta",
+    "Hash": "7605AB6BF7D11E465D47BAE606A8BCD0226B5BCAC82753BF5D6669F799AAA7A0"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Chair.png.meta",
+    "Hash": "BB88388DABDEC57535E2B886ADC590C14E010A4FA440FFCB569D4E2976B03645"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (10).png.meta",
+    "Hash": "5709B3D2DC9AA1A95B8FA3AC70401A5EB6E1F1CE838C0C094F32289226B15FB2"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (11).png.meta",
+    "Hash": "8194CD5569FAE238FB1853DA381CF8608B8E07182296390A53923D8F6EF7C722"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (12).png.meta",
+    "Hash": "9542CF8A9A931FD693B556BC9B16462673662AFA95FF9A13C6D8E16350A99819"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (13).png.meta",
+    "Hash": "38AF9DA470C9E6943A526F56E769D2DD38F41A491ABC8B5EB2287EFBFB87F2DE"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (14).png.meta",
+    "Hash": "73D3C29A588B1696E12E499A3D6BEFA1FFC01F2A85D6A07F86EF665CBDE15F25"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (15).png.meta",
+    "Hash": "4C40537154AABD38546DA06D012C0851ABF6A9A10BB8D7BF3EC70C4E922BB111"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (16).png.meta",
+    "Hash": "A052D6B994724D48822C49ADD9D053DFACB7B5626EA3A4B3A21CB39622F32512"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (17).png.meta",
+    "Hash": "2E2240E9446219BEA1848772D6DEE13195FAB300D5745B7559235E3F157C0742"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (2).png.meta",
+    "Hash": "6B3F5B4CD674140D538E17AF31F3C863BE4E5B5D95DDF847E7E4C8D63D290A60"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (3).png.meta",
+    "Hash": "8591E9A2D3C089C38BB2125DBDC1D8B1C1353826BE0084C3F5F1117EDE15F53B"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (4).png.meta",
+    "Hash": "2538D6F187B58AA41715DB46646116764CFC3D8CF23342C318E64DCD0ED5E956"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (5).png.meta",
+    "Hash": "301866488ED43199B413EC6DBEF5ED2CC840A8DA2CFE6D0CB7F0A824ED9B26C0"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (6).png.meta",
+    "Hash": "5999089C1EA2E40F3D7ABA97C8BE3B53CADFDC8A7438DDCB7AB619B54EC64B42"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (7).png.meta",
+    "Hash": "FEBDF4CBE5C0A83FDE6387C9FC3F9F44F725D05C578315643D5DB95055A6A09A"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (8).png.meta",
+    "Hash": "B54D283CD2822CAB5E354C5A5A03CE0521B161D9BF11792EF4C59B8EDDB3E285"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color (9).png.meta",
+    "Hash": "7A254063EE41E97BE612A074E7E93395583EBF84597D72E9B719893BDAED577E"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Color.png.meta",
+    "Hash": "47F2A2962A53B0ECE59DA27061BEDA359BF979B66A42B4A6C8A8786E66B5C241"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Covered Object.png.meta",
+    "Hash": "F657AC23980CD0B291FD4939571BB14C8CD494FFF453F1DEC14DBDFD73C32D3C"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Desk (2).png.meta",
+    "Hash": "8F29408C53709FF10AA155431FF0861DBB22730CC3D6610F2AF62DEEB008CE6D"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Desk and Trash Can.png.meta",
+    "Hash": "A7B03EEF9CD886F6E76DDFF4BC7B18B665746290D2CC52D2DC08CF1EFA64A13A"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Desk.png.meta",
+    "Hash": "95DEC704E4EE2B743541F11036EBFCFCF4CCA256FD85355023C3C10651FD6A22"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Dining Table.png.meta",
+    "Hash": "21CC89BC3A4E22EF517EBFBBBB0F504B09EF56AAEE8F9ADD5A9F8F94EFF18C0C"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Floor.png.meta",
+    "Hash": "DC5710C7979C04488FD43970AFA0BBCAE84B3F02ADD21FBB19469EA4A3876F15"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Front Chair.png.meta",
+    "Hash": "9E3BA6C2C709A3B2363F2653E7E030190EF1C877444413EEAFE0B222C8AE551D"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Furniture.png.meta",
+    "Hash": "43DD5411A559633E2C01D58246505D3AD0BF8EF5F763B1B8B6BBC14321823CFB"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Handset.png.meta",
+    "Hash": "289A49AB065DFC2E8CF121A45608DE299C2DD000EC4A77ED934E64E9C0D5F413"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Heating.png.meta",
+    "Hash": "E2293AC44B3586B2B8696AD3D266D55D14F2ADBBA87D6ADF152FE819A8DEED39"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Instrument Panel.png.meta",
+    "Hash": "44073621ECFDEDC5F1E340860F4A5ECA2C1009485122A8F9480DC040D4654DFE"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Kitchen.png.meta",
+    "Hash": "DDA3CB646BFF16231F47A23FB391389DDD3573A850F8B90E072936B70F234F5F"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Layer 3.png.meta",
+    "Hash": "858D8B5512A4D3A3A8DD6C245760F5AE92FB3627D59200E3C722CCCB86D5A8C4"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Layer 4.png.meta",
+    "Hash": "5C4AEBDFC2035A011079770F8CA0BB0A11E1132CCBBD995ED6494821087EF7CB"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Living Room.png.meta",
+    "Hash": "DCDB4526B9B2CF0FBBDA24FAEB74FC932F1543F248E7EE421C037D987A726573"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Merged.png.meta",
+    "Hash": "0F530A45572F34499C63EA2F1B0F9CA0C4B75E642A88135033CC351A42FEB075"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Path.png.meta",
+    "Hash": "1562400B9ECBE8E9EE6293007159345C64823BF7410074532047C7DD3FFAE546"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Potions.png.meta",
+    "Hash": "EA211E3D98DCDD53E1396855D511EE4929B70B6DD2FD8C2A4609894B1EB27854"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Punching Bag.png.meta",
+    "Hash": "40379D15C1CC5DEFB62572FC073BF223B999A1E7E0B442A0C9A03FA73364E2B1"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (2).png.meta",
+    "Hash": "0E22315BFBE593B562017319DE2B496E3224E27DCBD0862B9F620D16C2F9BCDB"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (3).png.meta",
+    "Hash": "A766F022C5CD89D5C5C5488CECCC3397B65B461B37CCA58C13CDCB2B66A7FB16"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (4).png.meta",
+    "Hash": "545854141612DED1739F510071F385CB2D052EDCBBA5F70ED74C8AA9F6C24550"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (5).png.meta",
+    "Hash": "3C24EC3F0357529DDB5D424D1207D5B689049E7724B5296A78FC065CE3EFFF87"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (6).png.meta",
+    "Hash": "51B9A333E6D305702D4DDA9580B0370885FFF52E75A95E10F1BA78D2622CB937"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (7).png.meta",
+    "Hash": "2D8900179D83AE7AA06C7B7440403B63DC8C4A4B0463E95E13F0E682127A53DB"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room (8).png.meta",
+    "Hash": "ED9B4349F72DDC1C1F92762C882E71639F0B2CAF907B0E8FE45648AAC3381F99"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Room.png.meta",
+    "Hash": "1104FBE9CA568B38C71821A685E59464C95CA564AF98C12409282F409BF59380"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (10).png.meta",
+    "Hash": "95F67430E8FDEAFD7BCF01F3AED76CDC0FB7554722D53403C496F6F1C2D60BAF"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (11).png.meta",
+    "Hash": "BAB0C049EB92EABD789D66C0A7538CE1AD78F98D9DFEC4D444E2489982E756A6"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (12).png.meta",
+    "Hash": "D2C0011D81C87C7FC283CFBFBBA9B535B70F680402AFDBBA27BA6163D5F8DFCF"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (2).png.meta",
+    "Hash": "E7E319E55F5546EACD56B22F7AF06699A2A21188D5D7C2E00F8DB0EE1E9A625C"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (3).png.meta",
+    "Hash": "EE4313889E6C334CF05392D6D545D8A988DC11C6624C387CB82E27FAFE345B1C"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (4).png.meta",
+    "Hash": "3D5AD132D43534F594A0586462BF0CF2F4EF072EE30B995F78DF57355D433170"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (5).png.meta",
+    "Hash": "9C34EF7A10F1AD877C5D9040317ECA0C97E9F56E35FA622F6D883DAEF376BACC"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (6).png.meta",
+    "Hash": "516EA795FFB0C3097D9BFC20BC85EE52E1C1F33F68890925414F0E2A4C828711"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (7).png.meta",
+    "Hash": "D8464516BB6D5B687512E4BA7432146854EC912129DA1A2B424CCFF48DF9781B"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (8).png.meta",
+    "Hash": "1862D1CC057D54F4482DB8909CC8FC5C16F0208C98ED9061379771242CA2A020"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow (9).png.meta",
+    "Hash": "36712980BAE415452DCEC2C7D97A10513E818DFA2444DA47FC1BB9FE55CE59CD"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shadow.png.meta",
+    "Hash": "9505DEED9D306BBCC338E12029F5A4DB92FAD4D08CFCB816D35F36F26769450C"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shelf (2).png.meta",
+    "Hash": "9567F6CDF667780C4FBE63A36F0A87EC0E1619A7F13F0103FED9B4334CA68318"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Shelf.png.meta",
+    "Hash": "9FE4B0D07CAD0764C279B3FAD549692BE81D817A1748C7C461C5DDD57D43E161"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Training Dummy.png.meta",
+    "Hash": "4381EFC7A58350E8763B454A06F2390220992475014D64744AB3E1E197E0EF0E"
+  },
+  {
+    "Path": "F:\\명지전문대학\\MBC게임아카데미\\프로젝트\\유니티 프로젝트\\BehindTheGear\\Assets\\!UI\\Base\\아이소메트릭.aseprite.sprites\\Workbench.png.meta",
+    "Hash": "FF9C7C272DBBE895D604899AC29EDF7584764D5B1EFC8FE6EAADDEEF7CCBCAB5"
+  }
+]

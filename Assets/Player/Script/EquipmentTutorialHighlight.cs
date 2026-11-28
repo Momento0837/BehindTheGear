@@ -36,12 +36,13 @@ public sealed class EquipmentTutorialHighlight : MonoBehaviour
             var socket = owner.FindTutorialSocket(item); if (socket != null) Raise(socket.gameObject, order + 1);
             border = Image("Cloak White Border", target);
             border.sprite = Resources.Load<InventoryOpeningHintStyle>("UI/InventoryOpeningHintStyle")?.border;
+            border.type = UnityEngine.UI.Image.Type.Sliced;
             mouseClip = ControlHintAnimation.Load("Inventory_Tutorial");
             mouse = Image("Inventory Equipment Tutorial", target); mouse.preserveAspect = true;
             mouse.maskable = false;
             mouse.rectTransform.anchorMin = mouse.rectTransform.anchorMax = new Vector2(.5f, 0);
             mouse.rectTransform.pivot = mouseClip.Pivot;
-            float height = source.rectTransform.rect.height * .65f * .7f;
+            float height = source.rectTransform.rect.height * .65f * .7f * ControlTutorialUI.DisplaySizeMultiplier;
             mouse.rectTransform.sizeDelta = new Vector2(height * mouseClip.Size.x / mouseClip.Size.y, height);
             mouse.rectTransform.anchoredPosition = Vector2.zero;
             animationStarted = Time.unscaledTime;

@@ -100,7 +100,8 @@ public static class SaveGameSession
             // All roots in this game's persistent player scene belong to this play session.
             foreach (var root in player.gameObject.scene.GetRootGameObjects())
             {
-                if (root.GetComponent<SceneFadeTransition>() != null || root.GetComponent<WindowsQuitOnEscape>() != null) continue;
+                if (root.GetComponent<SceneFadeTransition>() != null || root.GetComponent<WindowsQuitOnEscape>() != null
+                    || root.GetComponent<GameSoundService>() != null) continue;
                 root.SetActive(false); UnityEngine.Object.Destroy(root);
             }
         }
