@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91f964ac63150c04287569037705e2ca, type: 3}
+  m_Name: BossBartol
+  m_EditorClassIdentifier: Assembly-CSharp::BossProfile
+  body: {fileID: 2800000, guid: d0c7320c6f875c09a4bac4a8c64d954a, type: 3}
+  pilot: {fileID: 2800000, guid: fccc78b0d5a720df3811f090f7fba184, type: 3}
+  gear: {fileID: 2800000, guid: 409fba2bee84fe1762d81bb4bc2a45fb, type: 3}
+  furnace: {fileID: 2800000, guid: 088134136612a2a9acad55e833c1039e, type: 3}
+  fist: {fileID: 2800000, guid: 37524a46ea8f64d817c20c6d3cc182c7, type: 3}
+  chain: {fileID: 2800000, guid: e016bfb3cadda2b8d2d93ae604a12ec5, type: 3}
+  fxDust: {fileID: 2800000, guid: f29054cf91d668f7fca3e856ea0bdfb7, type: 3}
+  fxShockwave: {fileID: 2800000, guid: ba5a73a38a627529751da866d704c896, type: 3}
+  fxSlag: {fileID: 2800000, guid: fad5e9bcac6d7437e5278aa798f7f51a, type: 3}
+  fxMarker: {fileID: 2800000, guid: 30de334718620d9cde0b62b1c0591fba, type: 3}
+  fxSteam: {fileID: 2800000, guid: 70fcb8fb647b5329a94e119a39c0a019, type: 3}
+  fxSpark: {fileID: 2800000, guid: 74a87a9de9acff33a874551b4fa33d63, type: 3}
+  fxExplosion: {fileID: 2800000, guid: 82bf7d0748ab9abecce3eea40f9b132a, type: 3}
+  fxShadow: {fileID: 2800000, guid: 10de1ce5fc6ce1592bc32941ce69782f, type: 3}
+  bgm: {fileID: 8300000, guid: 9e659db7feba601b8b34978794ca630e, type: 3}
+  sfxThud: {fileID: 8300000, guid: 650e3410d67780f082746053c36729f4, type: 3}
+  sfxSlam: {fileID: 8300000, guid: 6617463cd10545e277b6e84f8c464290, type: 3}
+  sfxClank: {fileID: 8300000, guid: 46af2f859522fa140f5556b49c6cb7d3, type: 3}
+  sfxChain: {fileID: 8300000, guid: 09fc5f808373723e7ab42e9d3b1637ac, type: 3}
+  sfxSteam: {fileID: 8300000, guid: 94a7d18097cdd7c45fa23c7fdf238e95, type: 3}
+  sfxWhistle: {fileID: 8300000, guid: 8faf6d53f00e6be407e6a790d18d4978, type: 3}
+  sfxCharge: {fileID: 8300000, guid: 2385fca1f7089285c12aa35db16be1b6, type: 3}
+  sfxExplosion: {fileID: 8300000, guid: 8c661abe6943b6a7a614ad6a94084b08, type: 3}
+  sfxSlagHit: {fileID: 8300000, guid: cfd047436c59297aa99d61f3e01cdaf2, type: 3}
+  sfxSweep: {fileID: 8300000, guid: a159a65c3e2d82066b53648eb2b3aa23, type: 3}
+  sfxRoar: {fileID: 8300000, guid: 4961d898dc724a9c685da25a681ab1a9, type: 3}
+  sfxTread: {fileID: 8300000, guid: 87c20ecfb257c8f7b6b1e155eafbc2b9, type: 3}

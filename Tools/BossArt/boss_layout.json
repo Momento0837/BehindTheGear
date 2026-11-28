@@ -1,0 +1,789 @@
+{
+ "pixelsPerUnit": 11,
+ "sheets": {
+  "Boss_Body": {
+   "frameWidth": 112,
+   "frameHeight": 92,
+   "frames": [
+    "idle0",
+    "idle1",
+    "leanLeft",
+    "leanRight",
+    "slump0",
+    "slump1",
+    "slump2",
+    "rage0",
+    "rage1",
+    "wreck0",
+    "wreck1",
+    "rageLeanLeft",
+    "rageLeanRight",
+    "rageSlump0",
+    "rageSlump1",
+    "rageSlump2",
+    "walkLeftUp",
+    "walkRightUp",
+    "rageRoll0",
+    "rageRoll1",
+    "rageRoll2",
+    "rageRoll3"
+   ]
+  },
+  "Boss_Pilot": {
+   "frameWidth": 52,
+   "frameHeight": 40,
+   "frames": [
+    "idle0",
+    "idle1",
+    "pull0",
+    "pull1",
+    "roar0",
+    "roar1",
+    "hit",
+    "panic0",
+    "panic1",
+    "rage0",
+    "rage1",
+    "stun"
+   ]
+  },
+  "Boss_Gear": {
+   "frameWidth": 22,
+   "frameHeight": 22,
+   "frames": [
+    "turn0",
+    "turn1",
+    "turn2",
+    "turn3"
+   ]
+  },
+  "Boss_Furnace": {
+   "frameWidth": 28,
+   "frameHeight": 10,
+   "frames": [
+    "idle",
+    "charge",
+    "overheat"
+   ]
+  },
+  "Boss_Fist": {
+   "frameWidth": 30,
+   "frameHeight": 26,
+   "frames": [
+    "clench",
+    "slam",
+    "side"
+   ]
+  },
+  "Boss_Chain": {
+   "frameWidth": 3,
+   "frameHeight": 5,
+   "frames": [
+    "link"
+   ]
+  },
+  "BossFx_Dust": {
+   "frameWidth": 16,
+   "frameHeight": 12,
+   "frames": 4
+  },
+  "BossFx_Shockwave": {
+   "frameWidth": 20,
+   "frameHeight": 12,
+   "frames": 4
+  },
+  "BossFx_Slag": {
+   "frameWidth": 8,
+   "frameHeight": 8,
+   "frames": 2
+  },
+  "BossFx_Marker": {
+   "frameWidth": 16,
+   "frameHeight": 4,
+   "frames": 2
+  },
+  "BossFx_Shadow": {
+   "frameWidth": 32,
+   "frameHeight": 5,
+   "frames": 2
+  },
+  "BossFx_Steam": {
+   "frameWidth": 16,
+   "frameHeight": 16,
+   "frames": 4
+  },
+  "BossFx_Spark": {
+   "frameWidth": 12,
+   "frameHeight": 12,
+   "frames": 3
+  },
+  "BossFx_Explosion": {
+   "frameWidth": 32,
+   "frameHeight": 32,
+   "frames": 5
+  }
+ },
+ "body": {
+  "idle0": {
+   "gear": [
+    39,
+    37
+   ],
+   "furnace": [
+    42,
+    62
+   ],
+   "pilot": [
+    31,
+    1
+   ],
+   "drumLeft": [
+    13,
+    48
+   ],
+   "drumRight": [
+    97,
+    48
+   ],
+   "stackLeft": [
+    26,
+    13
+   ],
+   "stackRight": [
+    85,
+    6
+   ]
+  },
+  "idle1": {
+   "gear": [
+    39,
+    38
+   ],
+   "furnace": [
+    42,
+    63
+   ],
+   "pilot": [
+    31,
+    2
+   ],
+   "drumLeft": [
+    13,
+    49
+   ],
+   "drumRight": [
+    97,
+    49
+   ],
+   "stackLeft": [
+    26,
+    14
+   ],
+   "stackRight": [
+    85,
+    7
+   ]
+  },
+  "leanLeft": {
+   "gear": [
+    42,
+    36
+   ],
+   "furnace": [
+    45,
+    61
+   ],
+   "pilot": [
+    34,
+    -1
+   ],
+   "drumLeft": [
+    16,
+    45
+   ],
+   "drumRight": [
+    100,
+    51
+   ],
+   "stackLeft": [
+    29,
+    11
+   ],
+   "stackRight": [
+    88,
+    8
+   ]
+  },
+  "leanRight": {
+   "gear": [
+    36,
+    38
+   ],
+   "furnace": [
+    39,
+    63
+   ],
+   "pilot": [
+    28,
+    3
+   ],
+   "drumLeft": [
+    10,
+    51
+   ],
+   "drumRight": [
+    94,
+    45
+   ],
+   "stackLeft": [
+    23,
+    15
+   ],
+   "stackRight": [
+    82,
+    4
+   ]
+  },
+  "slump0": {
+   "gear": [
+    39,
+    42
+   ],
+   "furnace": [
+    42,
+    67
+   ],
+   "pilot": [
+    31,
+    6
+   ],
+   "drumLeft": [
+    13,
+    53
+   ],
+   "drumRight": [
+    97,
+    53
+   ],
+   "stackLeft": [
+    26,
+    18
+   ],
+   "stackRight": [
+    85,
+    11
+   ]
+  },
+  "slump1": {
+   "gear": [
+    39,
+    47
+   ],
+   "furnace": [
+    42,
+    72
+   ],
+   "pilot": [
+    31,
+    11
+   ],
+   "drumLeft": [
+    13,
+    58
+   ],
+   "drumRight": [
+    97,
+    58
+   ],
+   "stackLeft": [
+    26,
+    23
+   ],
+   "stackRight": [
+    85,
+    16
+   ]
+  },
+  "slump2": {
+   "gear": [
+    39,
+    51
+   ],
+   "furnace": [
+    42,
+    76
+   ],
+   "pilot": [
+    31,
+    15
+   ],
+   "drumLeft": [
+    13,
+    62
+   ],
+   "drumRight": [
+    97,
+    62
+   ],
+   "stackLeft": [
+    26,
+    27
+   ],
+   "stackRight": [
+    85,
+    20
+   ]
+  },
+  "rage0": {
+   "gear": [
+    39,
+    37
+   ],
+   "furnace": [
+    42,
+    62
+   ],
+   "pilot": [
+    31,
+    1
+   ],
+   "drumLeft": [
+    13,
+    48
+   ],
+   "drumRight": [
+    97,
+    48
+   ],
+   "stackLeft": [
+    26,
+    13
+   ],
+   "stackRight": [
+    85,
+    6
+   ]
+  },
+  "rage1": {
+   "gear": [
+    39,
+    38
+   ],
+   "furnace": [
+    42,
+    63
+   ],
+   "pilot": [
+    31,
+    2
+   ],
+   "drumLeft": [
+    13,
+    49
+   ],
+   "drumRight": [
+    97,
+    49
+   ],
+   "stackLeft": [
+    26,
+    14
+   ],
+   "stackRight": [
+    85,
+    7
+   ]
+  },
+  "wreck0": {
+   "gear": [
+    39,
+    51
+   ],
+   "furnace": [
+    42,
+    76
+   ],
+   "pilot": [
+    31,
+    15
+   ],
+   "drumLeft": [
+    13,
+    62
+   ],
+   "drumRight": [
+    97,
+    62
+   ],
+   "stackLeft": [
+    26,
+    27
+   ],
+   "stackRight": [
+    85,
+    20
+   ]
+  },
+  "wreck1": {
+   "gear": [
+    39,
+    52
+   ],
+   "furnace": [
+    42,
+    77
+   ],
+   "pilot": [
+    31,
+    16
+   ],
+   "drumLeft": [
+    13,
+    63
+   ],
+   "drumRight": [
+    97,
+    63
+   ],
+   "stackLeft": [
+    26,
+    28
+   ],
+   "stackRight": [
+    85,
+    21
+   ]
+  },
+  "rageLeanLeft": {
+   "gear": [
+    42,
+    36
+   ],
+   "furnace": [
+    45,
+    61
+   ],
+   "pilot": [
+    34,
+    -1
+   ],
+   "drumLeft": [
+    16,
+    45
+   ],
+   "drumRight": [
+    100,
+    51
+   ],
+   "stackLeft": [
+    29,
+    11
+   ],
+   "stackRight": [
+    88,
+    8
+   ]
+  },
+  "rageLeanRight": {
+   "gear": [
+    36,
+    38
+   ],
+   "furnace": [
+    39,
+    63
+   ],
+   "pilot": [
+    28,
+    3
+   ],
+   "drumLeft": [
+    10,
+    51
+   ],
+   "drumRight": [
+    94,
+    45
+   ],
+   "stackLeft": [
+    23,
+    15
+   ],
+   "stackRight": [
+    82,
+    4
+   ]
+  },
+  "rageSlump0": {
+   "gear": [
+    39,
+    42
+   ],
+   "furnace": [
+    42,
+    67
+   ],
+   "pilot": [
+    31,
+    6
+   ],
+   "drumLeft": [
+    13,
+    53
+   ],
+   "drumRight": [
+    97,
+    53
+   ],
+   "stackLeft": [
+    26,
+    18
+   ],
+   "stackRight": [
+    85,
+    11
+   ]
+  },
+  "rageSlump1": {
+   "gear": [
+    39,
+    47
+   ],
+   "furnace": [
+    42,
+    72
+   ],
+   "pilot": [
+    31,
+    11
+   ],
+   "drumLeft": [
+    13,
+    58
+   ],
+   "drumRight": [
+    97,
+    58
+   ],
+   "stackLeft": [
+    26,
+    23
+   ],
+   "stackRight": [
+    85,
+    16
+   ]
+  },
+  "rageSlump2": {
+   "gear": [
+    39,
+    51
+   ],
+   "furnace": [
+    42,
+    76
+   ],
+   "pilot": [
+    31,
+    15
+   ],
+   "drumLeft": [
+    13,
+    62
+   ],
+   "drumRight": [
+    97,
+    62
+   ],
+   "stackLeft": [
+    26,
+    27
+   ],
+   "stackRight": [
+    85,
+    20
+   ]
+  },
+  "walkLeftUp": {
+   "gear": [
+    37,
+    38
+   ],
+   "furnace": [
+    40,
+    62
+   ],
+   "pilot": [
+    29,
+    2
+   ],
+   "drumLeft": [
+    11,
+    50
+   ],
+   "drumRight": [
+    95,
+    47
+   ],
+   "stackLeft": [
+    24,
+    14
+   ],
+   "stackRight": [
+    83,
+    5
+   ]
+  },
+  "walkRightUp": {
+   "gear": [
+    41,
+    37
+   ],
+   "furnace": [
+    44,
+    63
+   ],
+   "pilot": [
+    33,
+    1
+   ],
+   "drumLeft": [
+    15,
+    47
+   ],
+   "drumRight": [
+    99,
+    50
+   ],
+   "stackLeft": [
+    28,
+    13
+   ],
+   "stackRight": [
+    87,
+    8
+   ]
+  },
+  "rageRoll0": {
+   "gear": [
+    39,
+    37
+   ],
+   "furnace": [
+    42,
+    62
+   ],
+   "pilot": [
+    31,
+    1
+   ],
+   "drumLeft": [
+    13,
+    48
+   ],
+   "drumRight": [
+    97,
+    48
+   ],
+   "stackLeft": [
+    26,
+    13
+   ],
+   "stackRight": [
+    85,
+    6
+   ]
+  },
+  "rageRoll1": {
+   "gear": [
+    39,
+    38
+   ],
+   "furnace": [
+    42,
+    63
+   ],
+   "pilot": [
+    31,
+    2
+   ],
+   "drumLeft": [
+    13,
+    49
+   ],
+   "drumRight": [
+    97,
+    49
+   ],
+   "stackLeft": [
+    26,
+    14
+   ],
+   "stackRight": [
+    85,
+    7
+   ]
+  },
+  "rageRoll2": {
+   "gear": [
+    39,
+    37
+   ],
+   "furnace": [
+    42,
+    62
+   ],
+   "pilot": [
+    31,
+    1
+   ],
+   "drumLeft": [
+    13,
+    48
+   ],
+   "drumRight": [
+    97,
+    48
+   ],
+   "stackLeft": [
+    26,
+    13
+   ],
+   "stackRight": [
+    85,
+    6
+   ]
+  },
+  "rageRoll3": {
+   "gear": [
+    39,
+    38
+   ],
+   "furnace": [
+    42,
+    63
+   ],
+   "pilot": [
+    31,
+    2
+   ],
+   "drumLeft": [
+    13,
+    49
+   ],
+   "drumRight": [
+    97,
+    49
+   ],
+   "stackLeft": [
+    26,
+    14
+   ],
+   "stackRight": [
+    85,
+    7
+   ]
+  }
+ },
+ "pilotOverheatDrop": 21
+}

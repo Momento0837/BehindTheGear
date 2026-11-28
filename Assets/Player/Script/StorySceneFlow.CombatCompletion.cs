@@ -11,6 +11,7 @@ public sealed partial class StorySceneFlow
         bool previousBusy = busy;
         busy = true;
         portal.SetActive(false);
+        yield return ForestBossEncounter.Run(); // Forest boss: fought after the monsters, before the closing monologue
         var controls = player.GetComponent<PlayerControlLock>();
         controls?.Acquire();
         try

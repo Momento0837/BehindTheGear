@@ -77,6 +77,8 @@ public sealed class StoryFieldState
     public Vector3 selenaPosition;
     public Vector3 selenaScale = Vector3.one;
     public FieldMonsterState[] monsters;
+    // Forest boss: fought once per run. Missing in older saves -> false (the boss simply appears with its entrance).
+    public bool bossEngaged, bossDefeated;
 }
 
 [Serializable]
