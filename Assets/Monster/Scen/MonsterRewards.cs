@@ -11,6 +11,10 @@ public static class MonsterRewards
         var entry = table != null ? table.For(rank) : null;
         if (entry == null) return;
 
+        // EXP drops with the same pop-and-fall as coins; the amount depends on the monster's rank.
+        // A player already at the maximum level gets none (it could never be used).
+        var playerLevel = Object.FindFirstObjectByType<PlayerLevel>();
+        if (playerLevel == null || !playerLevel.IsMaxLevel) Scatter(RewardPickup.Kind.Experience, Roll(table.ExperienceFor(entry)), position, table.maxExperiencePickups, 2);
         if (Random.value < entry.coinChance)
             Scatter(RewardPickup.Kind.Coin, Roll(entry.coins), position, table.maxCoinPickups);
         if (Random.value < entry.actionPointChance)
@@ -27,10 +31,11 @@ public static class MonsterRewards
     private static int Roll(Vector2Int range) => Random.Range(Mathf.Min(range.x, range.y), Mathf.Max(range.x, range.y) + 1);
 
     // Splits `total` over up to `maxPickups` pickups that pop up and fall around the monster.
-    private static void Scatter(RewardPickup.Kind kind, int total, Vector3 position, int maxPickups)
+    // `minimumValue` keeps tiny amounts together (2-3 EXP from a weak monster is one shard, not three).
+    private static void Scatter(RewardPickup.Kind kind, int total, Vector3 position, int maxPickups, int minimumValue = 1)
     {
         if (total <= 0) return;
-        int count = Mathf.Clamp(total, 1, Mathf.Max(1, maxPickups));
+        int count = Mathf.Clamp(total / Mathf.Max(1, minimumValue), 1, Mathf.Max(1, maxPickups));
         for (int i = 0; i < count; i++)
         {
             int value = total / count + (i < total % count ? 1 : 0);

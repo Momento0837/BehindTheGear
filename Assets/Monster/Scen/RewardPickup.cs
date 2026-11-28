@@ -1,13 +1,14 @@
 using UnityEngine;
 
 /// <summary>
-/// Coin / AP pickup dropped by monsters. Pops out, falls and rests on the Ground layer only (never pushes the player or
-/// monsters), spins around its vertical axis, and is collected when the player touches it (no magnet).
-/// The amount goes to the player's PlayerFieldWallet, which hands it to the base (HideOutPlayerBridge).
+/// Coin / AP / EXP pickup dropped by monsters. Pops out, falls and rests on the Ground layer only (never pushes the
+/// player or monsters), and is collected when the player touches it (no magnet). Coins and AP spin around their vertical
+/// axis and go to the player's PlayerFieldWallet, which hands them to the base (HideOutPlayerBridge).
+/// EXP is a softly pulsing violet shard that goes to PlayerLevel (the ring next to the player's head).
 /// </summary>
 public sealed class RewardPickup : MonoBehaviour
 {
-    public enum Kind { Coin, ActionPoint }
+    public enum Kind { Coin, ActionPoint, Experience }
 
     private const float PixelsPerUnit = 11f;
     private const float PickupDelay = .35f;     // let it pop out before it can be collected
@@ -16,8 +17,13 @@ public sealed class RewardPickup : MonoBehaviour
     private const float BlinkTime = 4f;
     private const float TurnsPerSecond = 1.1f;
 
+    private static readonly Color ExperienceColor = new(.72f, .61f, 1f);
+    private const int LargeExperience = 5;      // EXP pickups worth this much or more use the bigger orb
+
     private static Sprite coinSprite;
     private static Sprite actionPointSprite;
+    private static Sprite experienceShardSprite;
+    private static Sprite experienceOrbSprite;
     private static PhysicsMaterial2D bouncy;
 
     private Kind kind;
@@ -28,7 +34,7 @@ public sealed class RewardPickup : MonoBehaviour
 
     public static RewardPickup Spawn(Kind kind, int amount, Vector3 position, Vector2 velocity)
     {
-        var go = new GameObject(kind == Kind.Coin ? "Coin Drop" : "AP Drop");
+        var go = new GameObject(kind == Kind.Coin ? "Coin Drop" : kind == Kind.ActionPoint ? "AP Drop" : "EXP Drop");
         go.transform.position = position;
 
         var body = go.AddComponent<Rigidbody2D>();
@@ -48,7 +54,9 @@ public sealed class RewardPickup : MonoBehaviour
         var visual = new GameObject("Art");
         visual.transform.SetParent(go.transform, false);
         var art = visual.AddComponent<SpriteRenderer>();
-        art.sprite = kind == Kind.Coin ? CoinSprite() : ActionPointSprite();
+        art.sprite = kind == Kind.Coin ? CoinSprite()
+            : kind == Kind.ActionPoint ? ActionPointSprite()
+            : ExperienceSprite(Mathf.Max(1, amount) >= LargeExperience);
         art.sortingOrder = 20;
         var material = Resources.Load<Material>("Effects/WorldItemForeground"); // same look as other world items
         if (material != null) art.sharedMaterial = material;
@@ -65,10 +73,21 @@ public sealed class RewardPickup : MonoBehaviour
         if (collected) return;
         age += Time.deltaTime;
 
-        // Spin around the vertical axis: squash X with cos and darken as it turns edge-on.
-        float c = Mathf.Cos(age * TurnsPerSecond * Mathf.PI * 2f);
-        art.transform.localScale = new Vector3(Mathf.Max(.12f, Mathf.Abs(c)), 1f, 1f);
-        float shade = Mathf.Lerp(.7f, 1f, Mathf.Abs(c));
+        float shade;
+        if (kind == Kind.Experience)
+        {
+            // EXP does not spin like a coin: it breathes (size and brightness) so it reads as energy, not money.
+            float pulse = .5f + .5f * Mathf.Sin(age * 5.5f);
+            art.transform.localScale = Vector3.one * Mathf.Lerp(.86f, 1.12f, pulse);
+            shade = Mathf.Lerp(.82f, 1f, pulse);
+        }
+        else
+        {
+            // Spin around the vertical axis: squash X with cos and darken as it turns edge-on.
+            float c = Mathf.Cos(age * TurnsPerSecond * Mathf.PI * 2f);
+            art.transform.localScale = new Vector3(Mathf.Max(.12f, Mathf.Abs(c)), 1f, 1f);
+            shade = Mathf.Lerp(.7f, 1f, Mathf.Abs(c));
+        }
         float alpha = 1f;
         if (age > Lifetime - BlinkTime) alpha = Mathf.Repeat(age * 6f, 1f) < .5f ? 1f : .25f;
         art.color = new Color(shade, shade, shade, alpha);
@@ -101,6 +120,16 @@ public sealed class RewardPickup : MonoBehaviour
         var inventory = player.GetComponentInParent<PlayerInventory>();
         if (inventory == null) inventory = player.GetComponentInChildren<PlayerInventory>();
         var owner = inventory != null ? inventory.gameObject : player.gameObject; // HideOutPlayerBridge lives next to PlayerInventory
+        if (kind == Kind.Experience)
+        {
+            // Counted at once (never lost to a scene change); the badge only animates the shard flying into the ring.
+            var level = PlayerLevel.EnsureOn(owner);
+            bool usable = !level.IsMaxLevel; // a shard dropped just before reaching the maximum level is simply absorbed
+            level.AddExperience(amount, transform.position);
+            if (usable) MonsterDamageNumbers.ShowLabel(transform.position + new Vector3(0f, .35f, 0f), "EXP +" + amount, ExperienceColor, .8f);
+            Destroy(gameObject);
+            return;
+        }
         var wallet = owner.GetComponent<PlayerFieldWallet>();
         if (wallet == null) wallet = owner.AddComponent<PlayerFieldWallet>();
         wallet.Add(kind, amount);
@@ -145,6 +174,35 @@ public sealed class RewardPickup : MonoBehaviour
             { t0, t0, t0, o, t0, t0, t0 },
         });
         return actionPointSprite;
+    }
+
+    private static Sprite ExperienceSprite(bool large)
+    {
+        Color32 o = new(60, 38, 112, 255), d = new(124, 92, 214, 255), b = new(183, 155, 255, 255),
+            s = new(240, 230, 255, 255), t0 = new(0, 0, 0, 0);
+        if (large)
+        {
+            if (experienceOrbSprite == null) experienceOrbSprite = Build("Experience Orb", new[,]
+            {
+                { t0, t0, o, o, o, t0, t0 },
+                { t0, o, d, b, d, o, t0 },
+                { o, d, b, s, b, d, o },
+                { o, b, s, s, b, b, o },
+                { o, d, b, b, b, d, o },
+                { t0, o, d, b, d, o, t0 },
+                { t0, t0, o, o, o, t0, t0 },
+            });
+            return experienceOrbSprite;
+        }
+        if (experienceShardSprite == null) experienceShardSprite = Build("Experience Shard", new[,]
+        {
+            { t0, t0, o, t0, t0 },
+            { t0, o, s, o, t0 },
+            { o, s, b, d, o },
+            { t0, o, d, o, t0 },
+            { t0, t0, o, t0, t0 },
+        });
+        return experienceShardSprite;
     }
 
     // Rows are written top to bottom; textures are bottom-up.

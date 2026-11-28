@@ -14,6 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterRewardTable
   basePart: {fileID: 11400000, guid: a5a85a23e3084a11a6f4ccd7793b1164, type: 2}
   maxCoinPickups: 8
+  maxExperiencePickups: 5
+  firstLevelExperience: 20
+  experiencePerLevel: 12
+  experienceGrowth: 1.12
+  maxLevel: 30
+  actionPointsPerLevel: 1
+  levelBadgeOffset: {x: -0.91, y: 0.2}
   entries:
   - rank: 4
     coins: {x: 1, y: 1}
@@ -22,6 +29,7 @@ MonoBehaviour:
     baseParts: {x: 1, y: 1}
     actionPointChance: 0.01
     actionPoints: {x: 1, y: 1}
+    experience: {x: 2, y: 3}
   - rank: 0
     coins: {x: 1, y: 2}
     coinChance: 1
@@ -29,6 +37,7 @@ MonoBehaviour:
     baseParts: {x: 1, y: 1}
     actionPointChance: 0.25
     actionPoints: {x: 1, y: 1}
+    experience: {x: 6, y: 8}
   - rank: 1
     coins: {x: 4, y: 7}
     coinChance: 1
@@ -36,6 +45,7 @@ MonoBehaviour:
     baseParts: {x: 1, y: 1}
     actionPointChance: 0.15
     actionPoints: {x: 1, y: 2}
+    experience: {x: 20, y: 26}
   - rank: 2
     coins: {x: 12, y: 20}
     coinChance: 1
@@ -43,6 +53,7 @@ MonoBehaviour:
     baseParts: {x: 1, y: 2}
     actionPointChance: 0.5
     actionPoints: {x: 2, y: 3}
+    experience: {x: 60, y: 80}
   - rank: 3
     coins: {x: 30, y: 50}
     coinChance: 1
@@ -50,3 +61,4 @@ MonoBehaviour:
     baseParts: {x: 3, y: 5}
     actionPointChance: 1
     actionPoints: {x: 3, y: 5}
+    experience: {x: 180, y: 240}

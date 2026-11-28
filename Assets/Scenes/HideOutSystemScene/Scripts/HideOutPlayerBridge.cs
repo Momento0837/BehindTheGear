@@ -15,6 +15,12 @@ namespace BehindTheGear.HideOut
         void RestoreJson(string json);
     }
 
+    /// <summary>Optional for a save participant: what to restore when a loaded save has no entry for it (an older save).</summary>
+    public interface IHideOutSaveDefault
+    {
+        void RestoreDefault();
+    }
+
     [DisallowMultipleComponent]
     public sealed class HideOutPlayerBridge : MonoBehaviour, IMeleeDamageModifier
     {
@@ -84,6 +90,7 @@ namespace BehindTheGear.HideOut
             settings.ValidateCatalog();
             Inventory = GetComponent<PlayerInventory>(); Health = GetComponent<PlayerHealth>(); Melee = GetComponent<PlayerMeleeAttack>();
             if (Inventory == null || Health == null) throw new InvalidOperationException("PlayerInventory and PlayerHealth are required on the player.");
+            PlayerLevel.EnsureOn(gameObject); // level/EXP joins the save as a participant; it must exist before the first Capture/Restore
             State = new HideOutSave { baseMana = settings.rules.baseMana, mana = settings.rules.baseMana };
             Capture(State); HideOutModel.Normalize(State, settings.rules);
             // Initialization never reads a disk slot. Continue owns production loading.
@@ -370,7 +377,12 @@ namespace BehindTheGear.HideOut
             s.mana = Mathf.Clamp(s.mana, 0, MaxMana);
             foreach (var component in GetComponents<MonoBehaviour>())
                 if (component is IHideOutSaveParticipant participant)
-                { var entry = s.extensions.Find(x => x.key == participant.SaveKey); if (entry != null) participant.RestoreJson(entry.json); }
+                {
+                    var entry = s.extensions.Find(x => x.key == participant.SaveKey);
+                    if (entry != null) participant.RestoreJson(entry.json);
+                    // Change()/Initialize() capture first, so a missing entry only comes from a loaded older save.
+                    else if (participant is IHideOutSaveDefault defaults) defaults.RestoreDefault();
+                }
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void GrantTestResources()
