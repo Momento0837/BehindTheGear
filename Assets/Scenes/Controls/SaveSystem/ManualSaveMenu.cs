@@ -123,42 +123,21 @@ public sealed class ManualSaveMenu : MonoBehaviour
         if (status == null) return;
         try
         {
-            string summary = "";
             if (exists)
             {
+                // Read and checked here so a broken save is reported on the menu, not first when 이어하기 is pressed.
                 var save = ManualSaveStore.ReadSlot();
                 HideOutPlayerBridge.ValidateSnapshot(save, settings);
-                summary = SaveSummary(save);
             }
-            // The record is shown quietly inside 이어하기; the line under the title is only for messages.
-            if (continueButton != null) continueButton.GetComponent<SaveSlotButtonStyle>().SetDetail(summary);
-            status.text = SaveGameSession.MenuMessage ?? (exists ? "" : "저장된 게임이 없습니다");
+            // 이어하기 shows only its label (the save date / level line under it was removed on request).
+            if (continueButton != null) continueButton.GetComponent<SaveSlotButtonStyle>().SetDetail("");
+            status.text = SaveGameSession.MenuMessage ?? ""; // no line when there is simply no save yet; 이어하기 is greyed out
         }
         catch (Exception error)
         {
             if (continueButton != null) continueButton.GetComponent<SaveSlotButtonStyle>().SetDetail("");
             status.text = "저장된 게임을 불러올 수 없습니다.\n" + error.Message;
         }
-    }
-    // What 이어하기 will load: when it was saved and how far the player was.
-    private static string SaveSummary(HideOutSave save)
-    {
-        string when = "";
-        try
-        {
-            // The time stored in the save (a cloud download or file copy does not change it); older saves use the file time.
-            DateTime saved;
-            if (save.savedAtUtcTicks > DateTime.MinValue.Ticks && save.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
-                saved = new DateTime(save.savedAtUtcTicks, DateTimeKind.Utc).ToLocalTime();
-            else
-            {
-                string path = System.IO.File.Exists(ManualSaveStore.SlotPath) ? ManualSaveStore.SlotPath : ManualSaveStore.LegacyPath;
-                saved = System.IO.File.GetLastWriteTime(path);
-            }
-            when = $"{saved:M월 d일 HH:mm} · ";
-        }
-        catch (Exception) { }
-        return $"{when}Lv {PlayerLevel.LevelIn(save)}";
     }
     public void Continue()
     {
