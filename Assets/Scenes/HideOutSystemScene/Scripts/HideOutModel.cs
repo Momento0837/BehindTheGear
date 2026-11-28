@@ -85,6 +85,8 @@ namespace BehindTheGear.HideOut
         public int clinicSpeedLevel; // Treatment booth time-reduction level; missing in older saves -> 0.
         public double clinicReadyAt, potionsReadyAt, activeClock;
         public List<ExtensionState> extensions = new();
+        // When this snapshot was written (UTC DateTime.Ticks). 0 in older saves: the menu then falls back to the file time.
+        public long savedAtUtcTicks;
         // PlayerInventory currently identifies equipment by definition ItemId, not by a per-copy instance ID.
         // Keeping this record separate from the facility level prevents the bonus moving to another weapon type.
         public List<WeaponDummyBonus> dummyWeaponBonuses = new();

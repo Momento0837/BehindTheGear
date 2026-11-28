@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// "계정 연동" corner button + dialog on the existing save menu. Built at runtime like ManualSaveMenu,
+/// "계정 연동" button (verdigris capsule with a cloud icon, under the slot buttons) + dialog on the existing save menu. Built at runtime like ManualSaveMenu,
 /// reusing its dialog/button styles. Owns no save data: it only drives CloudAccountService/CloudSaveSync
 /// and asks the menu to Refresh() after the local slot may have changed.
 /// </summary>
@@ -17,6 +17,7 @@ public sealed class CloudAccountPanel : MonoBehaviour
     private ManualSaveMenu menu;
     private Button cornerButton;
     private TMP_Text cornerLabel;
+    private SaveSlotButtonStyle cornerStyle;
     private GameObject overlay;
     private SaveConfirmGraphic dialogGraphic;
     private TMP_Text title, body, feedback;
@@ -154,6 +155,9 @@ public sealed class CloudAccountPanel : MonoBehaviour
         bool working = Working;
         if (CloudAccountService.SignedIn) cornerNotice = null;
         if (cornerLabel != null) cornerLabel.text = CornerText(working);
+        if (cornerStyle != null) // amber when the account needs the player: a conflict to resolve or a failed sign-in
+            cornerStyle.SetAttention(!working && (CloudAccountService.SignedIn ? CloudSaveSync.PendingConflict != null
+                : !string.IsNullOrEmpty(cornerNotice)));
         foreach (var button in new[] { signInButton, signUpButton, syncButton, signOutButton, useCloudButton, useLocalButton, laterButton, closeOutButton, closeInButton })
             if (button != null) button.interactable = !working;
         if (usernameInput != null) usernameInput.interactable = !working;
@@ -257,14 +261,55 @@ public sealed class CloudAccountPanel : MonoBehaviour
         var go = new GameObject("Cloud Account Button", typeof(RectTransform), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         var rect = (RectTransform)go.transform;
-        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1, 1);
-        rect.anchoredPosition = new Vector2(-40, -36); rect.sizeDelta = new Vector2(320, 60);
+        // Under the three slot buttons (they end at 614 in the 1600x900 menu), centred: inside the calm middle column of
+        // the backdrop, where players look anyway, and next in the keyboard order after 저장 삭제.
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, 1);
+        rect.anchoredPosition = new Vector2(0, -638); rect.sizeDelta = new Vector2(284, 54);
         go.GetComponent<Image>().color = new Color(.34f, .17f, .12f);
-        cornerLabel = Label(go.transform, "계정 연동하기", 21, TextAlignmentOptions.Center);
+        cornerLabel = Label(go.transform, "계정 연동하기", 20, TextAlignmentOptions.Center);
         cornerButton = go.GetComponent<Button>();
         cornerButton.onClick.AddListener(Open);
-        go.AddComponent<SaveSlotButtonStyle>().Configure(cornerLabel, plateSprite, gearSprite, false);
+        cornerStyle = go.AddComponent<SaveSlotButtonStyle>();
+        cornerStyle.ConfigureAccount(cornerLabel, CloudIcon());
     }
+
+    private static Sprite cloudIcon;
+    // 15x9 pixel cloud with an upload arrow; white so the button style can tint it.
+    private static Sprite CloudIcon()
+    {
+        if (cloudIcon != null) return cloudIcon;
+        string[] rows =
+        {
+            ".....ooooo.....",
+            "....o#####o....",
+            "....o##o##o....",
+            "..oo##ooo##oo..",
+            ".o###o#o#o###o.",
+            ".o#####o#####o.",
+            ".o#####o#####o.",
+            "..o####o####o..",
+            "..ooooooooooo..",
+        };
+        int width = rows[0].Length, height = rows.Length;
+        var pixels = new Color32[width * height];
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                char c = rows[height - 1 - y][x]; // texture rows are bottom-up
+                pixels[y * width + x] = c == '#' ? new Color32(255, 255, 255, 255)
+                    : c == 'o' ? new Color32(70, 92, 88, 255) : new Color32(0, 0, 0, 0);
+            }
+        var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+        { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp, name = "Account Cloud Icon" };
+        texture.SetPixels32(pixels);
+        texture.Apply(false);
+        cloudIcon = Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(.5f, .5f), 1f);
+        cloudIcon.name = "Account Cloud Icon";
+        return cloudIcon;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => cloudIcon = null; // domain reload is disabled in this project
 
     private void BuildDialog(Transform parent)
     {

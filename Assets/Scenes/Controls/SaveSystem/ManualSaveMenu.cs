@@ -48,6 +48,7 @@ public sealed class ManualSaveMenu : MonoBehaviour
         var scaler = root.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1600, 900);
         panel = new GameObject("Slot 1", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(root.transform, false);
+        SaveMenuBackdrop.Build(panel.transform); // clock-tower interior behind the title and buttons
         var rect = (RectTransform)panel.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
         panel.GetComponent<Image>().color = new Color(.09f, .045f, .035f, 1);
         CreateTitle(panel.transform);
@@ -157,10 +158,42 @@ public sealed class ManualSaveMenu : MonoBehaviour
         if (status == null) return;
         try
         {
-            if (exists) HideOutPlayerBridge.ValidateSnapshot(ManualSaveStore.ReadSlot(), settings);
+            string summary = "";
+            if (exists)
+            {
+                var save = ManualSaveStore.ReadSlot();
+                HideOutPlayerBridge.ValidateSnapshot(save, settings);
+                summary = SaveSummary(save);
+            }
+            // The record is shown quietly inside 이어하기; the line under the title is only for messages.
+            if (continueButton != null) continueButton.GetComponent<SaveSlotButtonStyle>().SetDetail(summary);
             status.text = SaveGameSession.MenuMessage ?? (exists ? "" : "저장된 게임이 없습니다");
         }
-        catch (Exception error) { status.text = "저장된 게임을 불러올 수 없습니다.\n" + error.Message; }
+        catch (Exception error)
+        {
+            if (continueButton != null) continueButton.GetComponent<SaveSlotButtonStyle>().SetDetail("");
+            status.text = "저장된 게임을 불러올 수 없습니다.\n" + error.Message;
+        }
+    }
+    // What 이어하기 will load: when it was saved and how far the player was.
+    private static string SaveSummary(HideOutSave save)
+    {
+        string when = "";
+        try
+        {
+            // The time stored in the save (a cloud download or file copy does not change it); older saves use the file time.
+            DateTime saved;
+            if (save.savedAtUtcTicks > DateTime.MinValue.Ticks && save.savedAtUtcTicks <= DateTime.MaxValue.Ticks)
+                saved = new DateTime(save.savedAtUtcTicks, DateTimeKind.Utc).ToLocalTime();
+            else
+            {
+                string path = System.IO.File.Exists(ManualSaveStore.SlotPath) ? ManualSaveStore.SlotPath : ManualSaveStore.LegacyPath;
+                saved = System.IO.File.GetLastWriteTime(path);
+            }
+            when = $"{saved:M월 d일 HH:mm} · ";
+        }
+        catch (Exception) { }
+        return $"{when}Lv {PlayerLevel.LevelIn(save)}";
     }
     public void Continue()
     {
@@ -260,7 +293,9 @@ public sealed class ManualSaveMenu : MonoBehaviour
         selectionBeforeConfirmation = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
         var tone = destructive ? SaveConfirmGraphic.Tone.Danger : SaveConfirmGraphic.Tone.Caution;
         confirmationPanel?.SetTone(tone); confirmStyle?.SetTone(tone); cancelStyle?.SetTone(tone);
-        confirmed = action; cancelled = onCancel; question.text = text; confirmation.SetActive(true);
+        confirmed = action; cancelled = onCancel; question.text = text;
+        confirmation.transform.SetAsLastSibling(); // above the account button too, so it cannot be clicked behind the dialog
+        confirmation.SetActive(true);
         confirmationPanel?.PlayIntro();
         confirmButton.GetComponentInChildren<TMP_Text>().text = confirmText;
         cancelButton.GetComponentInChildren<TMP_Text>().text = cancelText;
@@ -357,8 +392,12 @@ public sealed class ManualSaveMenu : MonoBehaviour
         go.GetComponent<Image>().color = new Color(.34f, .17f, .12f);
         var label = Label(go.transform, text, 14, 26); label.rectTransform.sizeDelta = new Vector2(400, 40);
         var button = go.GetComponent<Button>(); button.onClick.AddListener(action);
-        if (metalPlate) go.AddComponent<SaveSlotButtonStyle>().Configure(label, buttonPlateSprite,
-            buttonGear != null ? buttonGear.Icon : null, destructive);
+        if (metalPlate)
+        {
+            var style = go.AddComponent<SaveSlotButtonStyle>();
+            style.Configure(label, buttonPlateSprite, buttonGear != null ? buttonGear.Icon : null, destructive);
+            style.SetCornerRadius(30f); // nameplate: almost a capsule
+        }
         return button;
     }
 }

@@ -215,6 +215,7 @@ namespace BehindTheGear.HideOut
             var snapshot = CopyState();
             Capture(snapshot);
             snapshot.version = 2;
+            snapshot.savedAtUtcTicks = DateTime.UtcNow.Ticks;
             snapshot.facilities.Clear();
             foreach (Facility f in Enum.GetValues(typeof(Facility)))
                 snapshot.facilities.Add(new FacilityProgress { facilityId = Settings.FindPresentation(f).facilityId,
